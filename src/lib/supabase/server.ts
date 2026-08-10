@@ -64,6 +64,7 @@ export const getSupabaseServerClient = () => {
     },
     global: {
       headers: { 'x-application-name': 'luxury-perfumes-store' },
+      fetch: (url, options) => fetch(url, { ...options, cache: 'no-store' }),
     },
   });
 

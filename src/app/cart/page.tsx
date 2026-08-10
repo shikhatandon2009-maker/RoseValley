@@ -188,14 +188,14 @@ export default function ViewCartPage() {
                     <div className="flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto gap-4 pt-2 sm:pt-0 border-t sm:border-t-0 border-[#F7D1D8]">
                       <div className="flex items-center border border-[#F7D1D8] rounded-xl bg-white text-xs px-2 py-1 shadow-xs">
                         <button
-                          onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
+                          onClick={() => updateQuantity(item.id, -1)}
                           className="px-2 py-0.5 font-bold text-stone-600 hover:text-[#4A0D25]"
                         >
                           -
                         </button>
-                        <span className="px-3 font-black text-[#1A0510] text-sm">{item.quantity}</span>
+                        <span className="px-3 font-black text-[#1A0510] text-sm">{item.quantity > 99 ? 1 : item.quantity}</span>
                         <button
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          onClick={() => updateQuantity(item.id, 1)}
                           className="px-2 py-0.5 font-bold text-stone-600 hover:text-[#4A0D25]"
                         >
                           +

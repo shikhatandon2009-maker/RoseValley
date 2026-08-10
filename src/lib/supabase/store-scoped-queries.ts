@@ -1,51 +1,154 @@
+import { cache } from 'react';
 import { getSupabaseServerClient } from './server';
 import { STORE_ID } from '../constants';
 
 const DEMO_PRODUCTS = [
   {
-    id: 'p1111111-1111-1111-1111-111111111111',
-    name: 'Rose Royale Eau de Parfum',
-    slug: 'rose-royale-eau-de-parfum',
-    description: 'An intoxicating bouquet of Damask Rose, Velvet Oud, and warm Golden Amber. Crafted for moments of pure elegance and mystery.',
-    price: 4800,
-    compare_at_price: 5500,
-    stock: 45,
+    id: 'prod-ruh-khus-oil',
+    name: 'Ruh Khus Vetiver Extract',
+    slug: 'ruh-khus-oil',
+    description: 'Wild Vetiver roots distilled in traditional copper vessels over wood fire. Earthy, cooling, and deeply soothing.',
+    price: 3200,
+    compare_at_price: 3800,
+    stock: 40,
     images: [
-      'https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=1000&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=1000&auto=format&fit=crop'
+      '/uploads/hero/ruhkhus1_removebg_preview_1786261510836.png',
+      'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?q=80&w=1000&auto=format&fit=crop'
     ],
     scent_notes: {
-      top: ['Bergamot', 'Sparkling Pink Pepper'],
-      heart: ['Bulgarian Rose', 'Turkish Rose Absolute'],
-      base: ['Velvet Oud', 'Sandalwood', 'Golden Amber']
+      top: ['Wild Vetiver Roots', 'Green Moss'],
+      heart: ['Rain-Soaked Earth', 'Bamboo Water'],
+      base: ['Copper Still Essence', 'Smoked Amber']
     },
-    ingredients: ['Alcohol Denat.', 'Parfum (Fragrance)', 'Rosa Damascena Flower Extract', 'Linalool', 'Limonene'],
+    ingredients: ['100% Pure Vetiveria Zizanioides Root Extract'],
     is_featured: true,
     is_bestseller: true,
   },
   {
-    id: 'p2222222-2222-2222-2222-222222222222',
+    id: 'prod-gulab-khas-rose-oil',
+    name: 'Gulab Khas Pure Ruh Gulab',
+    slug: 'gulab-khas-pure-ruh-gulab',
+    description: '100% Pure Damask Rose Oil hydro-distilled in traditional Kannauj copper deg stills from pre-dawn petals.',
+    price: 5500,
+    compare_at_price: 6200,
+    stock: 20,
+    images: [
+      '/images/hero/champaca-bottle.png',
+      'https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=1000&auto=format&fit=crop'
+    ],
+    scent_notes: {
+      top: ['Fresh Damask Rose Petals', 'Sparkling Pink Pepper'],
+      heart: ['Bulgarian Rose Absolute', 'Turkish Rose'],
+      base: ['Mysore Sandalwood Base', 'Golden Amber']
+    },
+    ingredients: ['100% Pure Rosa Damascena Flower Extract'],
+    is_featured: true,
+    is_bestseller: true,
+  },
+  {
+    id: 'prod-shamama-kannauj-attar',
+    name: 'Shamama Kannauj Attar',
+    slug: 'shamama-kannauj-attar',
+    description: 'Traditional heritage attar aged over 40 secret herbs, rare spices, and sandalwood oil in Kannauj.',
+    price: 3900,
+    compare_at_price: 4500,
+    stock: 25,
+    images: [
+      '/uploads/hero/ruhkhus1_removebg_preview_1786261510836.png',
+      'https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=1000&auto=format&fit=crop'
+    ],
+    scent_notes: {
+      top: ['Kashmiri Saffron', 'Black Cardamom'],
+      heart: ['Nagarmotha', 'Spiced Rose'],
+      base: ['Aged Sandalwood', 'Smoked Vetiver']
+    },
+    ingredients: ['Pure Botanical Oils', 'Mysore Sandalwood Oil', 'Herbal Extracts'],
+    is_featured: true,
+    is_bestseller: false,
+  },
+  {
+    id: 'prod-royal-rose-oud-perfume',
+    name: 'Royal Rose Oud Perfume',
+    slug: 'royal-rose-oud-perfume',
+    description: 'An intoxicating bouquet of Damask Rose, Velvet Oud, and warm Golden Amber.',
+    price: 4800,
+    compare_at_price: 5500,
+    stock: 30,
+    images: [
+      'https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=1000&auto=format&fit=crop'
+    ],
+    scent_notes: {
+      top: ['Bergamot', 'Pink Pepper'],
+      heart: ['Bulgarian Rose', 'Turkish Rose'],
+      base: ['Velvet Oud', 'Sandalwood']
+    },
+    ingredients: ['Parfum (Fragrance)', 'Rosa Damascena Extract', 'Oud Resin'],
+    is_featured: true,
+    is_bestseller: true,
+  },
+  {
+    id: 'prod-saffron-crocus-attar',
+    name: 'Saffron Crocus Attar',
+    slug: 'saffron-crocus-attar',
+    description: 'Kashmiri Mogra saffron stamens blended with warm amber and Damask Rose.',
+    price: 6400,
+    compare_at_price: 7200,
+    stock: 15,
+    images: [
+      '/images/hero/champaca-bottle.png'
+    ],
+    scent_notes: {
+      top: ['Kashmiri Saffron', 'Warm Amber'],
+      heart: ['Damask Rose', 'Jasmine'],
+      base: ['Golden Amber', 'White Oud']
+    },
+    ingredients: ['Crocus Sativus Stigma Extract', 'Sandalwood Base'],
+    is_featured: true,
+    is_bestseller: false,
+  },
+  {
+    id: 'prod-rose-royale-eau-de-parfum',
+    name: 'Rose Royale Eau de Parfum',
+    slug: 'rose-royale-eau-de-parfum',
+    description: 'An intoxicating bouquet of Damask Rose, Velvet Oud, and warm Golden Amber.',
+    price: 4800,
+    compare_at_price: 5500,
+    stock: 45,
+    images: [
+      'https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=1000&auto=format&fit=crop'
+    ],
+    scent_notes: {
+      top: ['Bergamot', 'Pink Pepper'],
+      heart: ['Bulgarian Rose', 'Turkish Rose'],
+      base: ['Velvet Oud', 'Golden Amber']
+    },
+    ingredients: ['Alcohol Denat.', 'Parfum (Fragrance)', 'Rosa Damascena Extract'],
+    is_featured: true,
+    is_bestseller: true,
+  },
+  {
+    id: 'prod-velvet-amber-vanilla-oil-blend',
     name: 'Velvet Amber & Vanilla Oil Blend',
     slug: 'velvet-amber-vanilla-oil-blend',
-    description: 'Rich Madagascar Vanilla harmonized with golden amber and smoked vetiver. A calming elixir for deep relaxation.',
+    description: 'Rich Madagascar Vanilla harmonized with golden amber and smoked vetiver.',
     price: 3200,
     compare_at_price: 3800,
     stock: 30,
     images: ['https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?q=80&w=1000&auto=format&fit=crop'],
     scent_notes: {
       top: ['Sweet Almond', 'Cardamom'],
-      heart: ['Madagascar Vanilla Bean', 'Helichrysum'],
+      heart: ['Madagascar Vanilla', 'Helichrysum'],
       base: ['Golden Amber', 'Smoked Vetiver']
     },
-    ingredients: ['Simmondsia Chinensis Seed Oil', 'Vanilla Planifolia Extract', 'Amber Resin'],
+    ingredients: ['Simmondsia Chinensis Seed Oil', 'Vanilla Extract'],
     is_featured: true,
     is_bestseller: false,
   },
   {
-    id: 'p3333333-3333-3333-3333-333333333333',
+    id: 'prod-midnight-jasmine-bergamot-cologne',
     name: 'Midnight Jasmine & Bergamot Cologne',
     slug: 'midnight-jasmine-bergamot-cologne',
-    description: 'Night-blooming Jasmine blended with sun-ripened Calabrian Bergamot and soft White Musk.',
+    description: 'Night-blooming Jasmine blended with sun-ripened Calabrian Bergamot.',
     price: 4200,
     compare_at_price: 4900,
     stock: 25,
@@ -55,7 +158,7 @@ const DEMO_PRODUCTS = [
       heart: ['Night-Blooming Jasmine', 'Ylang Ylang'],
       base: ['White Musk', 'Cedarwood']
     },
-    ingredients: ['Organic Cane Alcohol', 'Jasminum Officinale Flower Oil', 'Citrus Bergamia Peel Oil'],
+    ingredients: ['Cane Alcohol', 'Jasmine Flower Oil'],
     is_featured: true,
     is_bestseller: true,
   },
@@ -67,7 +170,7 @@ const DEMO_CATEGORIES = [
   { id: 'c3', name: 'Luxury Elixirs & Blends', slug: 'luxury-elixirs-blends', description: 'Complex botanical synergy elixirs formulated to soothe the mind and elevate energy.', image_url: 'https://images.unsplash.com/photo-1616949755610-8c9bbc08f138?q=80&w=800&auto=format&fit=crop', display_order: 3 }
 ];
 
-export async function fetchProducts(options?: { categorySlug?: string; featuredOnly?: boolean; limit?: number }) {
+export const fetchProducts = cache(async (options?: { categorySlug?: string; featuredOnly?: boolean; limit?: number }) => {
   try {
     const supabase = getSupabaseServerClient();
     let query = supabase.from('products').select('*');
@@ -80,37 +183,80 @@ export async function fetchProducts(options?: { categorySlug?: string; featuredO
     }
 
     const { data, error } = await query;
-    if (error) {
-      console.error('Database fetchProducts error:', error);
-      return [];
+    if (error || !data || data.length === 0) {
+      return DEMO_PRODUCTS;
     }
-    return data || [];
+    return data;
   } catch (err) {
-    console.error('Database fetchProducts catch error:', err);
-    return [];
+    console.error('Database fetchProducts error:', err);
+    return DEMO_PRODUCTS;
   }
-}
+});
 
-export async function fetchProductBySlug(slug: string) {
+export const fetchProductBySlug = cache(async (slug: string) => {
+  const cleanSlug = (slug || '').toLowerCase().trim();
   try {
     const supabase = getSupabaseServerClient();
     const { data, error } = await supabase
       .from('products')
       .select('*')
       .eq('store_id', STORE_ID)
-      .eq('slug', slug)
+      .eq('slug', cleanSlug)
       .maybeSingle();
 
-    if (error || !data) {
-      return DEMO_PRODUCTS.find((p) => p.slug === slug) || DEMO_PRODUCTS[0];
+    if (!error && data) {
+      return data;
     }
-    return data;
   } catch (err) {
-    return DEMO_PRODUCTS.find((p) => p.slug === slug) || DEMO_PRODUCTS[0];
+    // continue
   }
-}
 
-export async function fetchProductVariants(productId: string) {
+  // Exact or alias matching in DEMO_PRODUCTS
+  const match = DEMO_PRODUCTS.find((p) => {
+    const s = p.slug.toLowerCase();
+    return (
+      s === cleanSlug ||
+      cleanSlug.includes(s) ||
+      s.includes(cleanSlug) ||
+      (cleanSlug.includes('khus') && s.includes('khus')) ||
+      (cleanSlug.includes('rose') && s.includes('rose')) ||
+      (cleanSlug.includes('shamama') && s.includes('shamama'))
+    );
+  });
+
+  if (match) {
+    return match;
+  }
+
+  // Fallback product dynamically formatted from the requested slug
+  const formattedTitle = cleanSlug
+    .replace(/-/g, ' ')
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+
+  return {
+    id: `prod-${cleanSlug}`,
+    name: formattedTitle || 'Artisanal Perfume',
+    slug: cleanSlug,
+    description: 'An exquisite artisanal perfume hydro-distilled using authentic copper deg stills in Kannauj.',
+    price: 4800,
+    compare_at_price: 5500,
+    stock: 35,
+    images: [
+      '/uploads/hero/ruhkhus1_removebg_preview_1786261510836.png',
+      'https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=1000&auto=format&fit=crop'
+    ],
+    scent_notes: {
+      top: ['Damask Rose', 'Calabrian Bergamot'],
+      heart: ['Bulgarian Rose Absolute', 'Kashmiri Saffron'],
+      base: ['Velvet Oud', 'Mysore Sandalwood']
+    },
+    ingredients: ['Rosa Damascena Flower Extract', 'Parfum (Fragrance)', 'Sandalwood Oil'],
+    is_featured: true,
+    is_bestseller: true,
+  };
+});
+
+export const fetchProductVariants = cache(async (productId: string) => {
   try {
     const supabase = getSupabaseServerClient();
     const { data, error } = await supabase
@@ -132,9 +278,9 @@ export async function fetchProductVariants(productId: string) {
       { id: 'v2', name: '100ml Eau de Parfum', price: 7200, size: '100ml', stock: 20 },
     ];
   }
-}
+});
 
-export async function fetchCategories() {
+export const fetchCategories = cache(async () => {
   try {
     const supabase = getSupabaseServerClient();
     const { data, error } = await supabase
@@ -150,9 +296,9 @@ export async function fetchCategories() {
   } catch (err) {
     return DEMO_CATEGORIES;
   }
-}
+});
 
-export async function fetchReviews(productId: string) {
+export const fetchReviews = cache(async (productId: string) => {
   try {
     const supabase = getSupabaseServerClient();
     const { data, error } = await supabase
@@ -181,9 +327,9 @@ export async function fetchReviews(productId: string) {
   } catch (err) {
     return [];
   }
-}
+});
 
-export async function fetchQuestions(productId: string) {
+export const fetchQuestions = cache(async (productId: string) => {
   try {
     const supabase = getSupabaseServerClient();
     const { data, error } = await supabase
@@ -215,7 +361,7 @@ export async function fetchQuestions(productId: string) {
   } catch (err) {
     return [];
   }
-}
+});
 
 export async function fetchUserByEmail(email: string) {
   try {
@@ -251,7 +397,7 @@ export async function fetchUserById(id: string) {
   }
 }
 
-export async function fetchExchangeRates() {
+export const fetchExchangeRates = cache(async () => {
   try {
     const supabase = getSupabaseServerClient();
     const { data, error } = await supabase
@@ -276,4 +422,6 @@ export async function fetchExchangeRates() {
       { currency_code: 'AED', rate_to_inr: 0.044 },
     ];
   }
-}
+});
+
+

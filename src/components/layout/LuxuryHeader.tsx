@@ -17,6 +17,8 @@ interface CategoryItem {
   image_url?: string;
 }
 
+let cachedHeaderCategories: CategoryItem[] | null = null;
+
 export function LuxuryHeader() {
   const router = useRouter();
   const { formatPrice } = useCurrencyStore();
@@ -25,31 +27,36 @@ export function LuxuryHeader() {
   const [cartHoverOpen, setCartHoverOpen] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
-  const [categories, setCategories] = useState<CategoryItem[]>([]);
+  const [categories, setCategories] = useState<CategoryItem[]>(cachedHeaderCategories || []);
   const [mounted, setMounted] = useState(false);
 
   const cartDropdownRef = useRef<HTMLDivElement>(null);
   const notificationRef = useRef<HTMLDivElement>(null);
   const accountRef = useRef<HTMLDivElement>(null);
 
-  const { items, toggleCart, syncLiveCart, updateQuantity, removeItem, getTotalINR } = useCartStore();
-  const { productIds, syncLiveWishlist } = useWishlistStore();
+  const { items, toggleCart, updateQuantity, removeItem, getTotalINR } = useCartStore();
+  const { productIds } = useWishlistStore();
 
   useEffect(() => {
     setMounted(true);
-    syncLiveCart();
-    syncLiveWishlist();
 
-    // Fetch real dynamic categories for the Collection dropdown
+    if (cachedHeaderCategories && cachedHeaderCategories.length > 0) {
+      setCategories(cachedHeaderCategories);
+      return;
+    }
+
+    // Fetch real dynamic categories for the Collection dropdown (cached in memory)
     fetch('/api/admin/categories')
       .then((res) => res.json())
       .then((data) => {
         if (data.categories && Array.isArray(data.categories)) {
+          cachedHeaderCategories = data.categories;
           setCategories(data.categories);
         }
       })
       .catch((err) => console.error('Categories fetch error:', err));
   }, []);
+
 
   // Close Cart, Notification & Account Dropdowns when clicking outside anywhere on the page
   useEffect(() => {
@@ -94,7 +101,7 @@ export function LuxuryHeader() {
 
       {/* 2. ROW 1: UTILITIES (LEFT), CENTERED LOGO (CENTER), ACTIONS (RIGHT) */}
       <div className="luxury-header-top-row">
-        {/* Left: Mobile Toggle & Currency Selector */}
+        {/* Left: Mobile Toggle, Currency Selector & Notification right next to Currency */}
         <div className="flex items-center gap-3">
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -103,8 +110,91 @@ export function LuxuryHeader() {
           >
             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
-          <div className="hidden sm:block">
+          <div className="hidden sm:flex items-center gap-3">
             <CurrencySelector />
+
+            {/* Mouseover & Click Notification Dropdown - Placed Right Next to Currency */}
+            <div
+              ref={notificationRef}
+              className="luxury-notification-wrapper"
+              onMouseEnter={() => setNotificationOpen(true)}
+            >
+              <button
+                onClick={() => setNotificationOpen((prev) => !prev)}
+                className="luxury-icon-btn relative"
+                title="Notifications & Saved Wishlist"
+              >
+                <Heart className="w-5 h-5" />
+                {mounted && productIds.length > 0 && (
+                  <span className="luxury-wishlist-badge">
+                    {productIds.length}
+                  </span>
+                )}
+              </button>
+
+              {notificationOpen && (
+                <div
+                  className="luxury-notification-menu"
+                  onMouseEnter={() => setNotificationOpen(true)}
+                >
+                  <div className="luxury-notification-header">
+                    <h3 className="luxury-notification-title">
+                      Notifications & Reserve
+                    </h3>
+                    <span className="luxury-notification-badge">
+                      {mounted ? productIds.length : 0} ITEMS SAVED
+                    </span>
+                  </div>
+
+                  <div className="luxury-notification-list">
+                    <div className="luxury-notification-item">
+                      <div className="luxury-notification-item-icon">
+                        <Sparkles className="w-4 h-4 text-[#F6A6BB]" />
+                      </div>
+                      <div>
+                        <h4 className="luxury-notification-item-title">
+                          2026 Damask Rose Harvest Live
+                        </h4>
+                        <p className="luxury-notification-item-desc">
+                          Hydro-distillation in progress in Vessel #Deg-04. Limited Ruh Gulab batches reserved.
+                        </p>
+                      </div>
+                    </div>
+
+                    {mounted && productIds.length > 0 ? (
+                      <div className="p-3 rounded-xl bg-[#F7EEED] text-center border border-[#F7D1D8]">
+                        <p className="text-xs text-[#4A0D25] font-bold">
+                          You have {productIds.length} saved item(s) in your Private Reserve Wishlist.
+                        </p>
+                        <button
+                          onClick={() => {
+                            setNotificationOpen(false);
+                            router.push('/wishlist');
+                          }}
+                          className="mt-2 text-xs font-bold text-[#F6A6BB] underline hover:text-[#4A0D25]"
+                        >
+                          View My Saved Wishlist &rarr;
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="text-center py-4 text-xs text-[#4A0D25]">
+                        Your private wishlist is empty. Tap the heart on any fragrance to save.
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="luxury-notification-footer">
+                    <Link
+                      href="/wishlist"
+                      onClick={() => setNotificationOpen(false)}
+                      className="luxury-notification-footer-btn"
+                    >
+                      Manage Private Reserve Wishlist
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -117,23 +207,23 @@ export function LuxuryHeader() {
             Est. 1620 • Pure Hydro-Distillates
           </span>
         </Link>
-
-        {/* Right: Actions Group (Account Dropdown, Wishlist/Notification, Rose Cart) */}
+             {/* Right: Actions Group (Account Button 100% Styled Like Cart Button, & Cart Preview Pill) */}
         <div className="luxury-actions-group">
           
-          {/* Account Icon with Interactive Dropdown Menu */}
+          {/* Account Capsule Pill Button - 100% Identical to Cart Button Design */}
           <div
             ref={accountRef}
-            className="relative inline-block"
+            className="luxury-cart-hover-wrapper relative inline-block"
             onMouseEnter={() => setAccountOpen(true)}
           >
             <button
               onClick={() => setAccountOpen((prev) => !prev)}
-              className="luxury-icon-btn flex items-center gap-1"
-              title="Private Client Account & Orders"
+              className="luxury-cart-btn"
               aria-label="Private Client Account"
+              title="Private Client Account & Orders"
             >
-              <User className="w-5 h-5" />
+              <User className="luxury-cart-icon" />
+              <span className="luxury-cart-text">Account</span>
               <ChevronDown className={`w-3.5 h-3.5 text-[#4A0D25] transition-transform duration-300 ${accountOpen ? 'rotate-180' : ''}`} />
             </button>
 
@@ -221,89 +311,6 @@ export function LuxuryHeader() {
                       <p className="font-black text-xs text-[#4A0D25]">Admin Suite</p>
                       <span className="text-[10px] text-stone-500 font-bold block">Manage orders & inventory</span>
                     </div>
-                  </Link>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Mouseover & Click Notification Dropdown */}
-          <div
-            ref={notificationRef}
-            className="luxury-notification-wrapper"
-            onMouseEnter={() => setNotificationOpen(true)}
-          >
-            <button
-              onClick={() => setNotificationOpen((prev) => !prev)}
-              className="luxury-icon-btn relative"
-              title="Notifications & Saved Wishlist"
-            >
-              <Heart className="w-5 h-5" />
-              {mounted && productIds.length > 0 && (
-                <span className="luxury-wishlist-badge">
-                  {productIds.length}
-                </span>
-              )}
-            </button>
-
-            {notificationOpen && (
-              <div
-                className="luxury-notification-menu"
-                onMouseEnter={() => setNotificationOpen(true)}
-              >
-                <div className="luxury-notification-header">
-                  <h3 className="luxury-notification-title">
-                    Notifications & Reserve
-                  </h3>
-                  <span className="luxury-notification-badge">
-                    {mounted ? productIds.length : 0} ITEMS SAVED
-                  </span>
-                </div>
-
-                <div className="luxury-notification-list">
-                  <div className="luxury-notification-item">
-                    <div className="luxury-notification-item-icon">
-                      <Sparkles className="w-4 h-4 text-[#F6A6BB]" />
-                    </div>
-                    <div>
-                      <h4 className="luxury-notification-item-title">
-                        2026 Damask Rose Harvest Live
-                      </h4>
-                      <p className="luxury-notification-item-desc">
-                        Hydro-distillation in progress in Vessel #Deg-04. Limited Ruh Gulab batches reserved.
-                      </p>
-                    </div>
-                  </div>
-
-                  {mounted && productIds.length > 0 ? (
-                    <div className="p-3 rounded-xl bg-[#F7EEED] text-center border border-[#F7D1D8]">
-                      <p className="text-xs text-[#4A0D25] font-bold">
-                        You have {productIds.length} saved item(s) in your Private Reserve Wishlist.
-                      </p>
-                      <button
-                        onClick={() => {
-                          setNotificationOpen(false);
-                          router.push('/wishlist');
-                        }}
-                        className="mt-2 text-xs font-bold text-[#F6A6BB] underline hover:text-[#4A0D25]"
-                      >
-                        View My Saved Wishlist &rarr;
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="text-center py-4 text-xs text-[#4A0D25]">
-                      Your private wishlist is empty. Tap the heart on any fragrance to save.
-                    </div>
-                  )}
-                </div>
-
-                <div className="luxury-notification-footer">
-                  <Link
-                    href="/wishlist"
-                    onClick={() => setNotificationOpen(false)}
-                    className="luxury-notification-footer-btn"
-                  >
-                    Manage Private Reserve Wishlist
                   </Link>
                 </div>
               </div>
@@ -442,7 +449,6 @@ export function LuxuryHeader() {
               </div>
             )}
           </div>
-
         </div>
       </div>
 

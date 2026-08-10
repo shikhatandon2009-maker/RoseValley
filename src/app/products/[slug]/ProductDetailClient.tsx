@@ -45,14 +45,15 @@ export function ProductDetailClient({ product, variants, initialReviews, initial
 
   const handleAddToCart = () => {
     // Add item to cart state without opening sidebar cart immediately
+    const itemId = selectedVariant ? `${product.id}_${selectedVariant.id}` : product.id;
     addItem({
-      id: selectedVariant ? selectedVariant.id : product.id,
+      id: itemId,
       productId: product.id,
-      variantId: selectedVariant?.id,
+      variantId: selectedVariant ? `${product.id}_${selectedVariant.id}` : undefined,
       name: product.name,
       variantName: selectedVariant?.name,
       price: currentPrice,
-      image: selectedImage || product.images?.[0],
+      image: selectedImage || product.images?.[0] || 'https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=800&auto=format&fit=crop',
     }, quantity, false);
 
     setIsFlying(true);

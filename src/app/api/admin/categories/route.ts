@@ -46,13 +46,21 @@ export async function GET(request: NextRequest) {
     const totalCategories = filteredCategories.length;
     const hasImageCount = filteredCategories.filter((c: any) => Boolean(c.image_url)).length;
 
-    return NextResponse.json({
-      categories: filteredCategories,
-      stats: {
-        totalCategories,
-        hasImageCount,
+    return NextResponse.json(
+      {
+        categories: filteredCategories,
+        stats: {
+          totalCategories,
+          hasImageCount,
+        },
       },
-    });
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+        },
+      }
+    );
+
   } catch (err: any) {
     console.error('API Error in GET /api/admin/categories:', err);
     return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });

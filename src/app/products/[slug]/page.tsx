@@ -9,6 +9,8 @@ interface ProductDetailPageProps {
   params: { slug: string };
 }
 
+export const revalidate = 60;
+
 export default async function ProductDetailPage({ params }: ProductDetailPageProps) {
   let product = await fetchProductBySlug(params.slug);
 
@@ -16,9 +18,12 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
     return notFound();
   }
 
-  const variants = await fetchProductVariants(product.id);
-  const reviews = await fetchReviews(product.id);
-  const questions = await fetchQuestions(product.id);
+  const [variants, reviews, questions] = await Promise.all([
+    fetchProductVariants(product.id),
+    fetchReviews(product.id),
+    fetchQuestions(product.id),
+  ]);
+
 
   return (
     <div className="min-h-screen bg-white text-black">

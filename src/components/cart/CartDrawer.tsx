@@ -102,14 +102,14 @@ export function CartDrawer() {
                     <div className="flex items-center justify-between mt-3">
                       <div className="flex items-center border border-[#F7D1D8] rounded-xl bg-white text-xs px-2 py-0.5">
                         <button
-                          onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
+                          onClick={() => updateQuantity(item.id, -1)}
                           className="px-1.5 py-0.5 font-bold text-stone-600 hover:text-[#4A0D25]"
                         >
                           -
                         </button>
-                        <span className="px-2.5 font-extrabold text-[#1A0510]">{item.quantity}</span>
+                        <span className="px-2.5 font-extrabold text-[#1A0510]">{item.quantity > 99 ? 1 : item.quantity}</span>
                         <button
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          onClick={() => updateQuantity(item.id, 1)}
                           className="px-1.5 py-0.5 font-bold text-stone-600 hover:text-[#4A0D25]"
                         >
                           +

@@ -12,8 +12,8 @@ import { Award, Sparkles, ArrowRight, CheckCircle2, QrCode, ShieldCheck, Clock }
 import { LuxuryHeader } from '@/components/layout/LuxuryHeader';
 import { LuxuryFooter } from '@/components/layout/LuxuryFooter';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const revalidate = 60;
+
 
 export default async function Home() {
   // Fetch real live products from Supabase store database

@@ -1,6 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  compress: true,
+  poweredByHeader: false,
   images: {
+    formats: ['image/avif', 'image/webp'],
+    minimumCacheTTL: 31536000,
     remotePatterns: [
       {
         protocol: 'https',
@@ -9,6 +13,14 @@ const nextConfig = {
     ],
   },
   experimental: {
+    optimizePackageImports: [
+      'lucide-react',
+      'framer-motion',
+      'clsx',
+      'tailwind-merge',
+      'zod',
+      'zustand',
+    ],
     serverActions: {
       bodySizeLimit: '10mb',
     },
@@ -16,3 +28,4 @@ const nextConfig = {
 };
 
 export default nextConfig;
+

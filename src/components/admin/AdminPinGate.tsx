@@ -132,7 +132,7 @@ export function AdminPinGate({ children }: { children: React.ReactNode }) {
           {/* Security Notice */}
           <div className="pt-4 border-t border-[#F7D1D8]/20 flex items-center justify-center gap-1.5 text-[11px] font-bold text-[#F7D1D8]/60">
             <ShieldCheck className="w-3.5 h-3.5 text-[#F6A6BB]" />
-            <span>PIN Authorized: 198411</span>
+            <span>Encrypted Administrator Access</span>
           </div>
         </div>
       </div>

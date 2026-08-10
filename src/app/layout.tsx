@@ -40,7 +40,6 @@ export default function RootLayout({
         <ThemeProvider>
           <main className="flex-1">{children}</main>
           <CartDrawer />
-          <FloatingAdminButton />
         </ThemeProvider>
       </body>
     </html>

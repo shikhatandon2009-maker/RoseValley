@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -11,34 +11,13 @@ import { SectionWrapper } from '@/components/common/SectionWrapper';
 import { useCartStore } from '@/store/cart-store';
 import { useCurrencyStore } from '@/store/currency-store';
 
-const AVAILABLE_COUPONS = [
+const DEFAULT_COUPONS = [
   {
     code: 'ROYAL15',
     flag: '👑',
     name: 'Royal Heritage 15% OFF',
     desc: '15% OFF on pure Kannauj attars & luxury perfumes',
     percent: 15,
-  },
-  {
-    code: 'ROSE10',
-    flag: '🌹',
-    name: 'Damask Rose 10% OFF',
-    desc: '10% OFF on pre-dawn Rosa Damascena distillates',
-    percent: 10,
-  },
-  {
-    code: 'HERITAGE20',
-    flag: '🏺',
-    name: '400-Yr Heritage Reserve 20% OFF',
-    desc: '20% OFF on artisanal attar collections',
-    percent: 20,
-  },
-  {
-    code: 'WELCOME10',
-    flag: '✨',
-    name: 'Welcome Member 10% OFF',
-    desc: '10% instant discount for new private clients',
-    percent: 10,
   },
 ];
 
@@ -47,11 +26,30 @@ export default function ViewCartPage() {
   const { items, updateQuantity, removeItem, getTotalINR } = useCartStore();
   const { formatPrice } = useCurrencyStore();
 
+  const [availableCoupons, setAvailableCoupons] = useState(DEFAULT_COUPONS);
   const [couponInput, setCouponInput] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; percent: number; name: string } | null>(null);
   const [validatingCoupon, setValidatingCoupon] = useState(false);
   const [couponError, setCouponError] = useState('');
   const [couponSuccess, setCouponSuccess] = useState('');
+
+  useEffect(() => {
+    fetch('/api/admin/coupons?status=active')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.coupons && Array.isArray(data.coupons) && data.coupons.length > 0) {
+          const formatted = data.coupons.map((c: any) => ({
+            code: c.code,
+            flag: '👑',
+            name: `${c.code} ${c.discount_value}${c.discount_type === 'percentage' ? '% OFF' : ' OFF'}`,
+            desc: c.min_spend > 0 ? `Min. spend ₹${c.min_spend} • Valid on pure Kannauj attars` : `${c.discount_value}${c.discount_type === 'percentage' ? '% OFF' : ' OFF'} discount on luxury collection`,
+            percent: c.discount_type === 'percentage' ? Number(c.discount_value) || 15 : 15,
+          }));
+          setAvailableCoupons(formatted);
+        }
+      })
+      .catch((err) => console.warn('Coupons fetch info:', err));
+  }, []);
 
   const subtotalINR = getTotalINR();
   const discountPercent = appliedCoupon ? appliedCoupon.percent : 0;
@@ -71,20 +69,16 @@ export default function ViewCartPage() {
 
     setValidatingCoupon(true);
     setTimeout(() => {
-      const match = AVAILABLE_COUPONS.find((c) => c.code === cleanCode);
+      const match = availableCoupons.find((c) => c.code.toUpperCase() === cleanCode);
       if (match) {
         setAppliedCoupon({ code: match.code, percent: match.percent, name: match.name });
         setCouponSuccess(`Coupon "${cleanCode}" applied! ${match.percent}% discount activated.`);
         setCouponInput('');
-      } else if (cleanCode.length >= 3) {
-        setAppliedCoupon({ code: cleanCode, percent: 15, name: `${cleanCode} Special Discount` });
-        setCouponSuccess(`Coupon "${cleanCode}" applied! 15% discount activated.`);
-        setCouponInput('');
       } else {
-        setCouponError(`Invalid code "${cleanCode}". Try: ROYAL15, ROSE10, or HERITAGE20`);
+        setCouponError(`Invalid coupon code "${cleanCode}". Active database coupon: ${availableCoupons.map(c => c.code).join(', ')}`);
       }
       setValidatingCoupon(false);
-    }, 600);
+    }, 500);
   };
 
   const handleRemoveCoupon = () => {
@@ -233,12 +227,12 @@ export default function ViewCartPage() {
                         <Tag className="w-4 h-4 text-[#F6A6BB]" /> Available Eligible Coupons & Offers
                       </label>
                       <span className="text-[10px] text-stone-500 font-extrabold uppercase tracking-wider">
-                        {AVAILABLE_COUPONS.length} Active
+                        {availableCoupons.length} Active
                       </span>
                     </div>
 
                     <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                      {AVAILABLE_COUPONS.map((coupon) => {
+                      {availableCoupons.map((coupon) => {
                         const isSelected = appliedCoupon?.code === coupon.code;
                         return (
                           <div

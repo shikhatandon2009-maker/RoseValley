@@ -3,6 +3,7 @@ import { Playfair_Display, Plus_Jakarta_Sans, Montserrat, Cinzel } from 'next/fo
 import './globals.css';
 import { CartDrawer } from '@/components/cart/CartDrawer';
 import { ThemeProvider } from '@/components/layout/ThemeProvider';
+import { FontProvider } from '@/components/layout/FontProvider';
 
 const playfair = Playfair_Display({
   subsets: ['latin'],
@@ -57,10 +58,12 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${playfair.variable} ${plusJakarta.variable} ${montserrat.variable} ${cinzel.variable}`}>
       <body className="font-sans min-h-screen flex flex-col justify-between selection:bg-[#F6A6BB] selection:text-neutral-950 relative">
-        <ThemeProvider>
-          <main className="flex-1">{children}</main>
-          <CartDrawer />
-        </ThemeProvider>
+        <FontProvider>
+          <ThemeProvider>
+            <main className="flex-1">{children}</main>
+            <CartDrawer />
+          </ThemeProvider>
+        </FontProvider>
       </body>
     </html>
   );

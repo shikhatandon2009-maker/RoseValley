@@ -26,7 +26,8 @@ import {
   ChevronDown,
   ChevronRight,
   ExternalLink,
-  Sparkles
+  Sparkles,
+  Type
 } from 'lucide-react';
 
 export default function AdminSidebar() {
@@ -134,6 +135,11 @@ export default function AdminSidebar() {
           label: 'Site Settings',
           href: '/admin/settings',
           icon: Settings,
+        },
+        {
+          label: 'Typography & Fonts',
+          href: '/admin/fonts',
+          icon: Type,
         },
         {
           label: 'Countries & Addresses',

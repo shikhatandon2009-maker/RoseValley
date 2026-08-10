@@ -291,32 +291,32 @@ export default function QAAdminPage() {
         <div
           className={`fixed bottom-6 right-6 z-50 px-5 py-3 rounded-2xl shadow-2xl border backdrop-blur-md flex items-center gap-3 transition-all animate-bounce ${
             toastMessage.type === 'success'
-              ? 'bg-emerald-950/90 border-emerald-500/40 text-emerald-200'
-              : 'bg-rose-950/90 border-rose-500/40 text-rose-200'
+              ? 'bg-[#FAE6E7] border-emerald-500/40 text-emerald-950'
+              : 'bg-[#FAE6E7] border-rose-500/40 text-rose-950'
           }`}
         >
           {toastMessage.type === 'success' ? (
-            <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+            <CheckCircle2 className="w-5 h-5 text-emerald-600" />
           ) : (
-            <AlertCircle className="w-5 h-5 text-rose-400" />
+            <AlertCircle className="w-5 h-5 text-rose-600" />
           )}
-          <span className="text-xs font-semibold">{toastMessage.text}</span>
-          <button onClick={() => setToastMessage(null)} className="ml-2 text-neutral-400 hover:text-white">
+          <span className="text-xs font-bold text-[#1A0510]">{toastMessage.text}</span>
+          <button onClick={() => setToastMessage(null)} className="ml-2 text-[#4A0D25] hover:text-rose-600">
             <X className="w-4 h-4" />
           </button>
         </div>
       )}
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200 pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#F7D1D8] pb-6">
         <div>
-          <div className="flex items-center gap-2 text-xs font-bold text-amber-700 uppercase tracking-wider">
-            <HelpCircle className="w-4 h-4" /> Community & Customer Support
+          <div className="flex items-center gap-2 text-xs font-black text-[#4A0D25] uppercase tracking-widest">
+            <HelpCircle className="w-4 h-4 text-[#F6A6BB]" /> Community & Customer Support
           </div>
-          <h1 className="text-3xl font-serif font-bold text-stone-900 mt-1">
+          <h1 className="text-3xl font-serif font-extrabold text-[#1A0510] mt-1">
             Product Questions & Official Answers (Q&A)
           </h1>
-          <p className="text-stone-500 text-xs mt-1 font-medium">
+          <p className="text-[#4A0D25] text-xs mt-1 font-bold">
             Answer shopper inquiries about fragrance notes, alcohol-free formulations, bottle sizes, and distillation purity.
           </p>
         </div>
@@ -325,78 +325,78 @@ export default function QAAdminPage() {
           <button
             onClick={fetchQuestions}
             disabled={loading}
-            className="p-2.5 rounded-xl bg-white border border-stone-300 text-stone-700 hover:bg-stone-50 transition-all disabled:opacity-50 shadow-sm"
+            className="p-2.5 rounded-2xl bg-white border border-[#F7D1D8] text-[#1A0510] hover:bg-[#FAE6E7] transition-all disabled:opacity-50 shadow-xs"
             title="Refresh Q&A"
           >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-amber-600' : ''}`} />
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-[#F6A6BB]' : 'text-[#4A0D25]'}`} />
           </button>
           <button
             onClick={handleOpenAddQuestionModal}
-            className="px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs transition-all shadow-md flex items-center gap-2"
+            className="px-4 py-2.5 rounded-2xl bg-[#F6A6BB] hover:bg-[#F4BBC9] text-[#4A0D25] font-black text-xs transition-all shadow-xs flex items-center gap-2 uppercase tracking-wider"
           >
-            <Plus className="w-4 h-4" /> Add Product Question
+            <Plus className="w-4 h-4 text-[#4A0D25]" /> Add Product Question
           </button>
         </div>
       </div>
 
       {/* Metrics Overview Bar */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="p-5 rounded-2xl bg-white border border-stone-200 shadow-sm flex items-center justify-between">
+        <div className="p-5 rounded-3xl bg-[#FAE6E7]/60 border-2 border-[#F7D1D8] shadow-xs flex items-center justify-between">
           <div>
-            <div className="text-xs text-stone-500 font-bold">Total Product Questions</div>
-            <div className="text-2xl font-bold font-serif text-stone-900 mt-1">{stats.totalQuestions}</div>
+            <div className="text-xs text-[#4A0D25] font-extrabold">Total Product Questions</div>
+            <div className="text-2xl font-black font-serif text-[#1A0510] mt-1">{stats.totalQuestions}</div>
           </div>
-          <div className="p-3 rounded-xl bg-amber-50 text-amber-700 border border-amber-200">
+          <div className="p-3 rounded-2xl bg-[#F7D1D8] text-[#4A0D25]">
             <HelpCircle className="w-5 h-5" />
           </div>
         </div>
 
-        <div className="p-5 rounded-2xl bg-white border border-stone-200 shadow-sm flex items-center justify-between">
+        <div className="p-5 rounded-3xl bg-[#FAE6E7]/60 border-2 border-[#F7D1D8] shadow-xs flex items-center justify-between">
           <div>
-            <div className="text-xs text-stone-500 font-bold">Unanswered Inbox</div>
-            <div className="text-2xl font-bold font-serif text-rose-700 mt-1">{stats.unansweredCount}</div>
+            <div className="text-xs text-[#4A0D25] font-extrabold">Unanswered Inbox</div>
+            <div className="text-2xl font-black font-serif text-rose-700 mt-1">{stats.unansweredCount}</div>
           </div>
-          <div className="p-3 rounded-xl bg-rose-50 text-rose-700 border border-rose-200">
+          <div className="p-3 rounded-2xl bg-rose-100 text-rose-800">
             <MessageSquare className="w-5 h-5" />
           </div>
         </div>
 
-        <div className="p-5 rounded-2xl bg-white border border-stone-200 shadow-sm flex items-center justify-between">
+        <div className="p-5 rounded-3xl bg-[#FAE6E7]/60 border-2 border-[#F7D1D8] shadow-xs flex items-center justify-between">
           <div>
-            <div className="text-xs text-stone-500 font-bold">Approved Questions</div>
-            <div className="text-2xl font-bold font-serif text-emerald-700 mt-1">{stats.approvedCount}</div>
+            <div className="text-xs text-[#4A0D25] font-extrabold">Approved Questions</div>
+            <div className="text-2xl font-black font-serif text-emerald-800 mt-1">{stats.approvedCount}</div>
           </div>
-          <div className="p-3 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200">
+          <div className="p-3 rounded-2xl bg-emerald-100 text-emerald-800">
             <CheckCircle2 className="w-5 h-5" />
           </div>
         </div>
 
-        <div className="p-5 rounded-2xl bg-white border border-stone-200 shadow-sm flex items-center justify-between">
+        <div className="p-5 rounded-3xl bg-[#FAE6E7]/60 border-2 border-[#F7D1D8] shadow-xs flex items-center justify-between">
           <div>
-            <div className="text-xs text-stone-500 font-bold">Official Staff Answers</div>
-            <div className="text-2xl font-bold font-serif text-purple-700 mt-1">{stats.officialAnswersCount}</div>
+            <div className="text-xs text-[#4A0D25] font-extrabold">Official Staff Answers</div>
+            <div className="text-2xl font-black font-serif text-[#4A0D25] mt-1">{stats.officialAnswersCount}</div>
           </div>
-          <div className="p-3 rounded-xl bg-purple-50 text-purple-700 border border-purple-200">
+          <div className="p-3 rounded-2xl bg-[#F6A6BB] text-[#4A0D25]">
             <ShieldCheck className="w-5 h-5" />
           </div>
         </div>
       </div>
 
       {/* Control & Search Bar */}
-      <div className="p-4 rounded-2xl bg-white border border-stone-200 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
+      <div className="p-4 rounded-3xl bg-[#FAE6E7]/40 border border-[#F7D1D8] shadow-xs flex flex-col md:flex-row gap-4 items-center justify-between">
         <div className="relative w-full md:w-80">
-          <Search className="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-[#4A0D25] absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by question, customer, or fragrance..."
-            className="w-full pl-9 pr-4 py-2 rounded-xl bg-stone-50 border border-stone-300 text-xs text-stone-900 focus:outline-none focus:border-amber-600 font-medium"
+            className="w-full pl-9 pr-4 py-2.5 rounded-2xl bg-white border border-[#F7D1D8] text-xs text-[#1A0510] focus:outline-none focus:ring-2 focus:ring-[#F6A6BB] font-bold"
           />
           {search && (
             <button
               onClick={() => setSearch('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-900"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4A0D25] hover:text-[#1A0510]"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -405,11 +405,11 @@ export default function QAAdminPage() {
 
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
           <div className="flex items-center gap-2">
-            <span className="text-xs text-stone-600 font-bold">Answer Status:</span>
+            <span className="text-xs text-[#4A0D25] font-extrabold">Answer Status:</span>
             <select
               value={answerFilter}
               onChange={(e) => setAnswerFilter(e.target.value)}
-              className="px-3 py-2 rounded-xl bg-stone-50 border border-stone-300 text-xs text-stone-900 focus:outline-none focus:border-amber-600 font-medium"
+              className="px-3 py-2 rounded-2xl bg-white border border-[#F7D1D8] text-xs text-[#1A0510] focus:outline-none focus:ring-2 focus:ring-[#F6A6BB] font-bold"
             >
               <option value="all">All Inquiries</option>
               <option value="unanswered">Unanswered Inbox ({stats.unansweredCount})</option>
@@ -418,11 +418,11 @@ export default function QAAdminPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-xs text-stone-600 font-bold">Approval:</span>
+            <span className="text-xs text-[#4A0D25] font-extrabold">Approval:</span>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 rounded-xl bg-stone-50 border border-stone-300 text-xs text-stone-900 focus:outline-none focus:border-amber-600 font-medium"
+              className="px-3 py-2 rounded-2xl bg-white border border-[#F7D1D8] text-xs text-[#1A0510] focus:outline-none focus:ring-2 focus:ring-[#F6A6BB] font-bold"
             >
               <option value="all">All Statuses</option>
               <option value="approved">Approved</option>
@@ -436,26 +436,26 @@ export default function QAAdminPage() {
       {/* Q&A Cards List */}
       <div className="space-y-4">
         {loading ? (
-          <div className="p-16 text-center space-y-3 rounded-2xl border border-stone-200 bg-white shadow-sm">
-            <RefreshCw className="w-8 h-8 text-amber-600 animate-spin mx-auto" />
-            <p className="text-xs text-stone-500 font-medium">Loading product inquiries from Supabase...</p>
+          <div className="p-16 text-center space-y-3 rounded-3xl border border-[#F7D1D8] bg-[#FAE6E7]/30 shadow-xs">
+            <RefreshCw className="w-8 h-8 text-[#F6A6BB] animate-spin mx-auto" />
+            <p className="text-xs text-[#4A0D25] font-bold">Loading product inquiries...</p>
           </div>
         ) : error ? (
-          <div className="p-12 text-center space-y-3 rounded-2xl border border-rose-300 bg-white shadow-sm">
-            <AlertCircle className="w-8 h-8 text-rose-500 mx-auto" />
-            <p className="text-sm font-semibold text-rose-700">{error}</p>
+          <div className="p-12 text-center space-y-3 rounded-3xl border border-rose-300 bg-rose-50 shadow-xs">
+            <AlertCircle className="w-8 h-8 text-rose-600 mx-auto" />
+            <p className="text-sm font-bold text-rose-800">{error}</p>
             <button
               onClick={fetchQuestions}
-              className="px-4 py-2 rounded-xl bg-stone-100 text-xs text-stone-800 font-bold hover:bg-stone-200"
+              className="px-4 py-2 rounded-2xl bg-white border border-rose-300 text-xs text-rose-900 font-extrabold hover:bg-rose-100"
             >
               Retry
             </button>
           </div>
         ) : filteredQuestions.length === 0 ? (
-          <div className="p-16 text-center space-y-4 rounded-2xl border border-stone-200 bg-white shadow-sm">
-            <HelpCircle className="w-10 h-10 text-stone-400 mx-auto" />
-            <h3 className="text-base font-serif font-bold text-stone-900">No product questions found</h3>
-            <p className="text-xs text-stone-500 max-w-sm mx-auto font-medium">
+          <div className="p-16 text-center space-y-4 rounded-3xl border border-[#F7D1D8] bg-[#FAE6E7]/30 shadow-xs">
+            <HelpCircle className="w-10 h-10 text-[#F6A6BB] mx-auto" />
+            <h3 className="text-base font-serif font-bold text-[#1A0510]">No product questions found</h3>
+            <p className="text-xs text-[#4A0D25] max-w-sm mx-auto font-semibold">
               {search
                 ? `No questions matching search term "${search}".`
                 : 'No customer questions submitted under this filter.'}
@@ -470,24 +470,24 @@ export default function QAAdminPage() {
               return (
                 <div
                   key={q.id}
-                  className="p-6 rounded-2xl bg-white border border-stone-200 transition-all space-y-4 shadow-sm"
+                  className="p-6 rounded-3xl bg-white border-2 border-[#F7D1D8] transition-all space-y-4 shadow-sm hover:shadow-md"
                 >
                   {/* Top Bar: Fragrance Product & Customer Inquirer */}
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-stone-200 pb-4">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#F7D1D8] pb-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-amber-100 border border-amber-300 flex items-center justify-center text-amber-900 font-bold">
+                      <div className="w-10 h-10 rounded-2xl bg-[#FAE6E7] border border-[#F7D1D8] flex items-center justify-center text-[#4A0D25] font-serif font-black text-base">
                         Q
                       </div>
                       <div>
-                        <div className="font-bold text-stone-900 text-sm flex items-center gap-2">
+                        <div className="font-extrabold text-[#1A0510] text-sm flex items-center gap-2">
                           {q.users?.full_name || 'Customer'}
                           {isUnanswered && (
-                            <span className="px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-300 text-[10px] font-bold">
+                            <span className="px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-300 text-[10px] font-black uppercase tracking-wider">
                               Needs Answer
                             </span>
                           )}
                         </div>
-                        <div className="text-[11px] text-stone-500 font-medium">{q.users?.email}</div>
+                        <div className="text-[11px] text-[#4A0D25] font-bold">{q.users?.email}</div>
                       </div>
                     </div>
 
@@ -496,18 +496,18 @@ export default function QAAdminPage() {
                         <Link
                           href={`/products/${q.products.slug}`}
                           target="_blank"
-                          className="px-3 py-1 rounded-xl bg-stone-50 border border-stone-300 text-amber-800 text-xs font-bold hover:border-amber-500 flex items-center gap-1.5 shadow-xs"
+                          className="px-3 py-1.5 rounded-2xl bg-[#FAE6E7] border border-[#F7D1D8] text-[#4A0D25] text-xs font-black hover:bg-[#F6A6BB] flex items-center gap-1.5 shadow-xs transition-colors"
                         >
-                          <Package className="w-3.5 h-3.5" /> {q.products.name}
+                          <Package className="w-3.5 h-3.5 text-[#F6A6BB]" /> {q.products.name}
                         </Link>
                       )}
 
                       <span
-                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border uppercase tracking-wider ${
+                        className={`px-3 py-0.5 rounded-full text-[10px] font-black border uppercase tracking-wider ${
                           q.status === 'approved'
-                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                            ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
                             : q.status === 'rejected'
-                            ? 'bg-rose-100 text-rose-800 border-rose-300'
+                            ? 'bg-rose-100 text-rose-900 border-rose-300'
                             : 'bg-amber-100 text-amber-900 border-amber-300'
                         }`}
                       >
@@ -518,23 +518,23 @@ export default function QAAdminPage() {
 
                   {/* Question Body */}
                   <div className="space-y-1">
-                    <div className="text-stone-900 font-bold text-sm">
+                    <div className="text-[#1A0510] font-serif font-extrabold text-base">
                       "{q.question}"
                     </div>
-                    <div className="text-[10px] text-neutral-500 flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
+                    <div className="text-[10px] text-[#4A0D25] font-bold flex items-center gap-1">
+                      <Clock className="w-3 h-3 text-[#F6A6BB]" />
                       Asked on {new Date(q.created_at).toLocaleString()}
                     </div>
                   </div>
 
                   {/* Published Answers Section */}
                   <div className="space-y-3 pt-2">
-                    <div className="text-xs font-semibold text-amber-400 flex items-center gap-1.5">
-                      <MessageSquare className="w-3.5 h-3.5" /> Answers ({answersList.length})
+                    <div className="text-xs font-black text-[#4A0D25] flex items-center gap-1.5">
+                      <MessageSquare className="w-3.5 h-3.5 text-[#F6A6BB]" /> Answers ({answersList.length})
                     </div>
 
                     {answersList.length === 0 ? (
-                      <div className="p-3 rounded-xl bg-neutral-950/80 border border-neutral-800/80 text-xs text-neutral-500 italic">
+                      <div className="p-3.5 rounded-2xl bg-[#FAE6E7]/50 border border-[#F7D1D8] text-xs text-[#4A0D25] italic font-semibold">
                         No answers posted yet. Click "+ Reply / Post Answer" below to respond as Master Perfumer or Admin.
                       </div>
                     ) : (
@@ -542,32 +542,32 @@ export default function QAAdminPage() {
                         {answersList.map((ans) => (
                           <div
                             key={ans.id}
-                            className={`p-3.5 rounded-xl text-xs space-y-1.5 border ${
+                            className={`p-4 rounded-2xl text-xs space-y-1.5 border ${
                               ans.is_official
-                                ? 'bg-amber-950/20 border-amber-500/30 text-amber-100'
-                                : 'bg-neutral-950 border-neutral-800 text-neutral-300'
+                                ? 'bg-[#FAE6E7] border-[#F7D1D8] text-[#1A0510]'
+                                : 'bg-white border-[#F7D1D8] text-[#1A0510]'
                             }`}
                           >
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
-                                <span className="font-semibold text-neutral-200">
-                                  {ans.users?.full_name || 'Maison Essence Staff'}
+                                <span className="font-extrabold text-[#1A0510]">
+                                  {ans.users?.full_name || 'Rose Valley Master Perfumer'}
                                 </span>
                                 {ans.is_official && (
-                                  <span className="px-2 py-0.2 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[9px] font-bold flex items-center gap-1">
+                                  <span className="px-2.5 py-0.5 rounded-full bg-[#F6A6BB] text-[#4A0D25] text-[9px] font-black uppercase tracking-wider flex items-center gap-1 shadow-xs">
                                     <Sparkles className="w-2.5 h-2.5" /> Official Store Response
                                   </span>
                                 )}
                               </div>
                               <button
                                 onClick={() => handleDeleteAnswer(ans.id)}
-                                className="text-neutral-500 hover:text-rose-400 transition-colors p-1"
+                                className="text-stone-400 hover:text-rose-600 transition-colors p-1"
                                 title="Delete Answer"
                               >
-                                <Trash2 className="w-3 h-3" />
+                                <Trash2 className="w-3.5 h-3.5" />
                               </button>
                             </div>
-                            <p className="leading-relaxed font-sans">{ans.answer}</p>
+                            <p className="leading-relaxed font-semibold text-[#4A0D25]">{ans.answer}</p>
                           </div>
                         ))}
                       </div>
@@ -575,13 +575,13 @@ export default function QAAdminPage() {
                   </div>
 
                   {/* Actions Footer */}
-                  <div className="pt-3 flex flex-wrap items-center justify-between gap-4 border-t border-neutral-800/80">
+                  <div className="pt-3 flex flex-wrap items-center justify-between gap-4 border-t border-[#F7D1D8]">
                     <button
                       onClick={() => {
                         setReplyingQuestion(q);
                         setAnswerInputText('');
                       }}
-                      className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-neutral-950 font-semibold text-xs transition-all shadow-md flex items-center gap-2"
+                      className="px-4 py-2.5 rounded-2xl bg-[#F6A6BB] hover:bg-[#F4BBC9] text-[#4A0D25] font-black text-xs transition-all shadow-xs flex items-center gap-2 uppercase tracking-wider"
                     >
                       <Send className="w-3.5 h-3.5" /> + Reply / Post Official Answer
                     </button>
@@ -590,7 +590,7 @@ export default function QAAdminPage() {
                       {q.status !== 'approved' && (
                         <button
                           onClick={() => handleUpdateQuestionStatus(q, 'approved')}
-                          className="px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-xs font-semibold hover:bg-emerald-500/30 transition-all flex items-center gap-1"
+                          className="px-3 py-1.5 rounded-2xl bg-emerald-100 text-emerald-900 border border-emerald-300 text-xs font-extrabold hover:bg-emerald-200 transition-all flex items-center gap-1"
                         >
                           <CheckCircle2 className="w-3.5 h-3.5" /> Approve
                         </button>
@@ -598,14 +598,14 @@ export default function QAAdminPage() {
                       {q.status !== 'rejected' && (
                         <button
                           onClick={() => handleUpdateQuestionStatus(q, 'rejected')}
-                          className="px-3 py-1.5 rounded-xl bg-rose-500/20 text-rose-300 border border-rose-500/40 text-xs font-semibold hover:bg-rose-500/30 transition-all flex items-center gap-1"
+                          className="px-3 py-1.5 rounded-2xl bg-rose-100 text-rose-900 border border-rose-300 text-xs font-extrabold hover:bg-rose-200 transition-all flex items-center gap-1"
                         >
                           <X className="w-3.5 h-3.5" /> Reject
                         </button>
                       )}
                       <button
                         onClick={() => setDeletingQuestion(q)}
-                        className="p-1.5 rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-400 hover:text-rose-400 hover:border-rose-500/30 transition-all"
+                        className="p-2 rounded-2xl bg-rose-100 border border-rose-300 text-rose-800 hover:bg-rose-200 transition-all"
                         title="Delete Question"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -622,15 +622,15 @@ export default function QAAdminPage() {
       {/* CREATE QUESTION MODAL */}
       {isAddQuestionModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white border border-stone-200 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl p-6 space-y-6">
-            <div className="flex items-center justify-between border-b border-stone-200 pb-4">
+          <div className="bg-white border-2 border-[#F7D1D8] rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl p-6 space-y-6">
+            <div className="flex items-center justify-between border-b border-[#F7D1D8] pb-4">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-amber-100 border border-amber-300 flex items-center justify-center text-amber-900">
-                  <HelpCircle className="w-4 h-4" />
+                <div className="w-9 h-9 rounded-2xl bg-[#FAE6E7] border border-[#F7D1D8] flex items-center justify-center text-[#4A0D25]">
+                  <HelpCircle className="w-4 h-4 text-[#F6A6BB]" />
                 </div>
-                <h2 className="text-lg font-serif font-bold text-stone-900">Add Product Question</h2>
+                <h2 className="text-lg font-serif font-extrabold text-[#1A0510]">Add Product Question</h2>
               </div>
-              <button onClick={() => setIsAddQuestionModalOpen(false)} className="p-1 rounded-lg text-stone-400 hover:text-stone-900">
+              <button onClick={() => setIsAddQuestionModalOpen(false)} className="p-1 rounded-xl text-[#4A0D25] hover:bg-[#FAE6E7]">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -638,12 +638,12 @@ export default function QAAdminPage() {
             <form onSubmit={handleCreateQuestion} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-stone-800 mb-1">Select Product *</label>
+                  <label className="block text-xs font-extrabold text-[#4A0D25] mb-1">Select Product *</label>
                   <select
                     required
                     value={questionFormData.product_id}
                     onChange={(e) => setQuestionFormData({ ...questionFormData, product_id: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-stone-50 border border-stone-300 text-xs text-stone-900 font-medium focus:outline-none focus:border-amber-600"
+                    className="w-full px-3.5 py-2.5 rounded-2xl bg-[#FAE6E7]/50 border border-[#F7D1D8] text-xs text-[#1A0510] font-bold focus:outline-none focus:ring-2 focus:ring-[#F6A6BB]"
                   >
                     <option value="" disabled>Select Product...</option>
                     {productsList.map((p) => (
@@ -652,12 +652,12 @@ export default function QAAdminPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-stone-800 mb-1">Inquirer Customer *</label>
+                  <label className="block text-xs font-extrabold text-[#4A0D25] mb-1">Inquirer Customer *</label>
                   <select
                     required
                     value={questionFormData.user_id}
                     onChange={(e) => setQuestionFormData({ ...questionFormData, user_id: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-stone-50 border border-stone-300 text-xs text-stone-900 font-medium focus:outline-none focus:border-amber-600"
+                    className="w-full px-3.5 py-2.5 rounded-2xl bg-[#FAE6E7]/50 border border-[#F7D1D8] text-xs text-[#1A0510] font-bold focus:outline-none focus:ring-2 focus:ring-[#F6A6BB]"
                   >
                     <option value="" disabled>Select User...</option>
                     {usersList.map((u) => (
@@ -668,29 +668,29 @@ export default function QAAdminPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-stone-800 mb-1">Question Text *</label>
+                <label className="block text-xs font-extrabold text-[#4A0D25] mb-1">Question Text *</label>
                 <textarea
                   rows={3}
                   required
                   value={questionFormData.question}
                   onChange={(e) => setQuestionFormData({ ...questionFormData, question: e.target.value })}
                   placeholder="e.g. Is this attar steam-distilled or cold-pressed?"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-stone-50 border border-stone-300 text-xs text-stone-900 font-medium focus:outline-none focus:border-amber-600"
+                  className="w-full px-3.5 py-2.5 rounded-2xl bg-[#FAE6E7]/50 border border-[#F7D1D8] text-xs text-[#1A0510] font-bold focus:outline-none focus:ring-2 focus:ring-[#F6A6BB]"
                 />
               </div>
 
-              <div className="pt-4 flex items-center justify-end gap-3 border-t border-stone-200">
+              <div className="pt-4 flex items-center justify-end gap-3 border-t border-[#F7D1D8]">
                 <button
                   type="button"
                   onClick={() => setIsAddQuestionModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-stone-600 hover:text-stone-900"
+                  className="px-4 py-2.5 rounded-2xl text-xs font-extrabold text-[#4A0D25] hover:bg-[#FAE6E7]"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-md disabled:opacity-50"
+                  className="px-5 py-2.5 rounded-2xl bg-[#F6A6BB] hover:bg-[#F4BBC9] text-[#4A0D25] font-black text-xs shadow-xs disabled:opacity-50 uppercase tracking-wider"
                 >
                   {isSubmitting ? 'Posting...' : 'Create Question'}
                 </button>
@@ -702,53 +702,53 @@ export default function QAAdminPage() {
 
       {/* POST REPLY / OFFICIAL ANSWER MODAL */}
       {replyingQuestion && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-neutral-950 border border-amber-500/30 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl p-6 space-y-5">
-            <div className="flex items-center justify-between border-b border-amber-500/20 pb-4">
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white border-2 border-[#F7D1D8] rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl p-6 space-y-5">
+            <div className="flex items-center justify-between border-b border-[#F7D1D8] pb-4">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
-                  <Send className="w-4 h-4" />
+                <div className="w-9 h-9 rounded-2xl bg-[#FAE6E7] border border-[#F7D1D8] flex items-center justify-center text-[#4A0D25]">
+                  <Send className="w-4 h-4 text-[#F6A6BB]" />
                 </div>
                 <div>
-                  <h2 className="text-base font-serif font-bold text-neutral-100">Post Official Response</h2>
-                  <p className="text-[11px] text-amber-400">{replyingQuestion.products?.name}</p>
+                  <h2 className="text-base font-serif font-extrabold text-[#1A0510]">Post Official Response</h2>
+                  <p className="text-[11px] text-[#4A0D25] font-bold">{replyingQuestion.products?.name}</p>
                 </div>
               </div>
-              <button onClick={() => setReplyingQuestion(null)} className="p-1 rounded-lg text-neutral-400 hover:text-white">
+              <button onClick={() => setReplyingQuestion(null)} className="p-1 rounded-xl text-[#4A0D25] hover:bg-[#FAE6E7]">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-neutral-900 border border-neutral-800 text-xs space-y-1">
-              <div className="text-[11px] text-neutral-400 font-medium">Question asked by {replyingQuestion.users?.full_name}:</div>
-              <div className="text-neutral-100 font-serif italic font-semibold">"{replyingQuestion.question}"</div>
+            <div className="p-4 rounded-2xl bg-[#FAE6E7]/60 border border-[#F7D1D8] text-xs space-y-1">
+              <div className="text-[11px] text-[#4A0D25] font-bold">Question asked by {replyingQuestion.users?.full_name}:</div>
+              <div className="text-[#1A0510] font-serif italic font-bold text-sm">"{replyingQuestion.question}"</div>
             </div>
 
             <form onSubmit={handlePostOfficialAnswer} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-amber-300 mb-1">Official Response Body *</label>
+                <label className="block text-xs font-extrabold text-[#4A0D25] mb-1">Official Response Body *</label>
                 <textarea
                   rows={4}
                   required
                   value={answerInputText}
                   onChange={(e) => setAnswerInputText(e.target.value)}
-                  placeholder="Enter official response from Maison Essence Master Perfumer..."
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-xs text-neutral-100 focus:outline-none focus:border-amber-500/40"
+                  placeholder="Enter official response from Rose Valley Master Perfumer..."
+                  className="w-full px-3.5 py-2.5 rounded-2xl bg-[#FAE6E7]/40 border border-[#F7D1D8] text-xs text-[#1A0510] font-bold focus:outline-none focus:ring-2 focus:ring-[#F6A6BB]"
                 />
               </div>
 
-              <div className="pt-4 flex items-center justify-end gap-3 border-t border-neutral-800">
+              <div className="pt-4 flex items-center justify-end gap-3 border-t border-[#F7D1D8]">
                 <button
                   type="button"
                   onClick={() => setReplyingQuestion(null)}
-                  className="px-4 py-2 rounded-xl text-xs font-medium text-neutral-400 hover:text-white"
+                  className="px-4 py-2.5 rounded-2xl text-xs font-extrabold text-[#4A0D25] hover:bg-[#FAE6E7]"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-neutral-950 font-semibold text-xs shadow-lg shadow-amber-500/20 disabled:opacity-50 flex items-center gap-2"
+                  className="px-5 py-2.5 rounded-2xl bg-[#F6A6BB] hover:bg-[#F4BBC9] text-[#4A0D25] font-black text-xs shadow-xs disabled:opacity-50 flex items-center gap-2 uppercase tracking-wider"
                 >
                   <Send className="w-3.5 h-3.5" />
                   {isSubmitting ? 'Posting...' : 'Post Official Answer'}
@@ -761,27 +761,27 @@ export default function QAAdminPage() {
 
       {/* DELETE QUESTION MODAL */}
       {deletingQuestion && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-neutral-950 border border-rose-500/30 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl p-6 space-y-5">
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white border-2 border-rose-300 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl p-6 space-y-5">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400">
+              <div className="w-10 h-10 rounded-2xl bg-rose-100 border border-rose-300 flex items-center justify-center text-rose-800">
                 <Trash2 className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-base font-serif font-bold text-neutral-100">Delete Question</h3>
-                <p className="text-xs text-rose-300 font-medium">{deletingQuestion.question}</p>
+                <h3 className="text-base font-serif font-extrabold text-[#1A0510]">Delete Question</h3>
+                <p className="text-xs text-rose-900 font-bold">{deletingQuestion.question}</p>
               </div>
             </div>
 
-            <p className="text-xs text-neutral-400 leading-relaxed">
+            <p className="text-xs text-[#4A0D25] leading-relaxed font-bold">
               Are you sure you want to delete this question? All associated staff and customer answers will also be deleted.
             </p>
 
-            <div className="pt-4 flex items-center justify-end gap-3 border-t border-neutral-800">
+            <div className="pt-4 flex items-center justify-end gap-3 border-t border-stone-200">
               <button
                 type="button"
                 onClick={() => setDeletingQuestion(null)}
-                className="px-4 py-2 rounded-xl text-xs font-medium text-neutral-400 hover:text-white"
+                className="px-4 py-2.5 rounded-2xl text-xs font-extrabold text-[#4A0D25] hover:bg-[#FAE6E7]"
               >
                 Cancel
               </button>
@@ -789,7 +789,7 @@ export default function QAAdminPage() {
                 type="button"
                 onClick={handleDeleteQuestion}
                 disabled={isSubmitting}
-                className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs shadow-lg shadow-rose-600/20 disabled:opacity-50"
+                className="px-5 py-2.5 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs shadow-xs disabled:opacity-50 uppercase tracking-wider"
               >
                 {isSubmitting ? 'Deleting...' : 'Yes, Delete Question'}
               </button>

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { STORE_ID } from '@/lib/constants';
 
+export const dynamic = 'force-dynamic';
+
 function generateSlug(text: string): string {
   return text
     .toLowerCase()

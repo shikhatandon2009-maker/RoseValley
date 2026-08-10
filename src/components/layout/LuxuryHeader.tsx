@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Sparkles, ShoppingBag, User, Heart, ChevronDown, Menu, X, Award, Droplet, ArrowRight, ShieldCheck, Trash2, ShoppingCart, CheckCircle2, QrCode, MapPin } from 'lucide-react';
+import { Sparkles, ShoppingBag, User, Heart, ChevronDown, Menu, X, Award, Droplet, ArrowRight, ShieldCheck, Trash2, ShoppingCart, CheckCircle2, QrCode, MapPin, BookOpen, Newspaper } from 'lucide-react';
 import { useCartStore } from '@/store/cart-store';
 import { useWishlistStore } from '@/store/wishlist-store';
 import { useCurrencyStore } from '@/store/currency-store';
@@ -23,7 +23,7 @@ export function LuxuryHeader() {
   const router = useRouter();
   const { formatPrice } = useCurrencyStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [activeDropdown, setActiveDropdown] = useState<'collection' | null>(null);
+  const [activeDropdown, setActiveDropdown] = useState<'collection' | 'inspiration' | null>(null);
   const [cartHoverOpen, setCartHoverOpen] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
@@ -528,14 +528,68 @@ export function LuxuryHeader() {
             )}
           </div>
 
-          {/* Navigation Item 3: About Rose Valley */}
+          {/* Navigation Item 3: Inspiration Dropdown (Blog & Press Mentions) */}
+          <div
+            className="luxury-nav-item relative group"
+            onMouseEnter={() => setActiveDropdown('inspiration')}
+            onMouseLeave={() => setActiveDropdown(null)}
+          >
+            <Link href="/journal" className="luxury-nav-link">
+              <span>Inspiration</span>
+              <ChevronDown className="luxury-nav-arrow" />
+            </Link>
+
+            {activeDropdown === 'inspiration' && (
+              <div className="luxury-mega-dropdown w-96 p-4">
+                <div className="space-y-2">
+                  <span className="luxury-mega-category-header block mb-3">Stories & Media</span>
+
+                  <Link
+                    href="/journal"
+                    className="flex items-start gap-3 p-3 rounded-2xl hover:bg-[#FAE6E7] border border-transparent hover:border-[#F7D1D8] transition-all group/item"
+                  >
+                    <div className="p-2.5 rounded-xl bg-[#FAE6E7] text-[#4A0D25] group-hover/item:bg-[#F6A6BB] transition-colors flex-shrink-0">
+                      <BookOpen className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <span className="font-extrabold text-xs text-[#1A0510] group-hover/item:text-[#4A0D25] block">
+                        Blog / Olfactory Journal
+                      </span>
+                      <span className="text-[10px] text-[#4A0D25] font-bold leading-tight block mt-0.5">
+                        Essays on Kannauj steam distillation, rose harvesting & fragrance layering
+                      </span>
+                    </div>
+                  </Link>
+
+                  <Link
+                    href="/press"
+                    className="flex items-start gap-3 p-3 rounded-2xl hover:bg-[#FAE6E7] border border-transparent hover:border-[#F7D1D8] transition-all group/item"
+                  >
+                    <div className="p-2.5 rounded-xl bg-[#FAE6E7] text-[#4A0D25] group-hover/item:bg-[#F6A6BB] transition-colors flex-shrink-0">
+                      <Newspaper className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <span className="font-extrabold text-xs text-[#1A0510] group-hover/item:text-[#4A0D25] block">
+                        Press & Media Mentions
+                      </span>
+                      <span className="text-[10px] text-[#4A0D25] font-bold leading-tight block mt-0.5">
+                        Featured in Vogue, Harper's Bazaar, GQ & Economic Times
+                      </span>
+                    </div>
+                  </Link>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Navigation Item 4: About Rose Valley */}
           <div className="luxury-nav-item">
             <Link href="/about" className="luxury-nav-link">
               About Rose Valley
             </Link>
           </div>
 
-          {/* Navigation Item 4: Contact Us */}
+          {/* Navigation Item 5: Contact Us */}
           <div className="luxury-nav-item">
             <Link href="/contact" className="luxury-nav-link">
               Contact Us

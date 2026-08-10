@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { STORE_ID } from '@/lib/constants';
+
+export const dynamic = 'force-dynamic';
 import bcrypt from 'bcryptjs';
 
 export async function GET(

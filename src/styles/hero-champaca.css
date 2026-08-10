@@ -1,0 +1,456 @@
+/* =============================================================================
+   CHAMPACA FLOWER HERO SECTION - EXCLUSIVE SEPARATE CSS FILE
+   Ultra-Luxury Aesthetics, Golden Glow Aura, Glassmorphism, Floating Bottle
+   ============================================================================= */
+
+@keyframes champacaFloat {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-14px) rotate(1deg);
+  }
+}
+
+@keyframes champacaGlowPulse {
+  0%, 100% {
+    opacity: 0.88;
+    transform: scale(1);
+    filter: blur(55px);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.14);
+    filter: blur(75px);
+  }
+}
+
+@keyframes champacaShimmerSweep {
+  0% {
+    transform: translateX(-100%) rotate(25deg);
+  }
+  100% {
+    transform: translateX(200%) rotate(25deg);
+  }
+}
+
+/* Base Hero Container */
+.champaca-hero-section {
+  position: relative;
+  width: 100%;
+  min-height: calc(100vh - 70px);
+  max-height: 980px;
+  overflow: hidden;
+  background-color: #0b0704;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+/* Background Image Layer (Full Screen Cover) */
+.champaca-bg-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transform: scale(1.04);
+  transition: transform 1.8s cubic-bezier(0.16, 1, 0.3, 1);
+  filter: brightness(0.68) contrast(1.12);
+  z-index: 1;
+}
+
+.champaca-hero-section:hover .champaca-bg-layer {
+  transform: scale(1.08);
+}
+
+/* Dark Luxury & Warm Floral Vignette Overlays */
+.champaca-overlay-dark {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(11, 7, 4, 0.94) 0%,
+    rgba(11, 7, 4, 0.85) 45%,
+    rgba(11, 7, 4, 0.45) 75%,
+    rgba(11, 7, 4, 0.85) 100%
+  );
+  z-index: 2;
+}
+
+.champaca-overlay-radial {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at 75% 50%,
+    rgba(255, 215, 0, 0.18) 0%,
+    rgba(11, 7, 4, 0.4) 50%,
+    rgba(11, 7, 4, 0.92) 100%
+  );
+  z-index: 3;
+}
+
+.champaca-overlay-bottom-fade {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 180px;
+  background: linear-gradient(to top, #ffffff 0%, rgba(255, 255, 255, 0) 100%);
+  z-index: 4;
+}
+
+/* Grid Layout for Text Left & Glowing Bottle Right */
+.champaca-hero-grid {
+  position: relative;
+  z-index: 10;
+  max-width: 1380px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 3rem 1.5rem;
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  align-items: center;
+  gap: 3.5rem;
+}
+
+/* Left Hero Content Box */
+.champaca-content-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1.75rem;
+  text-align: left;
+}
+
+/* High Contrast Glassmorphism Badge */
+.champaca-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 1.35rem;
+  border-radius: 9999px;
+  background: rgba(18, 12, 8, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1.5px solid #ffd700;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 12px rgba(255, 215, 0, 0.3);
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.champaca-badge-sparkle {
+  color: #ffd700;
+  width: 16px;
+  height: 16px;
+}
+
+.champaca-badge-text {
+  color: #ffffff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+  font-weight: 800;
+}
+
+/* Typography */
+.champaca-title-tagline {
+  font-family: var(--font-serif, 'Playfair Display', Georgia, serif);
+  font-size: 1.125rem;
+  color: #ffd700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 700;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
+}
+
+.champaca-main-heading {
+  font-family: var(--font-serif, 'Playfair Display', Georgia, serif);
+  font-size: clamp(2.5rem, 5vw, 4.75rem);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.champaca-heading-prefix {
+  display: block;
+  color: #ffffff !important;
+  font-size: clamp(2rem, 4.2vw, 3.75rem);
+  font-weight: 700;
+  line-height: 1.15;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.95), 0 4px 25px rgba(0, 0, 0, 0.95);
+  letter-spacing: -0.01em;
+  margin-bottom: 0.25rem;
+}
+
+.champaca-heading-gold {
+  background: linear-gradient(135deg, #fff3c4 0%, #ffd700 40%, #e6b800 70%, #d4af37 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+  font-style: italic;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.9));
+}
+
+.champaca-description {
+  font-size: clamp(1rem, 1.3vw, 1.25rem);
+  color: #f5eedc;
+  line-height: 1.65;
+  font-weight: 500;
+  max-width: 580px;
+  margin: 0;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
+}
+
+/* Call to Action Buttons */
+.champaca-cta-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.25rem;
+  padding-top: 0.75rem;
+}
+
+.champaca-btn-gold {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1.1rem 2.25rem;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #d4af37 0%, #ffd700 50%, #b8860b 100%);
+  color: #0b0704;
+  font-size: 0.825rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-decoration: none;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 8px 30px rgba(212, 175, 55, 0.4), 0 2px 10px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.champaca-btn-gold:hover {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 12px 40px rgba(255, 215, 0, 0.6), 0 4px 15px rgba(0, 0, 0, 0.5);
+  color: #000000;
+}
+
+.champaca-btn-gold::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+  animation: champacaShimmerSweep 3.5s infinite;
+}
+
+.champaca-btn-outline,
+.champaca-btn-outline span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  padding: 1.1rem 2.25rem;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  color: #ffffff !important;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-decoration: none;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.champaca-btn-outline:hover,
+.champaca-btn-outline:hover span {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 215, 0, 0.8);
+  color: #ffffff !important;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5), 0 0 15px rgba(255, 215, 0, 0.3);
+}
+
+/* RIGHT COLUMN - Glowing Bottle Showcase */
+.champaca-bottle-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 480px;
+}
+
+/* Golden Radiant Glow Aura behind Bottle */
+.champaca-golden-glow {
+  position: absolute;
+  width: 380px;
+  height: 380px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 215, 0, 0.75) 0%,
+    rgba(212, 175, 55, 0.5) 35%,
+    rgba(184, 134, 11, 0.25) 65%,
+    transparent 80%
+  );
+  animation: champacaGlowPulse 4.5s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Floating Bottle Image Wrapper */
+.champaca-bottle-wrapper {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 380px;
+  height: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: champacaFloat 6s ease-in-out infinite;
+  filter: drop-shadow(0 25px 40px rgba(0, 0, 0, 0.8)) drop-shadow(0 0 25px rgba(255, 215, 0, 0.45));
+}
+
+.champaca-bottle-img {
+  width: 100%;
+  height: auto;
+  max-height: 520px;
+  object-fit: contain;
+  filter: brightness(1.05) contrast(1.08);
+  transition: transform 0.6s ease;
+}
+
+.champaca-bottle-wrapper:hover .champaca-bottle-img {
+  transform: scale(1.05);
+}
+
+/* Floating Glass Spec Badge near Bottle */
+.champaca-spec-card {
+  position: absolute;
+  bottom: 20px;
+  left: -20px;
+  z-index: 15;
+  background: rgba(18, 12, 8, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 215, 0, 0.5);
+  border-radius: 1rem;
+  padding: 0.85rem 1.25rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.champaca-spec-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ffd700, #b8860b);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0b0704;
+  font-weight: bold;
+}
+
+.champaca-spec-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.champaca-spec-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.champaca-spec-sub {
+  font-size: 0.7rem;
+  color: #ffd700;
+  font-weight: 600;
+}
+
+/* RESPONSIVE DESIGN BREAKPOINTS */
+@media (max-width: 1024px) {
+  .champaca-hero-grid {
+    grid-template-columns: 1fr;
+    gap: 3rem;
+    padding-top: 2rem;
+    padding-bottom: 3rem;
+    text-align: center;
+  }
+
+  .champaca-content-left {
+    align-items: center;
+    text-align: center;
+  }
+
+  .champaca-description {
+    max-width: 100%;
+  }
+
+  .champaca-cta-group {
+    justify-content: center;
+  }
+
+  .champaca-golden-glow {
+    width: 300px;
+    height: 300px;
+  }
+
+  .champaca-bottle-wrapper {
+    max-width: 300px;
+  }
+
+  .champaca-spec-card {
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: -15px;
+  }
+}
+
+@media (max-width: 640px) {
+  .champaca-hero-section {
+    min-height: calc(100vh - 60px);
+  }
+
+  .champaca-main-heading {
+    font-size: 2.25rem;
+  }
+
+  .champaca-cta-group {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .champaca-btn-gold,
+  .champaca-btn-outline {
+    width: 100%;
+  }
+
+  .champaca-golden-glow {
+    width: 240px;
+    height: 240px;
+  }
+
+  .champaca-bottle-wrapper {
+    max-width: 240px;
+  }
+}

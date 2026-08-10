@@ -17,7 +17,7 @@ export default function AboutUsPage() {
       <section className="relative py-20 bg-gradient-to-b from-[#FAE6E7]/60 via-[#F7EEED] to-white border-b border-[#F7D1D8] overflow-hidden text-center">
         <div className="max-w-4xl mx-auto px-4 space-y-6">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#FAE6E7] border border-[#F7D1D8] text-[#4A0D25] text-xs font-bold uppercase tracking-widest">
-            <Sparkles className="w-4 h-4 text-[#F6A6BB]" /> Maison De L’Essence • Est. 1620
+            <Sparkles className="w-4 h-4 text-[#F6A6BB]" /> Rose Valley Kannauj • Est. 1620
           </div>
           <h1 className="font-serif font-bold text-4xl sm:text-6xl text-[#1A0510] leading-tight">
             400 Years of Kannauj Steam Distillation Mastery

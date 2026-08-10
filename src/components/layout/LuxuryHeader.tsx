@@ -114,7 +114,7 @@ export function LuxuryHeader() {
             ROSE VALLEY KANNAUJ
           </h1>
           <span className="luxury-brand-subtitle">
-            Maison De L&apos;Essence • Est. 1620
+            Est. 1620 • Pure Hydro-Distillates
           </span>
         </Link>
 

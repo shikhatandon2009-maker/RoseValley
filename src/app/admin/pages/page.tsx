@@ -24,6 +24,8 @@ import {
   ArrowRight
 } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 interface PageItem {
   id: string;
   store_id: string;
@@ -286,17 +288,17 @@ export default function PagesAdminPage() {
       )}
 
       {/* Top Banner Header */}
-      <div className="rounded-3xl bg-white border border-[#F7D1D8] p-8 shadow-sm relative overflow-hidden">
+      <div className="rounded-3xl bg-white border border-[#F7D1D8] p-8 shadow-xs relative overflow-hidden">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#FAE6E7] border border-[#F7D1D8] text-[#4A0D25] text-xs font-extrabold uppercase tracking-wider mb-3">
-              <BookOpen className="w-3.5 h-3.5 text-[#F6A6BB]" /> Content & Editorial CMS
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#FAE6E7] border border-[#F7D1D8] text-[#4A0D25] text-xs font-black uppercase tracking-wider mb-3">
+              <BookOpen className="w-3.5 h-3.5 text-[#F6A6BB]" /> Content Management System (CMS)
             </div>
             <h1 className="text-3xl sm:text-4xl font-serif font-extrabold text-[#1A0510] tracking-tight">
-              Blogs & Press Releases Backend
+              Static Pages & Blog Articles
             </h1>
             <p className="text-[#4A0D25] text-xs sm:text-sm mt-2 max-w-xl font-bold leading-relaxed">
-              Manage artisanal Kannauj journal posts, Vogue/GQ press releases, and brand story pages.
+              Publish brand story pages, legal policies, olfactory guides, and artisanal Kannauj heritage blog posts.
             </p>
           </div>
 
@@ -304,7 +306,7 @@ export default function PagesAdminPage() {
             <button
               onClick={handleSeedContent}
               disabled={isSeeding}
-              className="px-4 py-2.5 rounded-2xl bg-[#FAE6E7] border border-[#F7D1D8] text-[#4A0D25] hover:bg-[#F7D1D8] font-extrabold text-xs transition-all flex items-center gap-2 shadow-xs"
+              className="px-4 py-2.5 rounded-2xl bg-[#FAE6E7] border border-[#F7D1D8] text-[#4A0D25] hover:bg-[#F7D1D8] font-black text-xs transition-all flex items-center gap-2 shadow-xs"
               title="Populate high quality authentic articles"
             >
               <Zap className={`w-4 h-4 text-[#F6A6BB] ${isSeeding ? 'animate-spin' : ''}`} />
@@ -313,9 +315,9 @@ export default function PagesAdminPage() {
 
             <button
               onClick={() => handleOpenAddModal('blog')}
-              className="px-4 py-2.5 rounded-2xl bg-[#F6A6BB] text-[#4A0D25] hover:bg-[#F4BBC9] font-black text-xs uppercase tracking-wider transition-all shadow-md flex items-center gap-2"
+              className="px-5 py-2.5 rounded-2xl bg-[#F6A6BB] text-[#4A0D25] hover:bg-[#F4BBC9] font-black text-xs uppercase tracking-wider transition-all shadow-md flex items-center gap-2"
             >
-              <Plus className="w-4 h-4" /> Add Blog / Press
+              <Plus className="w-4 h-4 text-[#4A0D25]" /> Create Page / Article
             </button>
           </div>
         </div>
@@ -325,40 +327,40 @@ export default function PagesAdminPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="p-5 rounded-2xl bg-white border border-[#F7D1D8] shadow-xs flex items-center justify-between">
           <div>
-            <div className="text-xs text-[#4A0D25] font-bold">Total Published</div>
-            <div className="text-2xl font-extrabold font-serif text-[#1A0510] mt-1">{stats.totalPages}</div>
+            <div className="text-xs text-[#4A0D25] font-extrabold uppercase tracking-wider">Total Published Pages</div>
+            <div className="text-3xl font-extrabold font-serif text-[#1A0510] mt-1">{stats.totalPages}</div>
           </div>
-          <div className="p-3 rounded-xl bg-[#FAE6E7] text-[#4A0D25]">
+          <div className="p-3 rounded-xl bg-[#FAE6E7] text-[#4A0D25] border border-[#F7D1D8]">
             <FileText className="w-5 h-5 text-[#F6A6BB]" />
           </div>
         </div>
 
         <div className="p-5 rounded-2xl bg-white border border-[#F7D1D8] shadow-xs flex items-center justify-between">
           <div>
-            <div className="text-xs text-[#4A0D25] font-bold">Blog Articles</div>
-            <div className="text-2xl font-extrabold font-serif text-[#1A0510] mt-1">{stats.blogArticlesCount}</div>
+            <div className="text-xs text-[#4A0D25] font-extrabold uppercase tracking-wider">Blog Articles</div>
+            <div className="text-3xl font-extrabold font-serif text-[#1A0510] mt-1">{stats.blogArticlesCount}</div>
           </div>
-          <div className="p-3 rounded-xl bg-[#FAE6E7] text-[#4A0D25]">
+          <div className="p-3 rounded-xl bg-[#FAE6E7] text-[#4A0D25] border border-[#F7D1D8]">
             <BookOpen className="w-5 h-5 text-[#F6A6BB]" />
           </div>
         </div>
 
         <div className="p-5 rounded-2xl bg-white border border-[#F7D1D8] shadow-xs flex items-center justify-between">
           <div>
-            <div className="text-xs text-[#4A0D25] font-bold">Press Mentions</div>
-            <div className="text-2xl font-extrabold font-serif text-[#1A0510] mt-1">{stats.pressCount || 0}</div>
+            <div className="text-xs text-[#4A0D25] font-extrabold uppercase tracking-wider">Press Mentions</div>
+            <div className="text-3xl font-extrabold font-serif text-[#1A0510] mt-1">{stats.pressCount || 0}</div>
           </div>
-          <div className="p-3 rounded-xl bg-[#FAE6E7] text-[#4A0D25]">
+          <div className="p-3 rounded-xl bg-[#FAE6E7] text-[#4A0D25] border border-[#F7D1D8]">
             <Newspaper className="w-5 h-5 text-[#F6A6BB]" />
           </div>
         </div>
 
         <div className="p-5 rounded-2xl bg-white border border-[#F7D1D8] shadow-xs flex items-center justify-between">
           <div>
-            <div className="text-xs text-[#4A0D25] font-bold">Static Pages</div>
-            <div className="text-2xl font-extrabold font-serif text-[#1A0510] mt-1">{stats.staticPagesCount}</div>
+            <div className="text-xs text-[#4A0D25] font-extrabold uppercase tracking-wider">Static Pages</div>
+            <div className="text-3xl font-extrabold font-serif text-[#1A0510] mt-1">{stats.staticPagesCount}</div>
           </div>
-          <div className="p-3 rounded-xl bg-[#FAE6E7] text-[#4A0D25]">
+          <div className="p-3 rounded-xl bg-[#FAE6E7] text-[#4A0D25] border border-[#F7D1D8]">
             <Globe className="w-5 h-5 text-[#F6A6BB]" />
           </div>
         </div>
@@ -369,18 +371,18 @@ export default function PagesAdminPage() {
         {/* Type Filter Pills */}
         <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           {[
-            { key: 'all', label: 'All Content', icon: FileText },
-            { key: 'blog', label: 'Blog / Journal', icon: BookOpen },
-            { key: 'press', label: 'Press Releases', icon: Newspaper },
-            { key: 'static', label: 'Static Pages', icon: Globe },
+            { key: 'all', label: `All Content (${stats.totalPages})`, icon: FileText },
+            { key: 'blog', label: `Blog / Journal (${stats.blogArticlesCount})`, icon: BookOpen },
+            { key: 'press', label: `Press Releases (${stats.pressCount || 0})`, icon: Newspaper },
+            { key: 'static', label: `Static Pages (${stats.staticPagesCount})`, icon: Globe },
           ].map((tab) => (
             <button
               key={tab.key}
               onClick={() => setTypeFilter(tab.key as any)}
-              className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 ${
+              className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 ${
                 typeFilter === tab.key
                   ? 'bg-[#4A0D25] text-[#F7EEED] shadow-sm'
-                  : 'bg-[#FAE6E7]/60 text-[#4A0D25] hover:bg-[#FAE6E7]'
+                  : 'bg-[#FAE6E7]/80 text-[#4A0D25] hover:bg-[#FAE6E7] border border-[#F7D1D8]'
               }`}
             >
               <tab.icon className="w-3.5 h-3.5 text-[#F6A6BB]" />
@@ -391,13 +393,13 @@ export default function PagesAdminPage() {
 
         {/* Search Input */}
         <div className="relative w-full sm:w-72">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400" />
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#4A0D25]" />
           <input
             type="text"
-            placeholder="Search title, slug, excerpt..."
+            placeholder="Search title, slug, content..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 rounded-xl bg-[#F7EEED] border border-[#F7D1D8] text-xs text-[#1A0510] font-bold focus:outline-none focus:border-[#F6A6BB]"
+            className="w-full pl-9 pr-4 py-2 rounded-xl bg-[#F7EEED] border border-[#F7D1D8] text-xs text-[#1A0510] font-extrabold placeholder-[#4A0D25]/60 focus:outline-none focus:border-[#F6A6BB]"
           />
         </div>
       </div>
@@ -407,18 +409,18 @@ export default function PagesAdminPage() {
         {loading ? (
           <div className="p-12 text-center space-y-3">
             <RefreshCw className="w-8 h-8 text-[#F6A6BB] animate-spin mx-auto" />
-            <p className="text-xs font-bold text-[#4A0D25]">Loading editorial articles...</p>
+            <p className="text-xs font-black text-[#4A0D25]">Loading editorial articles...</p>
           </div>
         ) : filteredPages.length === 0 ? (
           <div className="p-12 text-center space-y-4">
             <BookOpen className="w-10 h-10 text-[#F6A6BB] mx-auto" />
             <h3 className="font-serif font-extrabold text-lg text-[#1A0510]">No Articles Found</h3>
-            <p className="text-xs text-[#4A0D25] font-semibold max-w-md mx-auto">
+            <p className="text-xs text-[#4A0D25] font-bold max-w-md mx-auto">
               No matching content found for filter "{typeFilter}". Click the seed button to generate authentic Rose Valley articles.
             </p>
             <button
               onClick={handleSeedContent}
-              className="px-5 py-2.5 rounded-full bg-[#F6A6BB] text-[#4A0D25] font-extrabold text-xs hover:bg-[#F4BBC9] transition-all"
+              className="px-5 py-2.5 rounded-full bg-[#F6A6BB] text-[#4A0D25] font-black text-xs hover:bg-[#F4BBC9] transition-all"
             >
               Seed High-Quality Content
             </button>
@@ -427,18 +429,18 @@ export default function PagesAdminPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-[#FAE6E7] border-b border-[#F7D1D8] text-[10px] font-black uppercase tracking-wider text-[#4A0D25]">
-                  <th className="p-4">Cover Image</th>
-                  <th className="p-4">Title & Excerpt</th>
+                <tr className="bg-[#FAE6E7] border-b border-[#F7D1D8] text-[11px] font-black uppercase tracking-wider text-[#4A0D25]">
+                  <th className="p-4">Cover</th>
+                  <th className="p-4">Page Title & Slug</th>
                   <th className="p-4">Type</th>
-                  <th className="p-4">Slug</th>
-                  <th className="p-4">Updated</th>
+                  <th className="p-4">SEO Readiness</th>
+                  <th className="p-4">Last Updated</th>
                   <th className="p-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#F7D1D8]">
+              <tbody className="divide-y divide-[#F7D1D8] bg-white">
                 {filteredPages.map((p) => (
-                  <tr key={p.id} className="hover:bg-[#F7EEED]/50 transition-colors">
+                  <tr key={p.id} className="hover:bg-[#F7EEED]/60 transition-colors">
                     <td className="p-4">
                       <div className="w-16 h-12 rounded-xl bg-[#FAE6E7] border border-[#F7D1D8] overflow-hidden relative flex-shrink-0">
                         {p.featured_image ? (
@@ -453,8 +455,12 @@ export default function PagesAdminPage() {
 
                     <td className="p-4">
                       <div className="max-w-md space-y-1">
-                        <h4 className="font-serif font-extrabold text-sm text-[#1A0510] line-clamp-1">{p.title}</h4>
-                        <p className="text-xs text-[#4A0D25] font-semibold line-clamp-2">{p.excerpt || p.content.slice(0, 100)}</p>
+                        <h4 className="font-serif font-extrabold text-sm text-[#1A0510] line-clamp-1">
+                          {p.title}
+                        </h4>
+                        <span className="text-xs font-mono font-bold text-[#4A0D25] block">
+                          /{p.slug}
+                        </span>
                       </div>
                     </td>
 
@@ -462,23 +468,25 @@ export default function PagesAdminPage() {
                       <span
                         className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
                           p.page_type === 'blog'
-                            ? 'bg-[#F6A6BB] text-[#4A0D25]'
+                            ? 'bg-[#F6A6BB] text-[#4A0D25] border border-[#F7D1D8]'
                             : p.page_type === 'press'
                             ? 'bg-[#4A0D25] text-[#F7EEED]'
-                            : 'bg-stone-200 text-stone-700'
+                            : 'bg-[#FAE6E7] text-[#4A0D25] border border-[#F7D1D8]'
                         }`}
                       >
-                        {p.page_type}
+                        {p.page_type === 'blog' ? 'Blog Article' : p.page_type === 'press' ? 'Press Release' : 'Static Page'}
                       </span>
                     </td>
 
                     <td className="p-4">
-                      <span className="text-xs font-mono font-bold text-stone-600">/{p.slug}</span>
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAE6E7] border border-[#F7D1D8] text-[10px] font-black text-[#4A0D25] uppercase">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-[#F6A6BB]" /> Meta Tags Configured
+                      </span>
                     </td>
 
                     <td className="p-4">
-                      <span className="text-xs font-bold text-stone-500">
-                        {new Date(p.updated_at).toLocaleDateString()}
+                      <span className="text-xs font-extrabold text-[#4A0D25]">
+                        {new Date(p.updated_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                       </span>
                     </td>
 
@@ -487,7 +495,7 @@ export default function PagesAdminPage() {
                         <Link
                           href={p.page_type === 'press' ? '/press' : `/journal/${p.slug}`}
                           target="_blank"
-                          className="p-2 rounded-xl hover:bg-[#FAE6E7] text-[#4A0D25] transition-colors"
+                          className="p-2.5 rounded-xl bg-[#FAE6E7] border border-[#F7D1D8] text-[#4A0D25] hover:bg-[#F6A6BB] transition-colors"
                           title="View Live Page"
                         >
                           <ExternalLink className="w-4 h-4" />
@@ -495,7 +503,7 @@ export default function PagesAdminPage() {
 
                         <button
                           onClick={() => handleOpenEditModal(p)}
-                          className="p-2 rounded-xl hover:bg-[#FAE6E7] text-[#4A0D25] transition-colors"
+                          className="p-2.5 rounded-xl bg-[#4A0D25] text-[#F6A6BB] hover:bg-[#1A0510] transition-colors"
                           title="Edit"
                         >
                           <Edit2 className="w-4 h-4" />
@@ -503,7 +511,7 @@ export default function PagesAdminPage() {
 
                         <button
                           onClick={() => setDeletingPage(p)}
-                          className="p-2 rounded-xl hover:bg-rose-100 text-rose-600 transition-colors"
+                          className="p-2.5 rounded-xl bg-rose-100 border border-rose-200 text-rose-800 hover:bg-rose-200 transition-colors"
                           title="Delete"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -543,7 +551,7 @@ export default function PagesAdminPage() {
             <form onSubmit={editingPage ? handleUpdatePage : handleCreatePage} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-extrabold text-[#4A0D25] uppercase tracking-wider">Type</label>
+                  <label className="text-xs font-black text-[#4A0D25] uppercase tracking-wider">Type</label>
                   <select
                     value={formData.page_type}
                     onChange={(e) => setFormData((prev) => ({ ...prev, page_type: e.target.value as any }))}
@@ -556,14 +564,14 @@ export default function PagesAdminPage() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-extrabold text-[#4A0D25] uppercase tracking-wider">Slug</label>
+                  <label className="text-xs font-black text-[#4A0D25] uppercase tracking-wider">Slug</label>
                   <div className="flex gap-2">
                     <input
                       type="text"
                       value={formData.slug}
                       onChange={(e) => setFormData((prev) => ({ ...prev, slug: e.target.value }))}
                       placeholder="e.g. art-of-fragrance-layering"
-                      className="w-full px-4 py-2.5 rounded-xl bg-[#F7EEED] border border-[#F7D1D8] text-xs font-bold text-[#1A0510]"
+                      className="w-full px-4 py-2.5 rounded-xl bg-[#F7EEED] border border-[#F7D1D8] text-xs font-extrabold text-[#1A0510]"
                     />
                     <button
                       type="button"
@@ -577,48 +585,48 @@ export default function PagesAdminPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-extrabold text-[#4A0D25] uppercase tracking-wider">Title</label>
+                <label className="text-xs font-black text-[#4A0D25] uppercase tracking-wider">Title</label>
                 <input
                   type="text"
                   required
                   value={formData.title}
                   onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
                   placeholder="Article or Press Release Title..."
-                  className="w-full px-4 py-2.5 rounded-xl bg-[#F7EEED] border border-[#F7D1D8] text-xs font-bold text-[#1A0510]"
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F7EEED] border border-[#F7D1D8] text-xs font-extrabold text-[#1A0510]"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-extrabold text-[#4A0D25] uppercase tracking-wider">Featured Image URL</label>
+                <label className="text-xs font-black text-[#4A0D25] uppercase tracking-wider">Featured Image URL</label>
                 <input
                   type="text"
                   value={formData.featured_image}
                   onChange={(e) => setFormData((prev) => ({ ...prev, featured_image: e.target.value }))}
                   placeholder="https://images.unsplash.com/..."
-                  className="w-full px-4 py-2.5 rounded-xl bg-[#F7EEED] border border-[#F7D1D8] text-xs font-bold text-[#1A0510]"
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F7EEED] border border-[#F7D1D8] text-xs font-extrabold text-[#1A0510]"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-extrabold text-[#4A0D25] uppercase tracking-wider">Short Excerpt / Summary</label>
+                <label className="text-xs font-black text-[#4A0D25] uppercase tracking-wider">Short Excerpt / Summary</label>
                 <textarea
                   rows={2}
                   value={formData.excerpt}
                   onChange={(e) => setFormData((prev) => ({ ...prev, excerpt: e.target.value }))}
                   placeholder="Brief 2-sentence summary for card previews..."
-                  className="w-full px-4 py-2.5 rounded-xl bg-[#F7EEED] border border-[#F7D1D8] text-xs font-semibold text-[#1A0510]"
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F7EEED] border border-[#F7D1D8] text-xs font-bold text-[#1A0510]"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-extrabold text-[#4A0D25] uppercase tracking-wider">Full Content (Markdown / Text)</label>
+                <label className="text-xs font-black text-[#4A0D25] uppercase tracking-wider">Full Content (Markdown / Text)</label>
                 <textarea
                   rows={8}
                   required
                   value={formData.content}
                   onChange={(e) => setFormData((prev) => ({ ...prev, content: e.target.value }))}
                   placeholder="Enter full article or press feature body text..."
-                  className="w-full px-4 py-2.5 rounded-xl bg-[#F7EEED] border border-[#F7D1D8] text-xs font-medium text-[#1A0510]"
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F7EEED] border border-[#F7D1D8] text-xs font-semibold text-[#1A0510]"
                 />
               </div>
 
@@ -629,7 +637,7 @@ export default function PagesAdminPage() {
                     setIsAddModalOpen(false);
                     setEditingPage(null);
                   }}
-                  className="px-5 py-2.5 rounded-full border border-[#F7D1D8] text-xs font-extrabold text-[#1A0510]"
+                  className="px-5 py-2.5 rounded-full border border-[#F7D1D8] text-xs font-black text-[#1A0510]"
                 >
                   Cancel
                 </button>
@@ -651,20 +659,20 @@ export default function PagesAdminPage() {
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl border-2 border-[#F7D1D8] p-6 max-w-md w-full space-y-4">
             <h3 className="font-serif font-extrabold text-lg text-[#1A0510]">Confirm Delete</h3>
-            <p className="text-xs text-[#4A0D25] font-semibold">
+            <p className="text-xs text-[#4A0D25] font-bold">
               Are you sure you want to delete "{deletingPage.title}"? This cannot be undone.
             </p>
             <div className="flex justify-end gap-3 pt-2">
               <button
                 onClick={() => setDeletingPage(null)}
-                className="px-4 py-2 rounded-full border border-stone-300 text-xs font-bold"
+                className="px-4 py-2 rounded-full border border-stone-300 text-xs font-bold text-[#1A0510]"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDeletePage}
                 disabled={isSubmitting}
-                className="px-5 py-2 rounded-full bg-rose-600 text-white font-extrabold text-xs"
+                className="px-5 py-2 rounded-full bg-rose-600 text-white font-black text-xs"
               >
                 {isSubmitting ? 'Deleting...' : 'Delete Permanently'}
               </button>

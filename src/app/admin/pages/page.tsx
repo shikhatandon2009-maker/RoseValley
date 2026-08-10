@@ -19,7 +19,9 @@ import {
   Sparkles,
   Calendar,
   Zap,
-  Search as SearchIcon
+  Newspaper,
+  Tag,
+  ArrowRight
 } from 'lucide-react';
 
 interface PageItem {
@@ -27,7 +29,7 @@ interface PageItem {
   store_id: string;
   slug: string;
   title: string;
-  page_type: 'static' | 'blog';
+  page_type: 'static' | 'blog' | 'press';
   content: string;
   excerpt?: string;
   featured_image?: string;
@@ -41,6 +43,7 @@ interface Stats {
   totalPages: number;
   staticPagesCount: number;
   blogArticlesCount: number;
+  pressCount?: number;
 }
 
 export default function PagesAdminPage() {
@@ -49,11 +52,12 @@ export default function PagesAdminPage() {
     totalPages: 0,
     staticPagesCount: 0,
     blogArticlesCount: 0,
+    pressCount: 0,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
-  const [typeFilter, setTypeFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState<'all' | 'blog' | 'press' | 'static'>('all');
 
   // Modals
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -64,7 +68,7 @@ export default function PagesAdminPage() {
   const [formData, setFormData] = useState({
     title: '',
     slug: '',
-    page_type: 'static' as 'static' | 'blog',
+    page_type: 'blog' as 'static' | 'blog' | 'press',
     content: '',
     excerpt: '',
     featured_image: '',
@@ -73,6 +77,7 @@ export default function PagesAdminPage() {
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSeeding, setIsSeeding] = useState(false);
   const [toastMessage, setToastMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const showToast = (type: 'success' | 'error', text: string) => {
@@ -91,11 +96,23 @@ export default function PagesAdminPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to fetch pages');
 
-      setPages(data.pages || []);
-      if (data.stats) setStats(data.stats);
+      const allPages: PageItem[] = data.pages || [];
+      setPages(allPages);
+
+      const total = allPages.length;
+      const blogs = allPages.filter((p) => p.page_type === 'blog').length;
+      const press = allPages.filter((p) => p.page_type === 'press').length;
+      const statics = allPages.filter((p) => p.page_type === 'static').length;
+
+      setStats({
+        totalPages: total,
+        blogArticlesCount: blogs,
+        pressCount: press,
+        staticPagesCount: statics,
+      });
     } catch (err: any) {
       console.error(err);
-      setError(err.message || 'Error loading pages');
+      setError(err.message || 'Error loading content');
     } finally {
       setLoading(false);
     }
@@ -127,17 +144,16 @@ export default function PagesAdminPage() {
     setFormData((prev) => ({ ...prev, slug: slugified }));
   };
 
-  const handleOpenAddModal = () => {
+  const handleOpenAddModal = (type: 'blog' | 'press' | 'static' = 'blog') => {
     setFormData({
-      title: 'Kannauj Distillation Heritage',
-      slug: 'kannauj-distillation-heritage',
-      page_type: 'blog',
-      content:
-        'Kannauj, often called the Grasse of the East, has been distilling rare attars using copper Deg-Bhapka apparatus for over 400 years...',
-      excerpt: 'Explore the 400-year artisanal history of hydro-distilling natural attars in Kannauj.',
-      featured_image: '',
-      meta_title: 'Kannauj Distillation Heritage | Maison De L\'Essence',
-      meta_description: 'Discover the ancient hydro-distillation craftsmanship of Kannauj attars.',
+      title: type === 'blog' ? 'Kannauj Distillation Heritage' : type === 'press' ? 'Vogue India Feature' : 'Brand Heritage Story',
+      slug: type === 'blog' ? 'kannauj-distillation-heritage' : type === 'press' ? 'press-vogue-feature' : 'brand-heritage-story',
+      page_type: type,
+      content: 'Enter full rich article or press release content here...',
+      excerpt: 'Short executive summary of this published story.',
+      featured_image: 'https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=1000&auto=format&fit=crop',
+      meta_title: '',
+      meta_description: '',
     });
     setIsAddModalOpen(true);
   };
@@ -156,6 +172,22 @@ export default function PagesAdminPage() {
     });
   };
 
+  const handleSeedContent = async () => {
+    try {
+      setIsSeeding(true);
+      const res = await fetch('/api/admin/pages/seed?reset=true', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to seed content');
+
+      showToast('success', data.message || 'Seeded 9 high-quality articles into database!');
+      fetchPages();
+    } catch (err: any) {
+      showToast('error', err.message || 'Seeding failed.');
+    } finally {
+      setIsSeeding(false);
+    }
+  };
+
   const handleCreatePage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title.trim() || !formData.content.trim()) {
@@ -172,13 +204,13 @@ export default function PagesAdminPage() {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to create page');
+      if (!res.ok) throw new Error(data.error || 'Failed to create item');
 
-      showToast('success', `Page "${formData.title}" created successfully!`);
+      showToast('success', `Created "${formData.title}" successfully!`);
       setIsAddModalOpen(false);
       fetchPages();
     } catch (err: any) {
-      showToast('error', err.message || 'Failed to create page.');
+      showToast('error', err.message || 'Failed to create item.');
     } finally {
       setIsSubmitting(false);
     }
@@ -197,13 +229,13 @@ export default function PagesAdminPage() {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to update page');
+      if (!res.ok) throw new Error(data.error || 'Failed to update item');
 
-      showToast('success', `Page "${formData.title}" updated successfully.`);
+      showToast('success', `Updated "${formData.title}" successfully.`);
       setEditingPage(null);
       fetchPages();
     } catch (err: any) {
-      showToast('error', err.message || 'Failed to update page.');
+      showToast('error', err.message || 'Failed to update item.');
     } finally {
       setIsSubmitting(false);
     }
@@ -218,585 +250,423 @@ export default function PagesAdminPage() {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to delete page');
+      if (!res.ok) throw new Error(data.error || 'Failed to delete item');
 
-      showToast('success', `Page "${deletingPage.title}" deleted.`);
+      showToast('success', `Deleted "${deletingPage.title}".`);
       setDeletingPage(null);
       fetchPages();
     } catch (err: any) {
-      showToast('error', err.message || 'Failed to delete page.');
+      showToast('error', err.message || 'Failed to delete item.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto pb-12">
+    <div className="space-y-8 max-w-7xl mx-auto pb-12 text-[#1A0510]">
       {/* Toast Notification */}
       {toastMessage && (
         <div
-          className={`fixed bottom-6 right-6 z-50 px-5 py-3 rounded-2xl shadow-2xl border backdrop-blur-md flex items-center gap-3 transition-all animate-bounce ${
+          className={`fixed bottom-6 right-6 z-50 px-5 py-3.5 rounded-2xl shadow-2xl border backdrop-blur-md flex items-center gap-3 transition-all animate-bounce ${
             toastMessage.type === 'success'
-              ? 'bg-emerald-950/90 border-emerald-500/40 text-emerald-200'
-              : 'bg-rose-950/90 border-rose-500/40 text-rose-200'
+              ? 'bg-[#1A0510] border-[#F6A6BB] text-[#F7EEED]'
+              : 'bg-rose-950 border-rose-500 text-rose-100'
           }`}
         >
           {toastMessage.type === 'success' ? (
-            <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+            <CheckCircle2 className="w-5 h-5 text-[#F6A6BB]" />
           ) : (
             <AlertCircle className="w-5 h-5 text-rose-400" />
           )}
-          <span className="text-xs font-semibold">{toastMessage.text}</span>
-          <button onClick={() => setToastMessage(null)} className="ml-2 text-neutral-400 hover:text-white">
+          <span className="text-xs font-extrabold">{toastMessage.text}</span>
+          <button onClick={() => setToastMessage(null)} className="ml-2 text-stone-400 hover:text-white">
             <X className="w-4 h-4" />
           </button>
         </div>
       )}
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200 pb-6">
-        <div>
-          <div className="flex items-center gap-2 text-xs font-bold text-amber-700 uppercase tracking-wider">
-            <FileText className="w-4 h-4" /> Content Management System (CMS)
-          </div>
-          <h1 className="text-3xl font-serif font-bold text-stone-900 mt-1">
-            Static Pages & Blog Articles
-          </h1>
-          <p className="text-stone-500 text-xs mt-1 font-medium">
-            Publish brand story pages, legal policies, olfactory guides, and artisanal Kannauj heritage blog posts.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <button
-            onClick={fetchPages}
-            disabled={loading}
-            className="p-2.5 rounded-xl bg-white border border-stone-300 text-stone-700 hover:bg-stone-50 transition-all disabled:opacity-50 shadow-sm"
-            title="Refresh Pages"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-amber-600' : ''}`} />
-          </button>
-          <button
-            onClick={handleOpenAddModal}
-            className="px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs transition-all shadow-md flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" /> Create Page / Article
-          </button>
-        </div>
-      </div>
-
-      {/* Metrics Overview Bar */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="p-5 rounded-2xl bg-white border border-stone-200 shadow-sm flex items-center justify-between">
+      {/* Top Banner Header */}
+      <div className="rounded-3xl bg-white border border-[#F7D1D8] p-8 shadow-sm relative overflow-hidden">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
-            <div className="text-xs text-stone-500 font-bold">Total Published Pages</div>
-            <div className="text-2xl font-bold font-serif text-stone-900 mt-1">{stats.totalPages}</div>
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#FAE6E7] border border-[#F7D1D8] text-[#4A0D25] text-xs font-extrabold uppercase tracking-wider mb-3">
+              <BookOpen className="w-3.5 h-3.5 text-[#F6A6BB]" /> Content & Editorial CMS
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-serif font-extrabold text-[#1A0510] tracking-tight">
+              Blogs & Press Releases Backend
+            </h1>
+            <p className="text-[#4A0D25] text-xs sm:text-sm mt-2 max-w-xl font-bold leading-relaxed">
+              Manage artisanal Kannauj journal posts, Vogue/GQ press releases, and brand story pages.
+            </p>
           </div>
-          <div className="p-3 rounded-xl bg-amber-50 text-amber-700 border border-amber-200">
-            <FileText className="w-5 h-5" />
-          </div>
-        </div>
 
-        <div className="p-5 rounded-2xl bg-white border border-stone-200 shadow-sm flex items-center justify-between">
-          <div>
-            <div className="text-xs text-stone-500 font-bold">Static Policy & Brand Pages</div>
-            <div className="text-2xl font-bold font-serif text-emerald-700 mt-1">{stats.staticPagesCount}</div>
-          </div>
-          <div className="p-3 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200">
-            <Globe className="w-5 h-5" />
-          </div>
-        </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={handleSeedContent}
+              disabled={isSeeding}
+              className="px-4 py-2.5 rounded-2xl bg-[#FAE6E7] border border-[#F7D1D8] text-[#4A0D25] hover:bg-[#F7D1D8] font-extrabold text-xs transition-all flex items-center gap-2 shadow-xs"
+              title="Populate high quality authentic articles"
+            >
+              <Zap className={`w-4 h-4 text-[#F6A6BB] ${isSeeding ? 'animate-spin' : ''}`} />
+              <span>{isSeeding ? 'Seeding...' : 'Seed High-Quality Content'}</span>
+            </button>
 
-        <div className="p-5 rounded-2xl bg-white border border-stone-200 shadow-sm flex items-center justify-between">
-          <div>
-            <div className="text-xs text-stone-500 font-bold">Blog & Olfactory Guides</div>
-            <div className="text-2xl font-bold font-serif text-purple-700 mt-1">{stats.blogArticlesCount}</div>
-          </div>
-          <div className="p-3 rounded-xl bg-purple-50 text-purple-700 border border-purple-200">
-            <BookOpen className="w-5 h-5" />
+            <button
+              onClick={() => handleOpenAddModal('blog')}
+              className="px-4 py-2.5 rounded-2xl bg-[#F6A6BB] text-[#4A0D25] hover:bg-[#F4BBC9] font-black text-xs uppercase tracking-wider transition-all shadow-md flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" /> Add Blog / Press
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Control Bar */}
-      <div className="p-4 rounded-2xl bg-white border border-stone-200 shadow-sm flex flex-col sm:flex-row gap-4 items-center justify-between">
-        <div className="relative w-full sm:w-80">
-          <Search className="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
+      {/* Metrics Overview Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="p-5 rounded-2xl bg-white border border-[#F7D1D8] shadow-xs flex items-center justify-between">
+          <div>
+            <div className="text-xs text-[#4A0D25] font-bold">Total Published</div>
+            <div className="text-2xl font-extrabold font-serif text-[#1A0510] mt-1">{stats.totalPages}</div>
+          </div>
+          <div className="p-3 rounded-xl bg-[#FAE6E7] text-[#4A0D25]">
+            <FileText className="w-5 h-5 text-[#F6A6BB]" />
+          </div>
+        </div>
+
+        <div className="p-5 rounded-2xl bg-white border border-[#F7D1D8] shadow-xs flex items-center justify-between">
+          <div>
+            <div className="text-xs text-[#4A0D25] font-bold">Blog Articles</div>
+            <div className="text-2xl font-extrabold font-serif text-[#1A0510] mt-1">{stats.blogArticlesCount}</div>
+          </div>
+          <div className="p-3 rounded-xl bg-[#FAE6E7] text-[#4A0D25]">
+            <BookOpen className="w-5 h-5 text-[#F6A6BB]" />
+          </div>
+        </div>
+
+        <div className="p-5 rounded-2xl bg-white border border-[#F7D1D8] shadow-xs flex items-center justify-between">
+          <div>
+            <div className="text-xs text-[#4A0D25] font-bold">Press Mentions</div>
+            <div className="text-2xl font-extrabold font-serif text-[#1A0510] mt-1">{stats.pressCount || 0}</div>
+          </div>
+          <div className="p-3 rounded-xl bg-[#FAE6E7] text-[#4A0D25]">
+            <Newspaper className="w-5 h-5 text-[#F6A6BB]" />
+          </div>
+        </div>
+
+        <div className="p-5 rounded-2xl bg-white border border-[#F7D1D8] shadow-xs flex items-center justify-between">
+          <div>
+            <div className="text-xs text-[#4A0D25] font-bold">Static Pages</div>
+            <div className="text-2xl font-extrabold font-serif text-[#1A0510] mt-1">{stats.staticPagesCount}</div>
+          </div>
+          <div className="p-3 rounded-xl bg-[#FAE6E7] text-[#4A0D25]">
+            <Globe className="w-5 h-5 text-[#F6A6BB]" />
+          </div>
+        </div>
+      </div>
+
+      {/* Filter Tabs & Search Bar */}
+      <div className="p-4 rounded-3xl bg-white border border-[#F7D1D8] shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
+        {/* Type Filter Pills */}
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+          {[
+            { key: 'all', label: 'All Content', icon: FileText },
+            { key: 'blog', label: 'Blog / Journal', icon: BookOpen },
+            { key: 'press', label: 'Press Releases', icon: Newspaper },
+            { key: 'static', label: 'Static Pages', icon: Globe },
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setTypeFilter(tab.key as any)}
+              className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 ${
+                typeFilter === tab.key
+                  ? 'bg-[#4A0D25] text-[#F7EEED] shadow-sm'
+                  : 'bg-[#FAE6E7]/60 text-[#4A0D25] hover:bg-[#FAE6E7]'
+              }`}
+            >
+              <tab.icon className="w-3.5 h-3.5 text-[#F6A6BB]" />
+              <span>{tab.label}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Search Input */}
+        <div className="relative w-full sm:w-72">
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400" />
           <input
             type="text"
+            placeholder="Search title, slug, excerpt..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by title, slug, or content..."
-            className="w-full pl-9 pr-4 py-2 rounded-xl bg-stone-50 border border-stone-300 text-xs text-stone-900 focus:outline-none focus:border-amber-600 font-medium"
+            className="w-full pl-9 pr-4 py-2 rounded-xl bg-[#F7EEED] border border-[#F7D1D8] text-xs text-[#1A0510] font-bold focus:outline-none focus:border-[#F6A6BB]"
           />
-          {search && (
-            <button
-              onClick={() => setSearch('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-900"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          )}
-        </div>
-
-        <div className="flex items-center gap-3 w-full sm:w-auto">
-          <span className="text-xs text-stone-600 font-bold">Content Type:</span>
-          <select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            className="px-3.5 py-2 rounded-xl bg-stone-50 border border-stone-300 text-xs text-stone-900 focus:outline-none focus:border-amber-600 font-medium"
-          >
-            <option value="all">All Content ({stats.totalPages})</option>
-            <option value="static">Static Info Pages ({stats.staticPagesCount})</option>
-            <option value="blog">Blog Articles ({stats.blogArticlesCount})</option>
-          </select>
         </div>
       </div>
 
-      {/* Data Table */}
-      <div className="rounded-2xl border border-stone-200 bg-white overflow-hidden shadow-sm">
+      {/* Content Table */}
+      <div className="rounded-3xl bg-white border border-[#F7D1D8] shadow-xs overflow-hidden">
         {loading ? (
-          <div className="p-16 text-center space-y-3">
-            <RefreshCw className="w-8 h-8 text-amber-600 animate-spin mx-auto" />
-            <p className="text-xs text-stone-500 font-medium">Loading CMS pages from Supabase...</p>
-          </div>
-        ) : error ? (
           <div className="p-12 text-center space-y-3">
-            <AlertCircle className="w-8 h-8 text-rose-500 mx-auto" />
-            <p className="text-sm font-semibold text-rose-700">{error}</p>
-            <button
-              onClick={fetchPages}
-              className="px-4 py-2 rounded-xl bg-stone-100 text-xs text-stone-800 font-bold hover:bg-stone-200"
-            >
-              Retry
-            </button>
+            <RefreshCw className="w-8 h-8 text-[#F6A6BB] animate-spin mx-auto" />
+            <p className="text-xs font-bold text-[#4A0D25]">Loading editorial articles...</p>
           </div>
         ) : filteredPages.length === 0 ? (
-          <div className="p-16 text-center space-y-4">
-            <FileText className="w-10 h-10 text-stone-400 mx-auto" />
-            <h3 className="text-base font-serif font-bold text-stone-900">No pages or blog articles found</h3>
-            <p className="text-xs text-stone-500 max-w-sm mx-auto font-medium">
-              {search
-                ? `No pages matching search term "${search}".`
-                : 'Click "Create Page / Article" to publish your first content page.'}
+          <div className="p-12 text-center space-y-4">
+            <BookOpen className="w-10 h-10 text-[#F6A6BB] mx-auto" />
+            <h3 className="font-serif font-extrabold text-lg text-[#1A0510]">No Articles Found</h3>
+            <p className="text-xs text-[#4A0D25] font-semibold max-w-md mx-auto">
+              No matching content found for filter "{typeFilter}". Click the seed button to generate authentic Rose Valley articles.
             </p>
+            <button
+              onClick={handleSeedContent}
+              className="px-5 py-2.5 rounded-full bg-[#F6A6BB] text-[#4A0D25] font-extrabold text-xs hover:bg-[#F4BBC9] transition-all"
+            >
+              Seed High-Quality Content
+            </button>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-stone-800">
-              <thead className="bg-stone-100/70 text-stone-600 uppercase text-[10px] font-bold tracking-wider border-b border-stone-200">
-                <tr>
-                  <th className="py-4 px-6">Page Title & Slug</th>
-                  <th className="py-4 px-4">Type</th>
-                  <th className="py-4 px-4">SEO Readiness</th>
-                  <th className="py-4 px-4">Last Updated</th>
-                  <th className="py-4 px-6 text-right">Actions</th>
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-[#FAE6E7] border-b border-[#F7D1D8] text-[10px] font-black uppercase tracking-wider text-[#4A0D25]">
+                  <th className="p-4">Cover Image</th>
+                  <th className="p-4">Title & Excerpt</th>
+                  <th className="p-4">Type</th>
+                  <th className="p-4">Slug</th>
+                  <th className="p-4">Updated</th>
+                  <th className="p-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-stone-200">
-                {filteredPages.map((p) => {
-                  const hasSeo = Boolean(p.meta_title && p.meta_description);
-
-                  return (
-                    <tr key={p.id} className="hover:bg-stone-50 transition-colors group">
-                      {/* Title & Slug */}
-                      <td className="py-4 px-6">
-                        <div className="flex items-center gap-3">
-                          {p.featured_image ? (
-                            <img
-                              src={p.featured_image}
-                              alt=""
-                              className="w-10 h-10 rounded-xl object-cover border border-amber-500/20 bg-neutral-950"
-                            />
-                          ) : (
-                            <div className="w-10 h-10 rounded-xl bg-neutral-950 border border-neutral-800 flex items-center justify-center text-amber-400/50">
-                              <FileText className="w-5 h-5" />
-                            </div>
-                          )}
-                          <div>
-                            <div className="font-semibold text-neutral-100 group-hover:text-amber-200 text-sm">
-                              {p.title}
-                            </div>
-                            <div className="text-[11px] text-amber-500 font-mono">
-                              /{p.slug}
-                            </div>
+              <tbody className="divide-y divide-[#F7D1D8]">
+                {filteredPages.map((p) => (
+                  <tr key={p.id} className="hover:bg-[#F7EEED]/50 transition-colors">
+                    <td className="p-4">
+                      <div className="w-16 h-12 rounded-xl bg-[#FAE6E7] border border-[#F7D1D8] overflow-hidden relative flex-shrink-0">
+                        {p.featured_image ? (
+                          <img src={p.featured_image} alt={p.title} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-[#F6A6BB]">
+                            <ImageIcon className="w-5 h-5" />
                           </div>
-                        </div>
-                      </td>
-
-                      {/* Type Badge */}
-                      <td className="py-4 px-4">
-                        {p.page_type === 'blog' ? (
-                          <span className="px-2.5 py-0.5 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/30 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 w-fit">
-                            <BookOpen className="w-3 h-3" /> Blog Article
-                          </span>
-                        ) : (
-                          <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 w-fit">
-                            <Globe className="w-3 h-3" /> Static Page
-                          </span>
                         )}
-                      </td>
+                      </div>
+                    </td>
 
-                      {/* SEO Indicator */}
-                      <td className="py-4 px-4">
-                        {hasSeo ? (
-                          <span className="text-[11px] text-emerald-400 font-medium flex items-center gap-1">
-                            <CheckCircle2 className="w-3.5 h-3.5" /> Meta Tags Configured
-                          </span>
-                        ) : (
-                          <span className="text-[11px] text-amber-400/80 font-medium flex items-center gap-1">
-                            <AlertCircle className="w-3.5 h-3.5" /> Needs SEO Optimization
-                          </span>
-                        )}
-                      </td>
+                    <td className="p-4">
+                      <div className="max-w-md space-y-1">
+                        <h4 className="font-serif font-extrabold text-sm text-[#1A0510] line-clamp-1">{p.title}</h4>
+                        <p className="text-xs text-[#4A0D25] font-semibold line-clamp-2">{p.excerpt || p.content.slice(0, 100)}</p>
+                      </div>
+                    </td>
 
-                      {/* Updated Date */}
-                      <td className="py-4 px-4 text-neutral-400 text-[11px]">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3 text-neutral-500" />
-                          {new Date(p.updated_at || p.created_at).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric',
-                          })}
-                        </span>
-                      </td>
+                    <td className="p-4">
+                      <span
+                        className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                          p.page_type === 'blog'
+                            ? 'bg-[#F6A6BB] text-[#4A0D25]'
+                            : p.page_type === 'press'
+                            ? 'bg-[#4A0D25] text-[#F7EEED]'
+                            : 'bg-stone-200 text-stone-700'
+                        }`}
+                      >
+                        {p.page_type}
+                      </span>
+                    </td>
 
-                      {/* Actions */}
-                      <td className="py-4 px-6 text-right space-x-2">
+                    <td className="p-4">
+                      <span className="text-xs font-mono font-bold text-stone-600">/{p.slug}</span>
+                    </td>
+
+                    <td className="p-4">
+                      <span className="text-xs font-bold text-stone-500">
+                        {new Date(p.updated_at).toLocaleDateString()}
+                      </span>
+                    </td>
+
+                    <td className="p-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
                         <Link
-                          href={`/${p.page_type === 'blog' ? 'blog' : 'pages'}/${p.slug}`}
+                          href={p.page_type === 'press' ? '/press' : `/journal/${p.slug}`}
                           target="_blank"
-                          className="inline-flex p-1.5 rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-400 hover:text-amber-300 hover:border-amber-500/30 transition-all"
-                          title="Preview Page"
+                          className="p-2 rounded-xl hover:bg-[#FAE6E7] text-[#4A0D25] transition-colors"
+                          title="View Live Page"
                         >
-                          <ExternalLink className="w-3.5 h-3.5" />
+                          <ExternalLink className="w-4 h-4" />
                         </Link>
+
                         <button
                           onClick={() => handleOpenEditModal(p)}
-                          className="p-1.5 rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-400 hover:text-amber-300 hover:border-amber-500/30 transition-all"
-                          title="Edit Page"
+                          className="p-2 rounded-xl hover:bg-[#FAE6E7] text-[#4A0D25] transition-colors"
+                          title="Edit"
                         >
-                          <Edit2 className="w-3.5 h-3.5" />
+                          <Edit2 className="w-4 h-4" />
                         </button>
+
                         <button
                           onClick={() => setDeletingPage(p)}
-                          className="p-1.5 rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-400 hover:text-rose-400 hover:border-rose-500/30 transition-all"
-                          title="Delete Page"
+                          className="p-2 rounded-xl hover:bg-rose-100 text-rose-600 transition-colors"
+                          title="Delete"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Trash2 className="w-4 h-4" />
                         </button>
-                      </td>
-                    </tr>
-                  );
-                })}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
         )}
       </div>
 
-      {/* CREATE PAGE MODAL */}
-      {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white border border-stone-200 rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl p-6 space-y-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-stone-200 pb-4">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-amber-100 border border-amber-300 flex items-center justify-center text-amber-900">
-                  <FileText className="w-4 h-4" />
-                </div>
-                <h2 className="text-lg font-serif font-bold text-stone-900">Create Page / Blog Article</h2>
-              </div>
-              <button onClick={() => setIsAddModalOpen(false)} className="p-1 rounded-lg text-stone-400 hover:text-stone-900">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleCreatePage} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-bold text-stone-800 mb-1">Page Title *</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    placeholder="e.g. History of Kannauj Rose Attar"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-stone-50 border border-stone-300 text-xs text-stone-900 font-medium focus:outline-none focus:border-amber-600"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-stone-800 mb-1">Content Type *</label>
-                  <select
-                    value={formData.page_type}
-                    onChange={(e) => setFormData({ ...formData, page_type: e.target.value as any })}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-stone-50 border border-stone-300 text-xs text-stone-900 font-bold focus:outline-none focus:border-amber-600"
-                  >
-                    <option value="blog">Blog Article</option>
-                    <option value="static">Static Info Page</option>
-                  </select>
-                </div>
-              </div>
-
+      {/* Add / Edit Modal */}
+      {(isAddModalOpen || editingPage) && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl border-2 border-[#F7D1D8] shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 space-y-6 animate-fade-in">
+            <div className="flex items-center justify-between border-b border-[#F7D1D8] pb-4">
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="block text-xs font-bold text-stone-800">URL Slug *</label>
-                  <button
-                    type="button"
-                    onClick={handleGenerateSlug}
-                    className="text-[11px] text-amber-800 hover:underline flex items-center gap-1 font-bold"
-                  >
-                    <Zap className="w-3 h-3" /> Auto Slug
-                  </button>
-                </div>
-                <input
-                  type="text"
-                  required
-                  value={formData.slug}
-                  onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                  placeholder="history-of-kannauj-rose-attar"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-stone-50 border border-stone-300 text-xs text-amber-900 font-mono font-bold focus:outline-none focus:border-amber-600"
-                />
+                <h3 className="font-serif font-extrabold text-xl text-[#1A0510]">
+                  {editingPage ? 'Edit Content Item' : 'Create Article / Press Item'}
+                </h3>
+                <p className="text-xs text-[#4A0D25] font-bold">Publish to Journal, Press, or Brand pages</p>
               </div>
-
-              <div>
-                <label className="block text-xs font-bold text-stone-800 mb-1">Featured Header Image URL</label>
-                <input
-                  type="text"
-                  value={formData.featured_image}
-                  onChange={(e) => setFormData({ ...formData, featured_image: e.target.value })}
-                  placeholder="https://..."
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-stone-50 border border-stone-300 text-xs text-stone-900 font-medium focus:outline-none focus:border-amber-600"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-stone-800 mb-1">Excerpt Summary</label>
-                <textarea
-                  rows={2}
-                  value={formData.excerpt}
-                  onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
-                  placeholder="Short summary for card previews..."
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-stone-50 border border-stone-300 text-xs text-stone-900 font-medium focus:outline-none focus:border-amber-600"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-stone-800 mb-1">Full Content Body *</label>
-                <textarea
-                  rows={6}
-                  required
-                  value={formData.content}
-                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                  placeholder="Full article markdown/HTML text content..."
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-stone-50 border border-stone-300 text-xs text-stone-900 focus:outline-none focus:border-amber-600 font-mono"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-stone-200">
-                <div>
-                  <label className="block text-xs font-bold text-stone-800 mb-1">SEO Meta Title</label>
-                  <input
-                    type="text"
-                    value={formData.meta_title}
-                    onChange={(e) => setFormData({ ...formData, meta_title: e.target.value })}
-                    placeholder="Page Title | Maison De L'Essence"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-xs text-neutral-100 focus:outline-none focus:border-amber-500/40"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-neutral-300 mb-1">SEO Meta Description</label>
-                  <input
-                    type="text"
-                    value={formData.meta_description}
-                    onChange={(e) => setFormData({ ...formData, meta_description: e.target.value })}
-                    placeholder="Meta description snippet..."
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-xs text-neutral-100 focus:outline-none focus:border-amber-500/40"
-                  />
-                </div>
-              </div>
-
-              <div className="pt-4 flex items-center justify-end gap-3 border-t border-neutral-800">
-                <button
-                  type="button"
-                  onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-medium text-neutral-400 hover:text-white"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-neutral-950 font-semibold text-xs shadow-lg shadow-amber-500/20 disabled:opacity-50"
-                >
-                  {isSubmitting ? 'Publishing...' : 'Publish Page'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* EDIT PAGE MODAL */}
-      {editingPage && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-neutral-950 border border-amber-500/30 rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl p-6 space-y-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-amber-500/20 pb-4">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
-                  <Edit2 className="w-4 h-4" />
-                </div>
-                <h2 className="text-lg font-serif font-bold text-neutral-100">Edit Page Content</h2>
-              </div>
-              <button onClick={() => setEditingPage(null)} className="p-1 rounded-lg text-neutral-400 hover:text-white">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleUpdatePage} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-medium text-neutral-300 mb-1">Page Title *</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-xs text-neutral-100 focus:outline-none focus:border-amber-500/40"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-neutral-300 mb-1">Content Type *</label>
-                  <select
-                    value={formData.page_type}
-                    onChange={(e) => setFormData({ ...formData, page_type: e.target.value as any })}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-xs text-amber-300 font-bold focus:outline-none focus:border-amber-500/40"
-                  >
-                    <option value="blog">Blog Article</option>
-                    <option value="static">Static Info Page</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-neutral-300 mb-1">URL Slug *</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.slug}
-                  onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-xs text-amber-300 font-mono focus:outline-none focus:border-amber-500/40"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-neutral-300 mb-1">Featured Header Image URL</label>
-                <input
-                  type="text"
-                  value={formData.featured_image}
-                  onChange={(e) => setFormData({ ...formData, featured_image: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-xs text-neutral-100 focus:outline-none focus:border-amber-500/40"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-neutral-300 mb-1">Excerpt Summary</label>
-                <textarea
-                  rows={2}
-                  value={formData.excerpt}
-                  onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-xs text-neutral-100 focus:outline-none focus:border-amber-500/40"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-neutral-300 mb-1">Full Content Body *</label>
-                <textarea
-                  rows={6}
-                  required
-                  value={formData.content}
-                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-xs text-neutral-100 focus:outline-none focus:border-amber-500/40 font-mono"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-neutral-800">
-                <div>
-                  <label className="block text-xs font-medium text-neutral-300 mb-1">SEO Meta Title</label>
-                  <input
-                    type="text"
-                    value={formData.meta_title}
-                    onChange={(e) => setFormData({ ...formData, meta_title: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-xs text-neutral-100 focus:outline-none focus:border-amber-500/40"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-neutral-300 mb-1">SEO Meta Description</label>
-                  <input
-                    type="text"
-                    value={formData.meta_description}
-                    onChange={(e) => setFormData({ ...formData, meta_description: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-xs text-neutral-100 focus:outline-none focus:border-amber-500/40"
-                  />
-                </div>
-              </div>
-
-              <div className="pt-4 flex items-center justify-end gap-3 border-t border-neutral-800">
-                <button
-                  type="button"
-                  onClick={() => setEditingPage(null)}
-                  className="px-4 py-2 rounded-xl text-xs font-medium text-neutral-400 hover:text-white"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-neutral-950 font-semibold text-xs shadow-lg shadow-amber-500/20 disabled:opacity-50"
-                >
-                  {isSubmitting ? 'Saving...' : 'Save Changes'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* DELETE PAGE MODAL */}
-      {deletingPage && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-neutral-950 border border-rose-500/30 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl p-6 space-y-5">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400">
-                <Trash2 className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-base font-serif font-bold text-neutral-100">Delete Page</h3>
-                <p className="text-xs text-rose-300 font-medium">{deletingPage.title}</p>
-              </div>
-            </div>
-
-            <p className="text-xs text-neutral-400 leading-relaxed">
-              Are you sure you want to delete this page? Visitors accessing <strong>/{deletingPage.slug}</strong> will receive a 404 page.
-            </p>
-
-            <div className="pt-4 flex items-center justify-end gap-3 border-t border-neutral-800">
               <button
-                type="button"
+                onClick={() => {
+                  setIsAddModalOpen(false);
+                  setEditingPage(null);
+                }}
+                className="p-2 rounded-xl hover:bg-[#FAE6E7] text-[#4A0D25]"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={editingPage ? handleUpdatePage : handleCreatePage} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-extrabold text-[#4A0D25] uppercase tracking-wider">Type</label>
+                  <select
+                    value={formData.page_type}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, page_type: e.target.value as any }))}
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#F7EEED] border border-[#F7D1D8] text-xs font-extrabold text-[#1A0510]"
+                  >
+                    <option value="blog">Blog / Journal Article</option>
+                    <option value="press">Press Release / Media Feature</option>
+                    <option value="static">Static Page</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-extrabold text-[#4A0D25] uppercase tracking-wider">Slug</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={formData.slug}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, slug: e.target.value }))}
+                      placeholder="e.g. art-of-fragrance-layering"
+                      className="w-full px-4 py-2.5 rounded-xl bg-[#F7EEED] border border-[#F7D1D8] text-xs font-bold text-[#1A0510]"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleGenerateSlug}
+                      className="px-3 py-2 rounded-xl bg-[#FAE6E7] border border-[#F7D1D8] text-[10px] font-black uppercase text-[#4A0D25]"
+                    >
+                      Generate
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-extrabold text-[#4A0D25] uppercase tracking-wider">Title</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.title}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
+                  placeholder="Article or Press Release Title..."
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F7EEED] border border-[#F7D1D8] text-xs font-bold text-[#1A0510]"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-extrabold text-[#4A0D25] uppercase tracking-wider">Featured Image URL</label>
+                <input
+                  type="text"
+                  value={formData.featured_image}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, featured_image: e.target.value }))}
+                  placeholder="https://images.unsplash.com/..."
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F7EEED] border border-[#F7D1D8] text-xs font-bold text-[#1A0510]"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-extrabold text-[#4A0D25] uppercase tracking-wider">Short Excerpt / Summary</label>
+                <textarea
+                  rows={2}
+                  value={formData.excerpt}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, excerpt: e.target.value }))}
+                  placeholder="Brief 2-sentence summary for card previews..."
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F7EEED] border border-[#F7D1D8] text-xs font-semibold text-[#1A0510]"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-extrabold text-[#4A0D25] uppercase tracking-wider">Full Content (Markdown / Text)</label>
+                <textarea
+                  rows={8}
+                  required
+                  value={formData.content}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, content: e.target.value }))}
+                  placeholder="Enter full article or press feature body text..."
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F7EEED] border border-[#F7D1D8] text-xs font-medium text-[#1A0510]"
+                />
+              </div>
+
+              <div className="pt-4 flex justify-end gap-3 border-t border-[#F7D1D8]">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsAddModalOpen(false);
+                    setEditingPage(null);
+                  }}
+                  className="px-5 py-2.5 rounded-full border border-[#F7D1D8] text-xs font-extrabold text-[#1A0510]"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-6 py-2.5 rounded-full bg-[#F6A6BB] text-[#4A0D25] hover:bg-[#F4BBC9] text-xs font-black uppercase tracking-wider shadow-md"
+                >
+                  {isSubmitting ? 'Saving...' : editingPage ? 'Update Content' : 'Publish Content'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deletingPage && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl border-2 border-[#F7D1D8] p-6 max-w-md w-full space-y-4">
+            <h3 className="font-serif font-extrabold text-lg text-[#1A0510]">Confirm Delete</h3>
+            <p className="text-xs text-[#4A0D25] font-semibold">
+              Are you sure you want to delete "{deletingPage.title}"? This cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3 pt-2">
+              <button
                 onClick={() => setDeletingPage(null)}
-                className="px-4 py-2 rounded-xl text-xs font-medium text-neutral-400 hover:text-white"
+                className="px-4 py-2 rounded-full border border-stone-300 text-xs font-bold"
               >
                 Cancel
               </button>
               <button
-                type="button"
                 onClick={handleDeletePage}
                 disabled={isSubmitting}
-                className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs shadow-lg shadow-rose-600/20 disabled:opacity-50"
+                className="px-5 py-2 rounded-full bg-rose-600 text-white font-extrabold text-xs"
               >
-                {isSubmitting ? 'Deleting...' : 'Yes, Delete Page'}
+                {isSubmitting ? 'Deleting...' : 'Delete Permanently'}
               </button>
             </div>
           </div>

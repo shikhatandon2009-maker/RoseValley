@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Cinzel:wght@400..900&family=Cormorant+Garamond:ital,wght@0,400..700;1,400..700&family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..900;1,6..96,400..900&family=Prata&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&display=swap');
 @import '../styles/luxury-header.css';
 
 @tailwind base;
@@ -42,7 +41,7 @@
   html, body {
     background-color: #FFFFFF !important;
     color: #1A0510 !important;
-    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: var(--font-jakarta, 'Plus Jakarta Sans'), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
@@ -61,27 +60,27 @@
 
 /* Luxury Font Helpers */
 .font-hero-playfair {
-  font-family: 'Playfair Display', serif !important;
+  font-family: var(--font-serif, 'Playfair Display'), serif !important;
 }
 
 .font-hero-cinzel {
-  font-family: 'Cinzel', serif !important;
+  font-family: var(--font-cinzel, 'Cinzel'), serif !important;
 }
 
 .font-hero-cormorant {
-  font-family: 'Cormorant Garamond', serif !important;
+  font-family: var(--font-serif, 'Playfair Display'), serif !important;
 }
 
 .font-hero-bodoni {
-  font-family: 'Bodoni Moda', serif !important;
+  font-family: var(--font-serif, 'Playfair Display'), serif !important;
 }
 
 .font-hero-prata {
-  font-family: 'Prata', serif !important;
+  font-family: var(--font-serif, 'Playfair Display'), serif !important;
 }
 
 .font-hero-montserrat {
-  font-family: 'Montserrat', sans-serif !important;
+  font-family: var(--font-montserrat, 'Montserrat'), sans-serif !important;
 }
 
 /* Luxury Glassmorphism Utilities */
@@ -91,6 +90,12 @@
 
 .shadow-luxury-hover {
   box-shadow: 0 30px 60px rgba(74, 13, 37, 0.15), 0 10px 25px rgba(246, 166, 187, 0.2);
+}
+
+/* Performance: content-visibility for below-fold sections */
+.content-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 500px;
 }
 
 /* Custom Scrollbar */

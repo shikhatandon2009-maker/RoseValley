@@ -4,7 +4,7 @@ import { STORE_ID } from '@/lib/constants';
 
 export const dynamic = 'force-dynamic';
 
-export const HIGH_QUALITY_PAGES_SEED = [
+const HIGH_QUALITY_PAGES_SEED = [
   // ----------------------------------------------------
   // BLOG ARTICLES (page_type: 'blog')
   // ----------------------------------------------------

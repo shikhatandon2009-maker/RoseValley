@@ -540,7 +540,7 @@ export default function ChatAdminPage() {
                             className={`max-w-md p-3.5 rounded-2xl text-xs space-y-1 ${
                               isUser
                                 ? 'bg-white border border-[#F7D1D8] text-[#1A0510] shadow-xs rounded-tl-none font-medium'
-                                ? 'bg-[#4A0D25] text-white shadow-xs rounded-tr-none'
+                                : 'bg-[#4A0D25] text-white shadow-xs rounded-tr-none'
                             }`}
                           >
                             <div className={`flex items-center justify-between gap-4 text-[9px] font-bold ${

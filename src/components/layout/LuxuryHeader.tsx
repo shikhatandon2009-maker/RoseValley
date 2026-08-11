@@ -7,7 +7,7 @@ import {
   Sparkles, ShoppingBag, User, Heart, ChevronDown, ChevronRight,
   Menu, X, Award, Droplet, ArrowRight, ShieldCheck, Trash2,
   ShoppingCart, CheckCircle2, QrCode, MapPin, BookOpen, Newspaper,
-  Search, Phone, Mail, Package, Star, Gift, Flame, Crown
+  Search, Phone, Mail, Package, Star, Gift, Flame, Crown, LogIn, LogOut
 } from 'lucide-react';
 import { useCartStore } from '@/store/cart-store';
 import { useWishlistStore } from '@/store/wishlist-store';
@@ -22,6 +22,13 @@ interface CategoryItem {
   image_url?: string;
 }
 
+interface UserSession {
+  id: string;
+  email: string;
+  full_name: string;
+  role: string;
+}
+
 let cachedHeaderCategories: CategoryItem[] | null = null;
 
 export function LuxuryHeader() {
@@ -29,7 +36,7 @@ export function LuxuryHeader() {
   const pathname = usePathname();
   const { formatPrice } = useCurrencyStore();
 
-  // UI states
+  // UI & Auth states
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<'collection' | 'inspiration' | null>(null);
   const [cartHoverOpen, setCartHoverOpen] = useState(false);
@@ -39,6 +46,7 @@ export function LuxuryHeader() {
   const [mounted, setMounted] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [mobileAccordion, setMobileAccordion] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<UserSession | null>(null);
 
   // Refs for outside-click
   const cartDropdownRef = useRef<HTMLDivElement>(null);
@@ -48,6 +56,52 @@ export function LuxuryHeader() {
 
   const { items, toggleCart, updateQuantity, removeItem, getTotalINR } = useCartStore();
   const { productIds } = useWishlistStore();
+
+  // Auth session check
+  const checkAuthSession = useCallback(() => {
+    fetch('/api/auth/me')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.authenticated && data.user) {
+          setCurrentUser(data.user);
+        } else if (typeof window !== 'undefined') {
+          const tempAccStr = localStorage.getItem('temp_guest_account');
+          if (tempAccStr) {
+            try {
+              const tempAcc = JSON.parse(tempAccStr);
+              if (tempAcc.fullName || tempAcc.email) {
+                setCurrentUser({
+                  id: 'temp-guest',
+                  email: tempAcc.email || 'guest@example.com',
+                  full_name: tempAcc.fullName || 'Guest Client',
+                  role: 'customer',
+                });
+                return;
+              }
+            } catch (e) {}
+          }
+          setCurrentUser(null);
+        } else {
+          setCurrentUser(null);
+        }
+      })
+      .catch(() => setCurrentUser(null));
+  }, []);
+
+  useEffect(() => {
+    checkAuthSession();
+  }, [checkAuthSession, pathname]);
+
+  const handleSignOut = async () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('temp_guest_account');
+    }
+    await fetch('/api/auth/logout', { method: 'POST' });
+    setCurrentUser(null);
+    setAccountOpen(false);
+    router.push('/');
+    router.refresh();
+  };
 
   // Mount + fetch categories
   useEffect(() => {
@@ -254,77 +308,151 @@ export function LuxuryHeader() {
             </span>
           </Link>
 
-          {/* Right: Account & Cart */}
+          {/* Right: Account / Login & Cart */}
           <div className="luxury-actions-group">
-            {/* Account Button */}
+            {/* Account / Login Button */}
             <div
               ref={accountRef}
               className="luxury-cart-hover-wrapper relative inline-block"
               onMouseEnter={() => setAccountOpen(true)}
             >
-              <button
-                onClick={() => setAccountOpen((prev) => !prev)}
-                className="luxury-cart-btn"
-                aria-label="Private Client Account"
-                title="Private Client Account & Orders"
-              >
-                <User className="luxury-cart-icon" />
-                <span className="luxury-cart-text hidden sm:inline">Account</span>
-                <ChevronDown className={`w-3.5 h-3.5 text-[#4A0D25] transition-transform duration-300 hidden sm:block ${accountOpen ? 'rotate-180' : ''}`} />
-              </button>
+              {currentUser ? (
+                <button
+                  onClick={() => setAccountOpen((prev) => !prev)}
+                  className="luxury-cart-btn"
+                  aria-label="Private Client Account"
+                  title={`Account (${currentUser.full_name})`}
+                >
+                  <User className="luxury-cart-icon" />
+                  <span className="luxury-cart-text hidden sm:inline">
+                    {currentUser.full_name ? currentUser.full_name.split(' ')[0] : 'Account'}
+                  </span>
+                  <ChevronDown className={`w-3.5 h-3.5 text-[#4A0D25] transition-transform duration-300 hidden sm:block ${accountOpen ? 'rotate-180' : ''}`} />
+                </button>
+              ) : (
+                <button
+                  onClick={() => setAccountOpen((prev) => !prev)}
+                  className="luxury-cart-btn"
+                  aria-label="Sign In to Account"
+                  title="Sign In to Account"
+                >
+                  <User className="luxury-cart-icon" />
+                  <span className="luxury-cart-text hidden sm:inline">Login</span>
+                  <ChevronDown className={`w-3.5 h-3.5 text-[#4A0D25] transition-transform duration-300 hidden sm:block ${accountOpen ? 'rotate-180' : ''}`} />
+                </button>
+              )}
 
               {accountOpen && (
                 <div
                   className="absolute right-0 top-full mt-2 w-72 border-2 border-[#F7D1D8] shadow-2xl rounded-3xl bg-white p-3 space-y-2 text-left z-50 animate-fade-in"
                   onMouseEnter={() => setAccountOpen(true)}
                 >
-                  <div className="px-3.5 py-3 rounded-2xl bg-[#FAE6E7] border border-[#F7D1D8] flex items-center justify-between">
-                    <div>
-                      <h3 className="font-serif font-extrabold text-[#1A0510] text-sm">Private Client Portal</h3>
-                      <p className="text-[10px] text-[#4A0D25] font-black uppercase tracking-widest mt-0.5">Rose Valley Kannauj</p>
-                    </div>
-                    <span className="px-2.5 py-0.5 rounded-full bg-[#F6A6BB] text-[#4A0D25] text-[9px] font-black uppercase tracking-wider shadow-xs">
-                      MEMBER
-                    </span>
-                  </div>
-
-                  <div className="space-y-1">
-                    {[
-                      { href: '/account', icon: ShoppingBag, label: 'My Orders', desc: 'Track orders & AWB receipts' },
-                      { href: '/wishlist', icon: Heart, label: 'My Wishlist', desc: `Saved attars (${mounted ? productIds.length : 0})` },
-                      { href: '/account', icon: MapPin, label: 'My Profile & Addresses', desc: 'Saved shipping address book' },
-                      { href: '/provenance-passport', icon: ShieldCheck, label: 'Authenticity Passports', desc: 'Verify batch QR purity spectrum' },
-                    ].map((item) => (
-                      <Link
-                        key={item.label}
-                        href={item.href}
-                        onClick={() => setAccountOpen(false)}
-                        className="flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-[#FAE6E7]/70 text-[#1A0510] transition-colors group"
-                      >
-                        <div className="p-2 rounded-xl bg-[#FAE6E7] text-[#4A0D25] group-hover:bg-[#F6A6BB] transition-colors flex-shrink-0">
-                          <item.icon className="w-4 h-4" />
-                        </div>
+                  {currentUser ? (
+                    <>
+                      {/* LOGGED IN ACCOUNT MENU */}
+                      <div className="px-3.5 py-3 rounded-2xl bg-[#FAE6E7] border border-[#F7D1D8] flex items-center justify-between">
                         <div>
-                          <p className="font-extrabold text-xs text-[#1A0510] group-hover:text-[#4A0D25]">{item.label}</p>
-                          <span className="text-[10px] text-stone-500 font-bold block">{item.desc}</span>
+                          <h3 className="font-serif font-extrabold text-[#1A0510] text-sm">{currentUser.full_name || 'Private Client'}</h3>
+                          <p className="text-[10px] text-[#4A0D25] font-black tracking-wider truncate max-w-[160px]">{currentUser.email}</p>
                         </div>
-                      </Link>
-                    ))}
+                        <span className="px-2.5 py-0.5 rounded-full bg-[#F6A6BB] text-[#4A0D25] text-[9px] font-black uppercase tracking-wider shadow-xs">
+                          {currentUser.role === 'admin' ? 'ADMIN' : 'MEMBER'}
+                        </span>
+                      </div>
 
-                    <Link
-                      href="/admin"
-                      onClick={() => setAccountOpen(false)}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-[#FAE6E7]/70 text-[#1A0510] transition-colors group border-t border-[#F7D1D8] pt-2"
-                    >
-                      <div className="p-2 rounded-xl bg-[#4A0D25] text-[#F6A6BB] flex-shrink-0">
-                        <Sparkles className="w-4 h-4" />
+                      <div className="space-y-1">
+                        {[
+                          { href: '/account', icon: ShoppingBag, label: 'My Orders', desc: 'Track orders & AWB receipts' },
+                          { href: '/wishlist', icon: Heart, label: 'My Wishlist', desc: `Saved attars (${mounted ? productIds.length : 0})` },
+                          { href: '/account', icon: MapPin, label: 'My Profile & Addresses', desc: 'Saved shipping address book' },
+                          { href: '/provenance-passport', icon: ShieldCheck, label: 'Authenticity Passports', desc: 'Verify batch QR purity spectrum' },
+                        ].map((item) => (
+                          <Link
+                            key={item.label}
+                            href={item.href}
+                            onClick={() => setAccountOpen(false)}
+                            className="flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-[#FAE6E7]/70 text-[#1A0510] transition-colors group"
+                          >
+                            <div className="p-2 rounded-xl bg-[#FAE6E7] text-[#4A0D25] group-hover:bg-[#F6A6BB] transition-colors flex-shrink-0">
+                              <item.icon className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <p className="font-extrabold text-xs text-[#1A0510] group-hover:text-[#4A0D25]">{item.label}</p>
+                              <span className="text-[10px] text-stone-500 font-bold block">{item.desc}</span>
+                            </div>
+                          </Link>
+                        ))}
+
+                        {currentUser.role === 'admin' && (
+                          <Link
+                            href="/admin"
+                            onClick={() => setAccountOpen(false)}
+                            className="flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-[#FAE6E7]/70 text-[#1A0510] transition-colors group border-t border-[#F7D1D8] pt-2"
+                          >
+                            <div className="p-2 rounded-xl bg-[#4A0D25] text-[#F6A6BB] flex-shrink-0">
+                              <Sparkles className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <p className="font-black text-xs text-[#4A0D25]">Admin Suite</p>
+                              <span className="text-[10px] text-stone-500 font-bold block">Manage orders & catalog</span>
+                            </div>
+                          </Link>
+                        )}
+
+                        <button
+                          onClick={handleSignOut}
+                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-rose-50 text-rose-700 transition-colors group border-t border-[#F7D1D8] pt-2 text-left"
+                        >
+                          <div className="p-2 rounded-xl bg-rose-100 text-rose-700 flex-shrink-0">
+                            <LogOut className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <p className="font-extrabold text-xs text-rose-800">Sign Out</p>
+                            <span className="text-[10px] text-stone-500 font-bold block">Log out of your account</span>
+                          </div>
+                        </button>
                       </div>
-                      <div>
-                        <p className="font-black text-xs text-[#4A0D25]">Admin Suite</p>
-                        <span className="text-[10px] text-stone-500 font-bold block">Manage orders & inventory</span>
+                    </>
+                  ) : (
+                    <>
+                      {/* LOGGED OUT / GUEST DROPDOWN */}
+                      <div className="px-3.5 py-3 rounded-2xl bg-[#FAE6E7] border border-[#F7D1D8]">
+                        <h3 className="font-serif font-extrabold text-[#1A0510] text-sm">Private Client Access</h3>
+                        <p className="text-[11px] text-[#4A0D25] font-semibold mt-0.5">
+                          Sign in to access your orders, saved addresses & private reserve wishlist.
+                        </p>
                       </div>
-                    </Link>
-                  </div>
+
+                      <div className="space-y-2 pt-1">
+                        <Link
+                          href="/login"
+                          onClick={() => setAccountOpen(false)}
+                          className="w-full py-2.5 px-4 rounded-2xl bg-[#4A0D25] hover:bg-[#6B0F34] text-white text-xs font-black uppercase tracking-wider text-center flex items-center justify-center gap-2 shadow-sm transition-all"
+                        >
+                          <LogIn className="w-4 h-4 text-[#F6A6BB]" />
+                          <span>Sign In to Account</span>
+                        </Link>
+
+                        <Link
+                          href="/register"
+                          onClick={() => setAccountOpen(false)}
+                          className="w-full py-2.5 px-4 rounded-2xl bg-[#FAE6E7] hover:bg-[#F6A6BB]/50 text-[#4A0D25] border border-[#F7D1D8] text-xs font-black uppercase tracking-wider text-center flex items-center justify-center gap-2 transition-all"
+                        >
+                          <User className="w-4 h-4 text-[#4A0D25]" />
+                          <span>Create New Account</span>
+                        </Link>
+
+                        <Link
+                          href="/account"
+                          onClick={() => setAccountOpen(false)}
+                          className="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold text-stone-600 hover:text-[#4A0D25] hover:bg-stone-50 transition-colors border-t border-[#F7D1D8] pt-2"
+                        >
+                          <span>Track Guest Order</span>
+                          <ArrowRight className="w-3.5 h-3.5 text-[#F6A6BB]" />
+                        </Link>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -805,15 +933,39 @@ export function LuxuryHeader() {
               <span>Wishlist ({mounted ? productIds.length : 0})</span>
             </Link>
           </div>
-          <Link
-            href="/account"
-            onClick={() => setMobileMenuOpen(false)}
-            className="luxury-mobile-footer-btn-primary"
-          >
-            <User className="w-4 h-4" />
-            <span>My Account</span>
-            <ArrowRight className="w-3.5 h-3.5 ml-auto" />
-          </Link>
+          {currentUser ? (
+            <div className="space-y-2">
+              <Link
+                href="/account"
+                onClick={() => setMobileMenuOpen(false)}
+                className="luxury-mobile-footer-btn-primary"
+              >
+                <User className="w-4 h-4" />
+                <span>My Account ({currentUser.full_name ? currentUser.full_name.split(' ')[0] : 'Member'})</span>
+                <ArrowRight className="w-3.5 h-3.5 ml-auto" />
+              </Link>
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  handleSignOut();
+                }}
+                className="w-full py-2.5 rounded-2xl bg-rose-100 hover:bg-rose-200 text-rose-800 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 border border-rose-300 transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Sign Out</span>
+              </button>
+            </div>
+          ) : (
+            <Link
+              href="/login"
+              onClick={() => setMobileMenuOpen(false)}
+              className="luxury-mobile-footer-btn-primary"
+            >
+              <LogIn className="w-4 h-4" />
+              <span>Sign In / Register</span>
+              <ArrowRight className="w-3.5 h-3.5 ml-auto" />
+            </Link>
+          )}
         </div>
       </div>
     </>

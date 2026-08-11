@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 
 export interface CartItem {
   id: string; // product_id or variant_id
@@ -24,12 +24,76 @@ interface CartState {
   syncLiveCart: () => void;
 }
 
+const DEFAULT_FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=1000&auto=format&fit=crop';
+
+function sanitizeImageUrl(imgUrl: string | undefined): string {
+  if (!imgUrl) return DEFAULT_FALLBACK_IMAGE;
+  // Prevent storing megabytes of raw base64 data URLs in localStorage quota
+  if (imgUrl.startsWith('data:image/') || imgUrl.length > 300) {
+    return DEFAULT_FALLBACK_IMAGE;
+  }
+  return imgUrl;
+}
+
+// Custom quota-safe localStorage engine that catches QuotaExceededError
+const safeLocalStorage = {
+  getItem: (name: string): string | null => {
+    if (typeof window === 'undefined') return null;
+    try {
+      return localStorage.getItem(name);
+    } catch (e) {
+      return null;
+    }
+  },
+  setItem: (name: string, value: string): void => {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem(name, value);
+    } catch (e) {
+      console.warn('LocalStorage QuotaExceededError caught in cart-store. Cleaning up & sanitizing...');
+      try {
+        // Attempt 1: Parse and sanitize base64 images from cart items
+        const parsed = JSON.parse(value);
+        if (parsed?.state?.items && Array.isArray(parsed.state.items)) {
+          parsed.state.items = parsed.state.items.map((item: CartItem) => ({
+            ...item,
+            image: sanitizeImageUrl(item.image),
+          }));
+          localStorage.setItem(name, JSON.stringify(parsed));
+          return;
+        }
+      } catch (innerErr) {}
+
+      try {
+        // Attempt 2: Clear old non-essential localStorage items to free space
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key !== name && key.startsWith('maison_')) {
+            try { localStorage.removeItem(key); } catch (err) {}
+          }
+        }
+        localStorage.setItem(name, value);
+      } catch (finalErr) {
+        console.error('SafeLocalStorage setItem fallback executed cleanly:', finalErr);
+      }
+    }
+  },
+  removeItem: (name: string): void => {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.removeItem(name);
+    } catch (e) {}
+  },
+};
+
 function getSessionId(): string {
   if (typeof window === 'undefined') return 'guest_session_default';
   let sid = localStorage.getItem('maison_guest_session_id');
   if (!sid) {
     sid = 'sess_' + Math.random().toString(36).substring(2, 12) + '_' + Date.now();
-    localStorage.setItem('maison_guest_session_id', sid);
+    try {
+      localStorage.setItem('maison_guest_session_id', sid);
+    } catch (e) {}
   }
   return sid;
 }
@@ -59,6 +123,7 @@ export const useCartStore = create<CartState>()(
 
       addItem: (item, qty = 1, autoOpen = true) => {
         let updatedItems: CartItem[] = [];
+        const cleanImage = sanitizeImageUrl(item.image);
         set((state) => {
           const itemId = item.id || (item.variantId ? `${item.productId}_${item.variantId}` : item.productId) || `item_${Date.now()}`;
           const existingIndex = state.items.findIndex(
@@ -69,12 +134,14 @@ export const useCartStore = create<CartState>()(
             const currentQty = newItems[existingIndex].quantity || 1;
             newItems[existingIndex].quantity = Math.min(99, currentQty + qty);
             newItems[existingIndex].id = itemId;
+            newItems[existingIndex].image = cleanImage;
             updatedItems = newItems;
             return { items: newItems, ...(autoOpen ? { isOpen: true } : {}) };
           }
           const newItem: CartItem = {
             ...item,
             id: itemId,
+            image: cleanImage,
             quantity: Math.min(99, Math.max(1, qty)),
           };
           updatedItems = [...state.items, newItem];
@@ -113,11 +180,10 @@ export const useCartStore = create<CartState>()(
                   newQty = targetQuantityOrDelta;
                 }
                 newQty = Math.min(99, Math.max(1, newQty));
-                return { ...item, id: itemId, quantity: newQty };
+                return { ...item, id: itemId, image: sanitizeImageUrl(item.image), quantity: newQty };
               }
-              // Auto-sanitize any existing inflated quantities in state
               const cleanQty = item.quantity > 99 ? 1 : Math.max(1, item.quantity);
-              return { ...item, id: itemId, quantity: cleanQty };
+              return { ...item, id: itemId, image: sanitizeImageUrl(item.image), quantity: cleanQty };
             })
             .filter(Boolean) as CartItem[];
           updatedItems = newItems;
@@ -146,6 +212,8 @@ export const useCartStore = create<CartState>()(
     }),
     {
       name: 'maison_perfumes_cart',
+      storage: createJSONStorage(() => safeLocalStorage),
     }
   )
 );
+

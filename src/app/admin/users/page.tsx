@@ -728,77 +728,77 @@ export default function UsersAdminPage() {
 
             {/* Inline Add Address Form */}
             {isAddAddressOpen && (
-              <form onSubmit={handleCreateAddress} className="p-4 rounded-2xl bg-stone-50 border border-stone-200 space-y-4">
-                <div className="flex items-center justify-between border-b border-stone-200 pb-2">
-                  <h4 className="text-xs font-bold text-amber-800">Add Customer Address</h4>
-                  <button type="button" onClick={() => setIsAddAddressOpen(false)} className="text-stone-400 hover:text-stone-900">
-                    <X className="w-3.5 h-3.5" />
+              <form onSubmit={handleCreateAddress} className="p-5 rounded-2xl bg-[#FAE6E7]/50 border border-[#F7D1D8] space-y-4">
+                <div className="flex items-center justify-between border-b border-[#F7D1D8] pb-3">
+                  <h4 className="text-xs font-black text-[#4A0D25] uppercase tracking-wider">Add Customer Address</h4>
+                  <button type="button" onClick={() => setIsAddAddressOpen(false)} className="text-[#4A0D25]/60 hover:text-[#1A0510]">
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[11px] font-bold text-stone-800 mb-1">Full Name *</label>
+                    <label className="block text-[11px] font-extrabold text-[#4A0D25] mb-1">Full Name *</label>
                     <input
                       type="text"
                       required
                       value={addressFormData.full_name}
                       onChange={(e) => setAddressFormData({ ...addressFormData, full_name: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl bg-white border border-stone-300 text-xs text-stone-900 font-medium"
+                      className="w-full px-3.5 py-2 rounded-xl bg-white border border-[#F7D1D8] text-xs font-bold text-[#1A0510] focus:outline-none focus:border-[#F6A6BB]"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-bold text-stone-800 mb-1">Phone Number *</label>
+                    <label className="block text-[11px] font-extrabold text-[#4A0D25] mb-1">Phone Number *</label>
                     <input
                       type="text"
                       required
                       value={addressFormData.phone}
                       onChange={(e) => setAddressFormData({ ...addressFormData, phone: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl bg-white border border-stone-300 text-xs text-stone-900 font-medium"
+                      className="w-full px-3.5 py-2 rounded-xl bg-white border border-[#F7D1D8] text-xs font-bold text-[#1A0510] focus:outline-none focus:border-[#F6A6BB]"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-medium text-neutral-300 mb-1">Street Address *</label>
+                  <label className="block text-[11px] font-extrabold text-[#4A0D25] mb-1">Street Address *</label>
                   <input
                     type="text"
                     required
                     value={addressFormData.street_address}
                     onChange={(e) => setAddressFormData({ ...addressFormData, street_address: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl bg-neutral-950 border border-neutral-800 text-xs text-neutral-100"
+                    className="w-full px-3.5 py-2 rounded-xl bg-white border border-[#F7D1D8] text-xs font-bold text-[#1A0510] focus:outline-none focus:border-[#F6A6BB]"
                   />
                 </div>
 
                 <div className="grid grid-cols-3 gap-3">
                   <div>
-                    <label className="block text-[11px] font-medium text-neutral-300 mb-1">City *</label>
+                    <label className="block text-[11px] font-extrabold text-[#4A0D25] mb-1">City *</label>
                     <input
                       type="text"
                       required
                       value={addressFormData.city}
                       onChange={(e) => setAddressFormData({ ...addressFormData, city: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl bg-neutral-950 border border-neutral-800 text-xs text-neutral-100"
+                      className="w-full px-3.5 py-2 rounded-xl bg-white border border-[#F7D1D8] text-xs font-bold text-[#1A0510] focus:outline-none focus:border-[#F6A6BB]"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-medium text-neutral-300 mb-1">State *</label>
+                    <label className="block text-[11px] font-extrabold text-[#4A0D25] mb-1">State *</label>
                     <input
                       type="text"
                       required
                       value={addressFormData.state}
                       onChange={(e) => setAddressFormData({ ...addressFormData, state: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl bg-neutral-950 border border-neutral-800 text-xs text-neutral-100"
+                      className="w-full px-3.5 py-2 rounded-xl bg-white border border-[#F7D1D8] text-xs font-bold text-[#1A0510] focus:outline-none focus:border-[#F6A6BB]"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-medium text-neutral-300 mb-1">Postal Code *</label>
+                    <label className="block text-[11px] font-extrabold text-[#4A0D25] mb-1">Postal Code *</label>
                     <input
                       type="text"
                       required
                       value={addressFormData.postal_code}
                       onChange={(e) => setAddressFormData({ ...addressFormData, postal_code: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl bg-neutral-950 border border-neutral-800 text-xs text-neutral-100"
+                      className="w-full px-3.5 py-2 rounded-xl bg-white border border-[#F7D1D8] text-xs font-bold text-[#1A0510] focus:outline-none focus:border-[#F6A6BB]"
                     />
                   </div>
                 </div>
@@ -809,27 +809,27 @@ export default function UsersAdminPage() {
                     id="addr_default"
                     checked={addressFormData.is_default}
                     onChange={(e) => setAddressFormData({ ...addressFormData, is_default: e.target.checked })}
-                    className="w-4 h-4 rounded accent-amber-500 bg-neutral-950 border-neutral-800"
+                    className="w-4 h-4 rounded accent-[#4A0D25]"
                   />
-                  <label htmlFor="addr_default" className="text-xs text-neutral-300">
+                  <label htmlFor="addr_default" className="text-xs font-bold text-[#4A0D25]">
                     Set as default shipping & billing address
                   </label>
                 </div>
 
-                <div className="flex justify-end gap-2 pt-2">
+                <div className="flex justify-end gap-2 pt-2 border-t border-[#F7D1D8]">
                   <button
                     type="button"
                     onClick={() => setIsAddAddressOpen(false)}
-                    className="px-3 py-1.5 rounded-xl text-xs text-neutral-400 hover:text-white"
+                    className="px-4 py-2 rounded-xl text-xs font-black text-stone-600 hover:text-[#1A0510]"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="px-4 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-neutral-950 font-bold text-xs shadow-md disabled:opacity-50"
+                    className="px-5 py-2 rounded-xl bg-[#4A0D25] hover:bg-[#6B0F34] text-white font-black text-xs shadow-md disabled:opacity-50 transition-all"
                   >
-                    {isSubmitting ? 'Saving...' : 'Save Address'}
+                    {isSubmitting ? 'Saving Address...' : 'Save Address'}
                   </button>
                 </div>
               </form>
@@ -840,64 +840,64 @@ export default function UsersAdminPage() {
 
       {/* CREATE USER MODAL */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-neutral-950 border border-amber-500/30 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl p-6 space-y-6">
-            <div className="flex items-center justify-between border-b border-amber-500/20 pb-4">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
-                  <UserPlus className="w-4 h-4" />
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white border border-[#F7D1D8] rounded-3xl w-full max-w-md overflow-hidden shadow-2xl p-6 space-y-6">
+            <div className="flex items-center justify-between border-b border-[#F7D1D8] pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-[#FAE6E7] border border-[#F7D1D8] flex items-center justify-center text-[#4A0D25]">
+                  <UserPlus className="w-5 h-5 text-[#F6A6BB]" />
                 </div>
-                <h2 className="text-lg font-serif font-bold text-neutral-100">Create New User</h2>
+                <h2 className="text-lg font-serif font-extrabold text-[#1A0510]">Create New User</h2>
               </div>
-              <button onClick={() => setIsAddModalOpen(false)} className="p-1 rounded-lg text-neutral-400 hover:text-white">
+              <button onClick={() => setIsAddModalOpen(false)} className="p-1 rounded-lg text-stone-400 hover:text-[#1A0510]">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleCreateUser} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-neutral-300 mb-1">Full Name *</label>
+                <label className="block text-xs font-black text-[#4A0D25] uppercase tracking-wider mb-1">Full Name *</label>
                 <input
                   type="text"
                   required
                   value={formData.full_name}
                   onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
                   placeholder="e.g. Princess Noor Jahan"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-xs text-neutral-100 focus:outline-none focus:border-amber-500/40"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F7EEED] border border-[#F7D1D8] text-xs font-bold text-[#1A0510] placeholder-[#4A0D25]/40 focus:outline-none focus:border-[#F6A6BB] focus:bg-white transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-neutral-300 mb-1">Email Address *</label>
+                <label className="block text-xs font-black text-[#4A0D25] uppercase tracking-wider mb-1">Email Address *</label>
                 <input
                   type="email"
                   required
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder="user@maisonessence.com"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-xs text-neutral-100 focus:outline-none focus:border-amber-500/40"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F7EEED] border border-[#F7D1D8] text-xs font-bold text-[#1A0510] placeholder-[#4A0D25]/40 focus:outline-none focus:border-[#F6A6BB] focus:bg-white transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-neutral-300 mb-1">Password *</label>
+                <label className="block text-xs font-black text-[#4A0D25] uppercase tracking-wider mb-1">Password *</label>
                 <input
                   type="password"
                   required
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   placeholder="••••••••••••"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-xs text-neutral-100 focus:outline-none focus:border-amber-500/40"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F7EEED] border border-[#F7D1D8] text-xs font-bold text-[#1A0510] placeholder-[#4A0D25]/40 focus:outline-none focus:border-[#F6A6BB] focus:bg-white transition-all"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-medium text-neutral-300 mb-1">Role *</label>
+                  <label className="block text-xs font-black text-[#4A0D25] uppercase tracking-wider mb-1">Role *</label>
                   <select
                     value={formData.role}
                     onChange={(e) => setFormData({ ...formData, role: e.target.value as any })}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-xs text-neutral-100 focus:outline-none focus:border-amber-500/40"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#F7EEED] border border-[#F7D1D8] text-xs font-bold text-[#1A0510] focus:outline-none focus:border-[#F6A6BB] focus:bg-white transition-all"
                   >
                     <option value="customer">Customer</option>
                     <option value="admin">Administrator</option>
@@ -905,29 +905,29 @@ export default function UsersAdminPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-neutral-300 mb-1">Phone Number</label>
+                  <label className="block text-xs font-black text-[#4A0D25] uppercase tracking-wider mb-1">Phone Number</label>
                   <input
                     type="text"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     placeholder="+91 98765 43210"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-xs text-neutral-100 focus:outline-none focus:border-amber-500/40"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#F7EEED] border border-[#F7D1D8] text-xs font-bold text-[#1A0510] placeholder-[#4A0D25]/40 focus:outline-none focus:border-[#F6A6BB] focus:bg-white transition-all"
                   />
                 </div>
               </div>
 
-              <div className="pt-4 flex items-center justify-end gap-3 border-t border-neutral-800">
+              <div className="pt-4 flex items-center justify-end gap-3 border-t border-[#F7D1D8]">
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-medium text-neutral-400 hover:text-white"
+                  className="px-4 py-2 rounded-xl text-xs font-black text-stone-600 hover:text-[#1A0510] transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-neutral-950 font-semibold text-xs shadow-lg shadow-amber-500/20 disabled:opacity-50"
+                  className="px-5 py-2.5 rounded-xl bg-[#4A0D25] hover:bg-[#6B0F34] text-white font-extrabold text-xs shadow-md transition-all disabled:opacity-50"
                 >
                   {isSubmitting ? 'Creating...' : 'Create Account'}
                 </button>
@@ -939,50 +939,50 @@ export default function UsersAdminPage() {
 
       {/* EDIT USER MODAL */}
       {editingUser && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-neutral-950 border border-amber-500/30 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl p-6 space-y-6">
-            <div className="flex items-center justify-between border-b border-amber-500/20 pb-4">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
-                  <Edit2 className="w-4 h-4" />
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white border border-[#F7D1D8] rounded-3xl w-full max-w-md overflow-hidden shadow-2xl p-6 space-y-6">
+            <div className="flex items-center justify-between border-b border-[#F7D1D8] pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-[#FAE6E7] border border-[#F7D1D8] flex items-center justify-center text-[#4A0D25]">
+                  <Edit2 className="w-5 h-5 text-[#F6A6BB]" />
                 </div>
-                <h2 className="text-lg font-serif font-bold text-neutral-100">Edit User Details</h2>
+                <h2 className="text-lg font-serif font-extrabold text-[#1A0510]">Edit User Details</h2>
               </div>
-              <button onClick={() => setEditingUser(null)} className="p-1 rounded-lg text-neutral-400 hover:text-white">
+              <button onClick={() => setEditingUser(null)} className="p-1 rounded-lg text-stone-400 hover:text-[#1A0510]">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleUpdateUser} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-neutral-300 mb-1">Full Name *</label>
+                <label className="block text-xs font-black text-[#4A0D25] uppercase tracking-wider mb-1">Full Name *</label>
                 <input
                   type="text"
                   required
                   value={formData.full_name}
                   onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-xs text-neutral-100 focus:outline-none focus:border-amber-500/40"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F7EEED] border border-[#F7D1D8] text-xs font-bold text-[#1A0510] focus:outline-none focus:border-[#F6A6BB] focus:bg-white transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-neutral-300 mb-1">Email Address *</label>
+                <label className="block text-xs font-black text-[#4A0D25] uppercase tracking-wider mb-1">Email Address *</label>
                 <input
                   type="email"
                   required
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-xs text-neutral-100 focus:outline-none focus:border-amber-500/40"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F7EEED] border border-[#F7D1D8] text-xs font-bold text-[#1A0510] focus:outline-none focus:border-[#F6A6BB] focus:bg-white transition-all"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-medium text-neutral-300 mb-1">Role *</label>
+                  <label className="block text-xs font-black text-[#4A0D25] uppercase tracking-wider mb-1">Role *</label>
                   <select
                     value={formData.role}
                     onChange={(e) => setFormData({ ...formData, role: e.target.value as any })}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-xs text-neutral-100 focus:outline-none focus:border-amber-500/40"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#F7EEED] border border-[#F7D1D8] text-xs font-bold text-[#1A0510] focus:outline-none focus:border-[#F6A6BB] focus:bg-white transition-all"
                   >
                     <option value="customer">Customer</option>
                     <option value="admin">Administrator</option>
@@ -990,28 +990,28 @@ export default function UsersAdminPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-neutral-300 mb-1">Phone Number</label>
+                  <label className="block text-xs font-black text-[#4A0D25] uppercase tracking-wider mb-1">Phone Number</label>
                   <input
                     type="text"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-xs text-neutral-100 focus:outline-none focus:border-amber-500/40"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#F7EEED] border border-[#F7D1D8] text-xs font-bold text-[#1A0510] focus:outline-none focus:border-[#F6A6BB] focus:bg-white transition-all"
                   />
                 </div>
               </div>
 
-              <div className="pt-4 flex items-center justify-end gap-3 border-t border-neutral-800">
+              <div className="pt-4 flex items-center justify-end gap-3 border-t border-[#F7D1D8]">
                 <button
                   type="button"
                   onClick={() => setEditingUser(null)}
-                  className="px-4 py-2 rounded-xl text-xs font-medium text-neutral-400 hover:text-white"
+                  className="px-4 py-2 rounded-xl text-xs font-black text-stone-600 hover:text-[#1A0510] transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-neutral-950 font-semibold text-xs shadow-lg shadow-amber-500/20 disabled:opacity-50"
+                  className="px-5 py-2.5 rounded-xl bg-[#4A0D25] hover:bg-[#6B0F34] text-white font-extrabold text-xs shadow-md transition-all disabled:opacity-50"
                 >
                   {isSubmitting ? 'Saving...' : 'Save Changes'}
                 </button>
@@ -1023,51 +1023,51 @@ export default function UsersAdminPage() {
 
       {/* RESET PASSWORD MODAL */}
       {passwordResetUser && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-neutral-950 border border-amber-500/30 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl p-6 space-y-5">
-            <div className="flex items-center justify-between border-b border-amber-500/20 pb-4">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
-                  <Key className="w-4 h-4" />
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white border border-[#F7D1D8] rounded-3xl w-full max-w-md overflow-hidden shadow-2xl p-6 space-y-5">
+            <div className="flex items-center justify-between border-b border-[#F7D1D8] pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-[#FAE6E7] border border-[#F7D1D8] flex items-center justify-center text-[#4A0D25]">
+                  <Key className="w-5 h-5 text-[#F6A6BB]" />
                 </div>
                 <div>
-                  <h2 className="text-base font-serif font-bold text-neutral-100">Reset User Password</h2>
-                  <p className="text-[11px] text-amber-400">{passwordResetUser.email}</p>
+                  <h2 className="text-base font-serif font-extrabold text-[#1A0510]">Reset User Password</h2>
+                  <p className="text-xs font-bold text-[#4A0D25]">{passwordResetUser.email}</p>
                 </div>
               </div>
-              <button onClick={() => setPasswordResetUser(null)} className="p-1 rounded-lg text-neutral-400 hover:text-white">
+              <button onClick={() => setPasswordResetUser(null)} className="p-1 rounded-lg text-stone-400 hover:text-[#1A0510]">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleResetPassword} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-neutral-300 mb-1">New Temporary Password *</label>
+                <label className="block text-xs font-black text-[#4A0D25] uppercase tracking-wider mb-1">New Temporary Password *</label>
                 <input
                   type="text"
                   required
                   value={resetPasswordInput}
                   onChange={(e) => setResetPasswordInput(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-xs text-amber-300 font-mono font-bold focus:outline-none focus:border-amber-500/40"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F7EEED] border border-[#F7D1D8] text-xs text-[#4A0D25] font-mono font-bold focus:outline-none focus:border-[#F6A6BB] focus:bg-white transition-all"
                 />
               </div>
 
-              <p className="text-[11px] text-neutral-400 bg-neutral-900 p-3 rounded-xl border border-neutral-800">
-                ⚠️ Resetting password will mark <code className="text-amber-300">must_change_password = true</code>. The user will be required to create a new password upon next sign in.
+              <p className="text-xs text-[#4A0D25] bg-[#FAE6E7]/60 p-3.5 rounded-xl border border-[#F7D1D8] font-semibold leading-relaxed">
+                ⚠️ Resetting password will mark <code className="text-[#4A0D25] font-black">must_change_password = true</code>. The user will be required to create a new password upon next sign in.
               </p>
 
-              <div className="pt-4 flex items-center justify-end gap-3 border-t border-neutral-800">
+              <div className="pt-4 flex items-center justify-end gap-3 border-t border-[#F7D1D8]">
                 <button
                   type="button"
                   onClick={() => setPasswordResetUser(null)}
-                  className="px-4 py-2 rounded-xl text-xs font-medium text-neutral-400 hover:text-white"
+                  className="px-4 py-2 rounded-xl text-xs font-black text-stone-600 hover:text-[#1A0510] transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-neutral-950 font-semibold text-xs shadow-lg shadow-amber-500/20 disabled:opacity-50"
+                  className="px-5 py-2.5 rounded-xl bg-[#4A0D25] hover:bg-[#6B0F34] text-white font-extrabold text-xs shadow-md transition-all disabled:opacity-50"
                 >
                   {isSubmitting ? 'Resetting...' : 'Reset Password'}
                 </button>
@@ -1079,27 +1079,27 @@ export default function UsersAdminPage() {
 
       {/* DELETE USER MODAL */}
       {deletingUser && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-neutral-950 border border-rose-500/30 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl p-6 space-y-5">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400">
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white border border-[#F7D1D8] rounded-3xl w-full max-w-md overflow-hidden shadow-2xl p-6 space-y-5">
+            <div className="flex items-center gap-3 border-b border-[#F7D1D8] pb-4">
+              <div className="w-10 h-10 rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600">
                 <Trash2 className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-base font-serif font-bold text-neutral-100">Delete User Account</h3>
-                <p className="text-xs text-rose-300 font-medium">{deletingUser.full_name} ({deletingUser.email})</p>
+                <h3 className="text-base font-serif font-extrabold text-[#1A0510]">Delete User Account</h3>
+                <p className="text-xs font-bold text-rose-700">{deletingUser.full_name} ({deletingUser.email})</p>
               </div>
             </div>
 
-            <p className="text-xs text-neutral-400 leading-relaxed">
+            <p className="text-xs text-[#4A0D25] font-semibold leading-relaxed bg-rose-50/50 p-3.5 rounded-xl border border-rose-100">
               Are you sure you want to delete this user? All associated saved addresses, wishlists, and cart items will be permanently removed.
             </p>
 
-            <div className="pt-4 flex items-center justify-end gap-3 border-t border-neutral-800">
+            <div className="pt-4 flex items-center justify-end gap-3 border-t border-[#F7D1D8]">
               <button
                 type="button"
                 onClick={() => setDeletingUser(null)}
-                className="px-4 py-2 rounded-xl text-xs font-medium text-neutral-400 hover:text-white"
+                className="px-4 py-2 rounded-xl text-xs font-black text-stone-600 hover:text-[#1A0510] transition-colors"
               >
                 Cancel
               </button>
@@ -1107,7 +1107,7 @@ export default function UsersAdminPage() {
                 type="button"
                 onClick={handleDeleteUser}
                 disabled={isSubmitting}
-                className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs shadow-lg shadow-rose-600/20 disabled:opacity-50"
+                className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs shadow-md transition-all disabled:opacity-50"
               >
                 {isSubmitting ? 'Deleting...' : 'Yes, Delete Account'}
               </button>

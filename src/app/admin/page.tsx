@@ -14,7 +14,8 @@ import {
   FileText,
   ArrowUpRight,
   Sparkles,
-  Activity
+  Activity,
+  Type
 } from 'lucide-react';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 
@@ -147,6 +148,13 @@ export default async function AdminDashboardPage() {
       icon: HelpCircle,
       href: '/admin/qa',
       badge: 'Q&A',
+    },
+    {
+      title: 'Executive Typography & Font Suite',
+      desc: 'Select and customize luxury heading, calligraphic script, and body fonts site-wide.',
+      icon: Type,
+      href: '/admin/fonts',
+      badge: 'Font Suite',
     },
     {
       title: 'Site Settings & Homepage Sections',

@@ -1,19 +1,37 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { X, ShoppingBag, Plus, Minus, Trash2, ArrowRight, ShieldCheck } from 'lucide-react';
 import { useCartStore } from '@/store/cart-store';
 import { useCurrencyStore } from '@/store/currency-store';
+import { CheckoutChoiceModal } from '@/components/checkout/CheckoutChoiceModal';
 
 export function CartDrawer() {
   const router = useRouter();
   const { items, isOpen, toggleCart, removeItem, updateQuantity, getTotalINR } = useCartStore();
   const { formatPrice } = useCurrencyStore();
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [checkoutChoiceOpen, setCheckoutChoiceOpen] = useState(false);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (isOpen) {
+      fetch('/api/auth/me')
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.authenticated && data.user) {
+            setCurrentUser(data.user);
+          } else {
+            setCurrentUser(null);
+          }
+        })
+        .catch(() => setCurrentUser(null));
+    }
+  }, [isOpen]);
+
+  if (!isOpen && !checkoutChoiceOpen) return null;
 
   const totalINR = getTotalINR();
 
@@ -157,10 +175,14 @@ export function CartDrawer() {
                 </Link>
                 <button
                   onClick={() => {
-                    toggleCart(false);
-                    router.push('/checkout');
+                    if (currentUser) {
+                      toggleCart(false);
+                      router.push('/checkout');
+                    } else {
+                      setCheckoutChoiceOpen(true);
+                    }
                   }}
-                  className="w-full py-3 rounded-full bg-[#F6A6BB] hover:bg-[#F4BBC9] text-[#4A0D25] text-xs font-black uppercase tracking-wider text-center transition-all shadow-xs flex items-center justify-center gap-1"
+                  className="w-full py-3 rounded-full bg-[#F6A6BB] hover:bg-[#F4BBC9] text-[#4A0D25] text-xs font-black uppercase tracking-wider text-center transition-all shadow-xs flex items-center justify-center gap-1 cursor-pointer"
                 >
                   <span>Checkout</span>
                   <ArrowRight className="w-4 h-4" />
@@ -170,6 +192,18 @@ export function CartDrawer() {
           )}
         </div>
       </div>
+
+      <CheckoutChoiceModal
+        isOpen={checkoutChoiceOpen}
+        isCompulsory={true}
+        onClose={() => setCheckoutChoiceOpen(false)}
+        onContinueGuest={() => {
+          setCheckoutChoiceOpen(false);
+          toggleCart(false);
+          try { sessionStorage.setItem('active_guest_checkout', 'true'); } catch (e) {}
+          router.push('/checkout');
+        }}
+      />
     </div>
   );
 }

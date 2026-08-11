@@ -8,6 +8,7 @@ import { useCurrencyStore } from '@/store/currency-store';
 import { ShieldCheck, Lock, Tag, ArrowRight, CreditCard, ShoppingBag, CheckCircle2, XCircle, Trash2, RefreshCw, Globe, MapPin, AlertTriangle, Check, RotateCcw, X } from 'lucide-react';
 import { LuxuryHeader } from '@/components/layout/LuxuryHeader';
 import { LuxuryFooter } from '@/components/layout/LuxuryFooter';
+import { CheckoutChoiceModal } from '@/components/checkout/CheckoutChoiceModal';
 
 interface CountryConfig {
   code: string;
@@ -248,6 +249,28 @@ export default function CheckoutPage() {
 
   const [loading, setLoading] = useState(false);
   const [paymentFailed, setPaymentFailed] = useState(false);
+  const [checkoutChoiceOpen, setCheckoutChoiceOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  useEffect(() => {
+    let isGuest = false;
+    try { isGuest = sessionStorage.getItem('active_guest_checkout') === 'true'; } catch (e) {}
+
+    fetch('/api/auth/me')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.authenticated && data.user) {
+          setCurrentUser(data.user);
+          if (data.user.email) setEmail((prev) => prev || data.user.email);
+          if (data.user.full_name) setFullName((prev) => prev || data.user.full_name);
+        } else if (!isGuest) {
+          setCheckoutChoiceOpen(true);
+        }
+      })
+      .catch(() => {
+        if (!isGuest) setCheckoutChoiceOpen(true);
+      });
+  }, []);
 
   // Interactive Payment Gateway Modal State
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -454,7 +477,10 @@ export default function CheckoutPage() {
     setPaymentFailed(true);
   };
 
-  if (items.length === 0) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  if (mounted && items.length === 0) {
     return (
       <div className="min-h-screen bg-[#F7EEED] text-[#1A0510] flex flex-col justify-between">
         <LuxuryHeader />
@@ -464,11 +490,22 @@ export default function CheckoutPage() {
           <p className="text-xs text-[#4A0D25]">Please select items from our Kannauj Damask Rose collection before proceeding to checkout.</p>
           <button
             onClick={() => router.push('/products')}
-            className="bg-[#F6A6BB] text-[#4A0D25] text-xs font-bold uppercase tracking-wider py-3 px-8 rounded-full shadow-sm hover:bg-[#F4BBC9] transition-all"
+            className="bg-[#F6A6BB] text-[#4A0D25] text-xs font-bold uppercase tracking-wider py-3 px-8 rounded-full shadow-sm hover:bg-[#F4BBC9] transition-all cursor-pointer"
           >
             Explore Fragrances & Oils
           </button>
         </main>
+
+        <CheckoutChoiceModal
+          isOpen={checkoutChoiceOpen}
+          isCompulsory={true}
+          onClose={() => setCheckoutChoiceOpen(false)}
+          onContinueGuest={() => {
+            setCheckoutChoiceOpen(false);
+            try { sessionStorage.setItem('active_guest_checkout', 'true'); } catch (e) {}
+          }}
+        />
+
         <LuxuryFooter />
       </div>
     );
@@ -726,7 +763,7 @@ export default function CheckoutPage() {
                       <p className="font-bold text-[#1A0510]">{item.name}</p>
                       <span className="text-[10px] text-[#4A0D25] font-semibold">Qty: {item.quantity}</span>
                     </div>
-                    <span className="font-bold text-[#1A0510]">{formatPrice(item.price * item.quantity)}</span>
+                    <span className="font-bold text-[#1A0510]" suppressHydrationWarning>{formatPrice(item.price * item.quantity)}</span>
                   </div>
                 ))}
               </div>
@@ -875,13 +912,13 @@ export default function CheckoutPage() {
               <div className="space-y-2.5 pt-3 border-t border-[#F7D1D8] text-xs font-semibold">
                 <div className="flex justify-between text-[#1A0510]">
                   <span>Subtotal</span>
-                  <span>{formatPrice(subtotalINR)}</span>
+                  <span suppressHydrationWarning>{formatPrice(subtotalINR)}</span>
                 </div>
 
                 {appliedCoupon && (
                   <div className="flex justify-between text-emerald-800 font-extrabold">
                     <span>Discount ({appliedCoupon.percent}% OFF)</span>
-                    <span>-{formatPrice(discountAmount)}</span>
+                    <span suppressHydrationWarning>-{formatPrice(discountAmount)}</span>
                   </div>
                 )}
 
@@ -892,7 +929,7 @@ export default function CheckoutPage() {
 
                 <div className="flex justify-between text-lg font-bold text-[#1A0510] pt-3 border-t border-[#F7D1D8]">
                   <span>Total Payable</span>
-                  <span className="text-[#4A0D25] font-serif font-extrabold">{formatPrice(finalTotalINR)}</span>
+                  <span className="text-[#4A0D25] font-serif font-extrabold" suppressHydrationWarning>{formatPrice(finalTotalINR)}</span>
                 </div>
               </div>
 
@@ -901,7 +938,7 @@ export default function CheckoutPage() {
                 disabled={loading}
                 className="w-full bg-[#F6A6BB] hover:bg-[#F4BBC9] text-[#4A0D25] py-4 rounded-full font-extrabold text-xs uppercase tracking-widest shadow-md flex items-center justify-center gap-2 transition-all hover:scale-[1.01]"
               >
-                {loading ? 'Preparing Payment...' : `Pay ${formatPrice(finalTotalINR)} via Razorpay`}
+                {loading ? 'Preparing Payment...' : <span suppressHydrationWarning>Pay {formatPrice(finalTotalINR)} via Razorpay</span>}
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
@@ -1013,6 +1050,16 @@ export default function CheckoutPage() {
           </div>
         </div>
       )}
+
+      <CheckoutChoiceModal
+        isOpen={checkoutChoiceOpen}
+        isCompulsory={true}
+        onClose={() => setCheckoutChoiceOpen(false)}
+        onContinueGuest={() => {
+          setCheckoutChoiceOpen(false);
+          try { sessionStorage.setItem('active_guest_checkout', 'true'); } catch (e) {}
+        }}
+      />
 
       <LuxuryFooter />
     </div>

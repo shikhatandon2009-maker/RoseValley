@@ -12,7 +12,8 @@ import { Award, Sparkles, ArrowRight, CheckCircle2, QrCode, ShieldCheck, Clock }
 import { LuxuryHeader } from '@/components/layout/LuxuryHeader';
 import { LuxuryFooter } from '@/components/layout/LuxuryFooter';
 
-export const revalidate = 60;
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 
 export default async function Home() {

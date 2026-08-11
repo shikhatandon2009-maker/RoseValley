@@ -17,7 +17,7 @@ import {
   Globe,
   Sliders
 } from 'lucide-react';
-import { loadAndApplyGoogleFont, GOOGLE_FONTS_MAP } from '@/components/layout/FontProvider';
+import { loadAndApplyGoogleFont, applyFontWeightMode, GOOGLE_FONTS_MAP } from '@/components/layout/FontProvider';
 
 const SERIF_OPTIONS = [
   'Playfair Display',
@@ -52,6 +52,7 @@ export default function AdminFontsPage() {
   const [headerFont, setHeaderFont] = useState('Playfair Display');
   const [scriptFont, setScriptFont] = useState('Pinyon Script');
   const [bodyFont, setBodyFont] = useState('Plus Jakarta Sans');
+  const [fontWeightMode, setFontWeightMode] = useState<'thin' | 'regular' | 'bold'>('thin');
 
   const [customHeaderFont, setCustomHeaderFont] = useState('');
   const [customBodyFont, setCustomBodyFont] = useState('');
@@ -68,6 +69,7 @@ export default function AdminFontsPage() {
         if (data.header_font) setHeaderFont(data.header_font);
         if (data.script_font) setScriptFont(data.script_font);
         if (data.body_font) setBodyFont(data.body_font);
+        if (data.font_weight_mode) setFontWeightMode(data.font_weight_mode);
       })
       .catch((err) => console.error('Error loading font settings:', err))
       .finally(() => setLoading(false));
@@ -81,7 +83,8 @@ export default function AdminFontsPage() {
     loadAndApplyGoogleFont(finalHeader, 'header');
     loadAndApplyGoogleFont(scriptFont, 'script');
     loadAndApplyGoogleFont(finalBody, 'body');
-  }, [headerFont, customHeaderFont, scriptFont, bodyFont, customBodyFont]);
+    applyFontWeightMode(fontWeightMode);
+  }, [headerFont, customHeaderFont, scriptFont, bodyFont, customBodyFont, fontWeightMode]);
 
   // Handle Save
   const handleSave = async () => {
@@ -99,6 +102,7 @@ export default function AdminFontsPage() {
           header_font: finalHeader,
           script_font: scriptFont,
           body_font: finalBody,
+          font_weight_mode: fontWeightMode,
         }),
       });
 
@@ -108,6 +112,7 @@ export default function AdminFontsPage() {
           localStorage.setItem('admin_header_font', finalHeader);
           localStorage.setItem('admin_script_font', scriptFont);
           localStorage.setItem('admin_body_font', finalBody);
+          localStorage.setItem('admin_font_weight_mode', fontWeightMode);
         } catch (e) {}
 
         setToastMessage({
@@ -325,6 +330,49 @@ export default function AdminFontsPage() {
                   className="w-full p-2.5 rounded-xl border border-[#F7D1D8] text-xs text-[#1A0510] focus:outline-none focus:ring-2 focus:ring-[#F6A6BB]"
                 />
               </div>
+            </div>
+          </div>
+
+          {/* Section 4: Font Weight & Thickness Suite */}
+          <div className="bg-white p-6 rounded-2xl border border-[#F7D1D8] shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-[#FAE6E7] flex items-center justify-center">
+                  <Sliders className="w-4 h-4 text-[#4A0D25]" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-[#1A0510]">Font Weight & Thickness Suite</h3>
+                  <p className="text-xs text-neutral-500">Toggle between thin sleek typography and classic bold weight site-wide.</p>
+                </div>
+              </div>
+              <span className="text-xs font-mono bg-[#FAE6E7] text-[#4A0D25] px-2.5 py-1 rounded-full font-bold uppercase">
+                {fontWeightMode}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+              {[
+                { id: 'thin', title: 'Elegant Thin', desc: 'Light 300 / 400 sleek luxury weight' },
+                { id: 'regular', title: 'Classic Medium', desc: 'Balanced 400 / 500 regular weight' },
+                { id: 'bold', title: 'Bold Luxury', desc: 'Heavy 700 / 800 bold emphasis' },
+              ].map((opt) => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => setFontWeightMode(opt.id as any)}
+                  className={`p-3.5 rounded-2xl border-2 text-left transition-all cursor-pointer ${
+                    fontWeightMode === opt.id
+                      ? 'bg-[#FAE6E7] border-[#4A0D25] shadow-xs'
+                      : 'bg-white border-[#F7D1D8] hover:border-[#F6A6BB]'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-extrabold text-xs text-[#1A0510]">{opt.title}</span>
+                    {fontWeightMode === opt.id && <Check className="w-4 h-4 text-[#4A0D25]" />}
+                  </div>
+                  <p className="text-[10px] text-[#4A0D25] font-semibold mt-1">{opt.desc}</p>
+                </button>
+              ))}
             </div>
           </div>
         </div>

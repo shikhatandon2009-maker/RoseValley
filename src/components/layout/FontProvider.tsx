@@ -90,6 +90,50 @@ export function loadAndApplyGoogleFont(fontName: string, targetType: 'header' | 
   }
 }
 
+export function applyFontWeightMode(mode: string = 'thin') {
+  if (typeof document === 'undefined') return;
+  let styleTag = document.getElementById('dynamic-font-weight-override') as HTMLStyleElement;
+  if (!styleTag) {
+    styleTag = document.createElement('style');
+    styleTag.id = 'dynamic-font-weight-override';
+    document.head.appendChild(styleTag);
+  }
+
+  if (mode === 'thin') {
+    styleTag.innerHTML = `
+      h1, h2, h3, h4, h5, h6,
+      .font-serif,
+      .luxury-brand-title,
+      .luxury-hero-title,
+      .product-title,
+      .collection-title {
+        font-weight: 300 !important;
+        letter-spacing: 0.03em !important;
+      }
+      body, p, span, a, button, input, select, .font-sans {
+        font-weight: 300 !important;
+      }
+      .font-bold, .font-extrabold, .font-black {
+        font-weight: 400 !important;
+      }
+    `;
+  } else if (mode === 'regular') {
+    styleTag.innerHTML = `
+      h1, h2, h3, h4, h5, h6, .font-serif {
+        font-weight: 400 !important;
+      }
+      body, p, span, a, button, input, select, .font-sans {
+        font-weight: 400 !important;
+      }
+      .font-bold, .font-extrabold, .font-black {
+        font-weight: 500 !important;
+      }
+    `;
+  } else {
+    styleTag.innerHTML = ``;
+  }
+}
+
 export function FontProvider({ children }: { children: React.ReactNode }) {
   const [loaded, setLoaded] = useState(false);
 
@@ -98,14 +142,17 @@ export function FontProvider({ children }: { children: React.ReactNode }) {
     let headerFont = 'Playfair Display';
     let bodyFont = 'Plus Jakarta Sans';
     let scriptFont = 'Pinyon Script';
+    let fontWeightMode = 'thin';
 
     try {
       const localHeader = localStorage.getItem('admin_header_font');
       const localBody = localStorage.getItem('admin_body_font');
       const localScript = localStorage.getItem('admin_script_font');
+      const localWeight = localStorage.getItem('admin_font_weight_mode');
       if (localHeader) headerFont = localHeader;
       if (localBody) bodyFont = localBody;
       if (localScript) scriptFont = localScript;
+      if (localWeight) fontWeightMode = localWeight;
     } catch (e) {
       // Ignore
     }
@@ -114,6 +161,7 @@ export function FontProvider({ children }: { children: React.ReactNode }) {
     loadAndApplyGoogleFont(headerFont, 'header');
     loadAndApplyGoogleFont(bodyFont, 'body');
     loadAndApplyGoogleFont(scriptFont, 'script');
+    applyFontWeightMode(fontWeightMode);
 
     // Sync from server API
     fetch('/api/admin/theme')
@@ -130,6 +178,10 @@ export function FontProvider({ children }: { children: React.ReactNode }) {
         if (data.script_font) {
           loadAndApplyGoogleFont(data.script_font, 'script');
           try { localStorage.setItem('admin_script_font', data.script_font); } catch (e) {}
+        }
+        if (data.font_weight_mode) {
+          applyFontWeightMode(data.font_weight_mode);
+          try { localStorage.setItem('admin_font_weight_mode', data.font_weight_mode); } catch (e) {}
         }
       })
       .catch((err) => console.error('Error fetching admin font settings:', err))

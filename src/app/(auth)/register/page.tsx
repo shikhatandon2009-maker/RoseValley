@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Mail, User, Phone, Lock, Sparkles, Key, CheckCircle2 } from 'lucide-react';
 
-export default function RegisterPage() {
+function RegisterContent() {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -15,6 +15,8 @@ export default function RegisterPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTarget = searchParams.get('redirect') || '/account';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,7 +44,7 @@ export default function RegisterPage() {
       if (data.generatedPassword) {
         setGeneratedPassResult(data.generatedPassword);
       } else {
-        router.push('/account');
+        router.push(redirectTarget);
         router.refresh();
       }
     } catch (err: any) {
@@ -186,5 +188,13 @@ export default function RegisterPage() {
 
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<div className="p-12 text-center text-xs">Loading...</div>}>
+      <RegisterContent />
+    </Suspense>
   );
 }

@@ -13,6 +13,7 @@ import { useCartStore } from '@/store/cart-store';
 import { useWishlistStore } from '@/store/wishlist-store';
 import { useCurrencyStore } from '@/store/currency-store';
 import { CurrencySelector } from './CurrencySelector';
+import { CheckoutChoiceModal } from '../checkout/CheckoutChoiceModal';
 
 interface CategoryItem {
   id: string;
@@ -47,6 +48,7 @@ export function LuxuryHeader() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileAccordion, setMobileAccordion] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<UserSession | null>(null);
+  const [checkoutChoiceOpen, setCheckoutChoiceOpen] = useState(false);
 
   // Refs for outside-click
   const cartDropdownRef = useRef<HTMLDivElement>(null);
@@ -470,7 +472,7 @@ export function LuxuryHeader() {
               >
                 <ShoppingBag className="luxury-cart-icon" />
                 <span className="luxury-cart-text hidden sm:inline">Cart</span>
-                <span className="luxury-cart-badge">
+                <span className="luxury-cart-badge" suppressHydrationWarning>
                   {mounted ? totalCartCount : 0}
                 </span>
               </button>
@@ -532,7 +534,7 @@ export function LuxuryHeader() {
                                     +
                                   </button>
                                 </div>
-                                <span className="luxury-cart-hover-price">
+                                <span className="luxury-cart-hover-price" suppressHydrationWarning>
                                   {formatPrice(item.price * item.quantity)}
                                 </span>
                               </div>
@@ -551,7 +553,7 @@ export function LuxuryHeader() {
                       <div className="border-t border-[#F7D1D8] pt-3 mt-1">
                         <div className="flex justify-between items-center mb-3">
                           <span className="text-xs font-bold text-stone-600">Subtotal:</span>
-                          <span className="font-serif font-extrabold text-base text-[#4A0D25]">
+                          <span className="font-serif font-extrabold text-base text-[#4A0D25]" suppressHydrationWarning>
                             {formatPrice(subtotal)}
                           </span>
                         </div>
@@ -568,9 +570,13 @@ export function LuxuryHeader() {
                           <button
                             onClick={() => {
                               setCartHoverOpen(false);
-                              router.push('/checkout');
+                              if (currentUser) {
+                                router.push('/checkout');
+                              } else {
+                                setCheckoutChoiceOpen(true);
+                              }
                             }}
-                            className="py-2.5 rounded-full bg-[#F6A6BB] text-[#4A0D25] hover:bg-[#F4BBC9] text-xs font-extrabold uppercase tracking-wider shadow-xs flex items-center justify-center gap-1 transition-all"
+                            className="py-2.5 rounded-full bg-[#F6A6BB] text-[#4A0D25] hover:bg-[#F4BBC9] text-xs font-extrabold uppercase tracking-wider shadow-xs flex items-center justify-center gap-1 transition-all cursor-pointer"
                           >
                             <span>Checkout</span>
                             <ArrowRight className="w-3.5 h-3.5" />
@@ -968,6 +974,17 @@ export function LuxuryHeader() {
           )}
         </div>
       </div>
+
+      <CheckoutChoiceModal
+        isOpen={checkoutChoiceOpen}
+        isCompulsory={true}
+        onClose={() => setCheckoutChoiceOpen(false)}
+        onContinueGuest={() => {
+          setCheckoutChoiceOpen(false);
+          try { sessionStorage.setItem('active_guest_checkout', 'true'); } catch (e) {}
+          router.push('/checkout');
+        }}
+      />
     </>
   );
 }

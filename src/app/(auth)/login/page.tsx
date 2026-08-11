@@ -1,16 +1,18 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Lock, Mail, ArrowRight, Sparkles } from 'lucide-react';
 
-export default function LoginPage() {
+function LoginContent() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTarget = searchParams.get('redirect') || '/account';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,7 +31,7 @@ export default function LoginPage() {
         throw new Error(data.error || 'Login failed.');
       }
 
-      router.push('/account');
+      router.push(redirectTarget);
       router.refresh();
     } catch (err: any) {
       setError(err.message);
@@ -111,5 +113,13 @@ export default function LoginPage() {
 
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="p-12 text-center text-xs">Loading...</div>}>
+      <LoginContent />
+    </Suspense>
   );
 }

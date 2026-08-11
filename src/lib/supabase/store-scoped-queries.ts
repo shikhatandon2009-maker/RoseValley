@@ -170,7 +170,7 @@ const DEMO_CATEGORIES = [
   { id: 'c3', name: 'Luxury Elixirs & Blends', slug: 'luxury-elixirs-blends', description: 'Complex botanical synergy elixirs formulated to soothe the mind and elevate energy.', image_url: 'https://images.unsplash.com/photo-1616949755610-8c9bbc08f138?q=80&w=800&auto=format&fit=crop', display_order: 3 }
 ];
 
-export const fetchProducts = cache(async (options?: { categorySlug?: string; featuredOnly?: boolean; limit?: number }) => {
+export async function fetchProducts(options?: { categorySlug?: string; featuredOnly?: boolean; limit?: number }) {
   try {
     const supabase = getSupabaseServerClient();
     let query = supabase.from('products').select('*');
@@ -188,12 +188,11 @@ export const fetchProducts = cache(async (options?: { categorySlug?: string; fea
     }
     return data;
   } catch (err) {
-    console.error('Database fetchProducts error:', err);
     return DEMO_PRODUCTS;
   }
-});
+}
 
-export const fetchProductBySlug = cache(async (slug: string) => {
+export async function fetchProductBySlug(slug: string) {
   const cleanSlug = (slug || '').toLowerCase().trim();
   try {
     const supabase = getSupabaseServerClient();
@@ -254,9 +253,9 @@ export const fetchProductBySlug = cache(async (slug: string) => {
     is_featured: true,
     is_bestseller: true,
   };
-});
+}
 
-export const fetchProductVariants = cache(async (productId: string) => {
+export async function fetchProductVariants(productId: string) {
   try {
     const supabase = getSupabaseServerClient();
     const { data, error } = await supabase
@@ -278,9 +277,9 @@ export const fetchProductVariants = cache(async (productId: string) => {
       { id: 'v2', name: '100ml Eau de Parfum', price: 7200, size: '100ml', stock: 20 },
     ];
   }
-});
+}
 
-export const fetchCategories = cache(async () => {
+export async function fetchCategories() {
   try {
     const supabase = getSupabaseServerClient();
     const { data, error } = await supabase
@@ -296,9 +295,9 @@ export const fetchCategories = cache(async () => {
   } catch (err) {
     return DEMO_CATEGORIES;
   }
-});
+}
 
-export const fetchReviews = cache(async (productId: string) => {
+export async function fetchReviews(productId: string) {
   try {
     const supabase = getSupabaseServerClient();
     const { data, error } = await supabase
@@ -327,9 +326,9 @@ export const fetchReviews = cache(async (productId: string) => {
   } catch (err) {
     return [];
   }
-});
+}
 
-export const fetchQuestions = cache(async (productId: string) => {
+export async function fetchQuestions(productId: string) {
   try {
     const supabase = getSupabaseServerClient();
     const { data, error } = await supabase
@@ -361,7 +360,7 @@ export const fetchQuestions = cache(async (productId: string) => {
   } catch (err) {
     return [];
   }
-});
+}
 
 export async function fetchUserByEmail(email: string) {
   try {
@@ -397,7 +396,7 @@ export async function fetchUserById(id: string) {
   }
 }
 
-export const fetchExchangeRates = cache(async () => {
+export async function fetchExchangeRates() {
   try {
     const supabase = getSupabaseServerClient();
     const { data, error } = await supabase
@@ -422,6 +421,6 @@ export const fetchExchangeRates = cache(async () => {
       { currency_code: 'AED', rate_to_inr: 0.044 },
     ];
   }
-});
+}
 
 

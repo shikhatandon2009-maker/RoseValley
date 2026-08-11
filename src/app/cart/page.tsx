@@ -11,6 +11,8 @@ import { SectionWrapper } from '@/components/common/SectionWrapper';
 import { useCartStore } from '@/store/cart-store';
 import { useCurrencyStore } from '@/store/currency-store';
 
+import { CheckoutChoiceModal } from '@/components/checkout/CheckoutChoiceModal';
+
 const DEFAULT_COUPONS = [
   {
     code: 'ROYAL15',
@@ -32,8 +34,19 @@ export default function ViewCartPage() {
   const [validatingCoupon, setValidatingCoupon] = useState(false);
   const [couponError, setCouponError] = useState('');
   const [couponSuccess, setCouponSuccess] = useState('');
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [checkoutChoiceOpen, setCheckoutChoiceOpen] = useState(false);
 
   useEffect(() => {
+    fetch('/api/auth/me')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.authenticated && data.user) {
+          setCurrentUser(data.user);
+        }
+      })
+      .catch(() => {});
+
     fetch('/api/admin/coupons?status=active')
       .then((res) => res.json())
       .then((data) => {
@@ -391,8 +404,14 @@ export default function ViewCartPage() {
                     </div>
 
                     <button
-                      onClick={() => router.push('/checkout')}
-                      className="w-full py-4 rounded-xl bg-[#F6A6BB] hover:bg-[#F4BBC9] text-[#4A0D25] font-black text-xs uppercase tracking-widest transition-all shadow-md flex items-center justify-center gap-2"
+                      onClick={() => {
+                        if (currentUser) {
+                          router.push('/checkout');
+                        } else {
+                          setCheckoutChoiceOpen(true);
+                        }
+                      }}
+                      className="w-full py-4 rounded-xl bg-[#F6A6BB] hover:bg-[#F4BBC9] text-[#4A0D25] font-black text-xs uppercase tracking-widest transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
                     >
                       <span>Proceed To Secure Checkout</span>
                       <ArrowRight className="w-4 h-4" />
@@ -404,6 +423,17 @@ export default function ViewCartPage() {
           )}
         </div>
       </SectionWrapper>
+
+      <CheckoutChoiceModal
+        isOpen={checkoutChoiceOpen}
+        isCompulsory={true}
+        onClose={() => setCheckoutChoiceOpen(false)}
+        onContinueGuest={() => {
+          setCheckoutChoiceOpen(false);
+          try { sessionStorage.setItem('active_guest_checkout', 'true'); } catch (e) {}
+          router.push('/checkout');
+        }}
+      />
 
       <LuxuryFooter />
     </div>

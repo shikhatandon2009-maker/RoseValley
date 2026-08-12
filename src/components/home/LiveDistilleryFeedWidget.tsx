@@ -1,25 +1,45 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Flame, Droplets, Thermometer, Radio, Sparkles, Activity } from 'lucide-react';
 
 export function LiveDistilleryFeedWidget() {
   const [temperature, setTemperature] = useState(96.4);
   const [steamRate, setSteamRate] = useState(1.42);
   const [yieldRate, setYieldRate] = useState(0.024);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setTemperature(Number((96.0 + Math.random() * 1.2).toFixed(1)));
-      setSteamRate(Number((1.38 + Math.random() * 0.1).toFixed(2)));
-      setYieldRate(Number((0.023 + Math.random() * 0.002).toFixed(3)));
-    }, 4000);
+    const el = containerRef.current;
+    if (!el) return;
 
-    return () => clearInterval(interval);
+    let interval: NodeJS.Timeout | null = null;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !interval) {
+          interval = setInterval(() => {
+            setTemperature(Number((96.0 + Math.random() * 1.2).toFixed(1)));
+            setSteamRate(Number((1.38 + Math.random() * 0.1).toFixed(2)));
+            setYieldRate(Number((0.023 + Math.random() * 0.002).toFixed(3)));
+          }, 8000);
+        } else if (!entry.isIntersecting && interval) {
+          clearInterval(interval);
+          interval = null;
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(el);
+    return () => {
+      observer.disconnect();
+      if (interval) clearInterval(interval);
+    };
   }, []);
 
   return (
-    <div className="p-6 sm:p-8 rounded-3xl bg-[#FAE6E7]/80 border border-[#F7D1D8] shadow-sm space-y-6 relative overflow-hidden text-[#1A0510]">
+    <div ref={containerRef} className="p-6 sm:p-8 rounded-3xl bg-[#FAE6E7]/80 border border-[#F7D1D8] shadow-sm space-y-6 relative overflow-hidden text-[#1A0510]">
       {/* Title Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#F7D1D8] pb-5">
         <div className="flex items-center gap-3">

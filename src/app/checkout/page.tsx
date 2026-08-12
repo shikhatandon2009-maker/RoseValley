@@ -989,11 +989,9 @@ export default function CheckoutPage() {
                 {items.map((item) => (
                   <div key={item.id} className="flex items-center justify-between p-2.5 rounded-xl bg-stone-50 border border-stone-100 text-xs">
                     <div className="flex items-center gap-3">
-                      {item.image && (
                         <div className="w-10 h-10 rounded-lg overflow-hidden relative bg-white flex-shrink-0">
-                          <Image src={item.image} alt={item.name} fill className="object-cover" />
+                          <Image src={item.image || '/images/hero/champaca-bottle.png'} alt={item.name} fill className="object-cover" />
                         </div>
-                      )}
                       <div>
                         <p className="font-bold text-[#1A0510] line-clamp-1">{item.name}</p>
                         <span className="text-[10px] text-[#4A0D25] font-extrabold">Qty: {item.quantity}</span>

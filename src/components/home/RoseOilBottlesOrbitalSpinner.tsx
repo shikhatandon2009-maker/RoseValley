@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import {
   ChevronLeft,
   ChevronRight,
-  Droplet,
   ArrowRight,
   ShieldCheck,
   ShoppingBag,
@@ -94,10 +93,10 @@ export function RoseOilBottlesOrbitalSpinner({ products }: RoseOilBottlesOrbital
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
 
-  // Map database products directly to bottle items using database images with seamless background blending
+  // Map database products to bottle items — limit to max 5
   const bottleList: BottleItem[] =
     products && products.length > 0
-      ? products.map((p, idx) => {
+      ? products.slice(0, 5).map((p, idx) => {
           const defaultBottle = DEFAULT_BOTTLES[idx % DEFAULT_BOTTLES.length];
           const dbImage = (p.images && p.images.length > 0 && p.images[0]) ? p.images[0] : defaultBottle.image;
           return {
@@ -149,11 +148,11 @@ export function RoseOilBottlesOrbitalSpinner({ products }: RoseOilBottlesOrbital
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      {/* Radiant Pinkish Radial Glow Backdrop - Matching LuxuryHeader */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[750px] h-[750px] bg-gradient-radial from-[#F6A6BB]/35 via-[#F7D1D8]/20 to-transparent rounded-full blur-3xl pointer-events-none z-0" />
+      {/* Soft radial glow — simplified for performance */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full pointer-events-none z-0 opacity-30" style={{ background: 'radial-gradient(circle, #F6A6BB 0%, #F7D1D8 40%, transparent 70%)' }} />
 
-      {/* Orbit Background Banner Text - PRODUCT NAME, EXACTLY 500PX WIDTH, 20% OPACITY */}
-      <div className="absolute top-[38%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] max-w-[500px] flex justify-center text-center pointer-events-none overflow-hidden opacity-20 z-0">
+      {/* Background product name watermark */}
+      <div className="absolute top-[38%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] max-w-[500px] flex justify-center text-center pointer-events-none overflow-hidden opacity-[0.08] z-0">
         <span className="font-serif text-3xl sm:text-5xl font-black uppercase tracking-[0.15em] text-[#1A0510] leading-tight text-center block">
           {current.name}
         </span>
@@ -161,7 +160,7 @@ export function RoseOilBottlesOrbitalSpinner({ products }: RoseOilBottlesOrbital
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 flex flex-col items-center">
 
-        {/* THREE BOTTLE ORBITAL CAROUSEL CONTROLLER */}
+        {/* THREE BOTTLE ORBITAL CAROUSEL */}
         <div className="w-full flex items-center justify-between gap-2 sm:gap-6 relative z-20 my-2">
           
           {/* Left: Previous Product Preview Card */}
@@ -178,7 +177,9 @@ export function RoseOilBottlesOrbitalSpinner({ products }: RoseOilBottlesOrbital
                 src={prevBottle.image}
                 alt={prevBottle.name}
                 fill
+                loading="lazy"
                 className="object-contain mix-blend-multiply drop-shadow-md"
+                sizes="128px"
               />
             </div>
             <p className="text-xs font-serif font-bold text-[#1A0510] max-w-[120px] truncate text-center group-hover:text-[#4A0D25] transition-colors">
@@ -198,8 +199,12 @@ export function RoseOilBottlesOrbitalSpinner({ products }: RoseOilBottlesOrbital
           {/* Centered Image Carousel Track Viewport */}
           <div className="overflow-hidden w-full max-w-xs sm:max-w-md md:max-w-lg lg:max-w-xl px-2 py-4 relative z-20">
             <div
-              className="flex transition-transform duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] w-full flex-nowrap"
-              style={{ transform: `translateX(-${activeIndex * 100}%)` }}
+              className="flex w-full flex-nowrap"
+              style={{
+                transform: `translateX(-${activeIndex * 100}%)`,
+                transition: 'transform 0.7s cubic-bezier(0.25,1,0.5,1)',
+                willChange: 'transform',
+              }}
             >
               {bottleList.map((bottle, idx) => {
                 const isActive = idx === activeIndex;
@@ -217,26 +222,27 @@ export function RoseOilBottlesOrbitalSpinner({ products }: RoseOilBottlesOrbital
                       className={`relative cursor-pointer w-72 h-72 sm:w-96 sm:h-96 md:w-[420px] md:h-[420px] flex items-center justify-center transition-all duration-700 ${
                         isActive
                           ? 'scale-100 opacity-100'
-                          : 'scale-90 opacity-30 blur-[1px]'
+                          : 'scale-90 opacity-30'
                       }`}
                     >
-                      {/* PINKISH AURA GLOW - MATCHING LUXURY HEADER (AMARANTH & ORCHID PINK #F6A6BB), 50% STRENGTH, 120PX SPREAD BLUR DIRECTLY BEHIND HERO BOTTLE */}
+                      {/* Simplified aura glow for active bottle */}
                       {isActive && (
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[360px] h-[360px] sm:w-[480px] sm:h-[480px] bg-gradient-radial from-[#F6A6BB]/50 via-[#F4BBC9]/35 to-transparent rounded-full blur-[120px] pointer-events-none z-0 animate-pulse" />
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[320px] h-[320px] sm:w-[400px] sm:h-[400px] rounded-full pointer-events-none z-0 animate-pulse opacity-40" style={{ background: 'radial-gradient(circle, #F6A6BB 0%, #F4BBC9 35%, transparent 65%)' }} />
                       )}
 
-                      {/* Studio Ground Shadow directly under the bottle */}
+                      {/* Studio Ground Shadow */}
                       {isActive && (
                         <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-2/3 h-6 bg-[#4A0D25]/15 rounded-full blur-xl pointer-events-none z-10" />
                       )}
 
-                      {/* Clean Bottle Image with Pinkish Aura Drop-Shadow (120px spread, 50% opacity) & Background Removal */}
+                      {/* Bottle Image */}
                       <Image
                         src={bottle.image}
                         alt={bottle.name}
                         fill
                         priority={idx === 0}
-                        className="object-contain mix-blend-multiply drop-shadow-[0_0_120px_rgba(246,166,187,0.5)] hover:scale-105 transition-transform duration-700 ease-out z-20 relative"
+                        loading={idx === 0 ? 'eager' : 'lazy'}
+                        className="object-contain mix-blend-multiply drop-shadow-lg hover:scale-105 transition-transform duration-700 ease-out z-20 relative"
                         sizes="(max-width: 768px) 320px, 420px"
                       />
                     </div>
@@ -269,7 +275,9 @@ export function RoseOilBottlesOrbitalSpinner({ products }: RoseOilBottlesOrbital
                 src={nextBottle.image}
                 alt={nextBottle.name}
                 fill
+                loading="lazy"
                 className="object-contain mix-blend-multiply drop-shadow-md"
+                sizes="128px"
               />
             </div>
             <p className="text-xs font-serif font-bold text-[#1A0510] max-w-[120px] truncate text-center group-hover:text-[#4A0D25] transition-colors">
@@ -278,12 +286,28 @@ export function RoseOilBottlesOrbitalSpinner({ products }: RoseOilBottlesOrbital
           </div>
         </div>
 
-        {/* CENTER LARGE CAPTION & DETAILS AREA - ULTRA MODERN MINIMALISM */}
+        {/* Dot indicators */}
+        <div className="flex items-center gap-2 my-3">
+          {bottleList.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => goToIndex(idx)}
+              className={`rounded-full transition-all duration-300 ${
+                idx === activeIndex
+                  ? 'w-8 h-2.5 bg-[#F6A6BB]'
+                  : 'w-2.5 h-2.5 bg-[#F7D1D8] hover:bg-[#F4BBC9]'
+              }`}
+              aria-label={`Go to slide ${idx + 1}`}
+            />
+          ))}
+        </div>
+
+        {/* CENTER CAPTION & DETAILS */}
         <div
           key={current.id}
-          className="mt-4 w-full max-w-2xl text-center flex flex-col items-center space-y-4 px-4 transition-all duration-500 relative z-20"
+          className="mt-2 w-full max-w-2xl text-center flex flex-col items-center space-y-4 px-4 transition-all duration-500 relative z-20"
         >
-          {/* Subtle Minimalist Category Tag */}
+          {/* Category Tag */}
           <span className="inline-flex items-center gap-1.5 px-4 py-1 rounded-full bg-[#FAE6E7] border border-[#F7D1D8] text-[11px] font-extrabold tracking-widest uppercase text-[#4A0D25] shadow-xs">
             <Sparkles className="w-3.5 h-3.5 text-[#F6A6BB]" />
             {current.subtitle}
@@ -294,7 +318,7 @@ export function RoseOilBottlesOrbitalSpinner({ products }: RoseOilBottlesOrbital
             {current.name}
           </h2>
 
-          {/* Fragrance Notes - Sleek Minimalist Pills */}
+          {/* Fragrance Notes Pills */}
           <div className="flex flex-wrap items-center justify-center gap-2">
             {current.notes.split('•').map((note, i) => (
               <span
@@ -306,7 +330,7 @@ export function RoseOilBottlesOrbitalSpinner({ products }: RoseOilBottlesOrbital
             ))}
           </div>
 
-          {/* Dynamic Multi-Currency Price & Action Buttons */}
+          {/* Price & Action Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-2">
             <div className="text-center sm:text-left">
               <span className="text-[10px] text-[#4A0D25] uppercase font-bold tracking-widest block">
@@ -336,7 +360,7 @@ export function RoseOilBottlesOrbitalSpinner({ products }: RoseOilBottlesOrbital
             </div>
           </div>
 
-          {/* Minimalist Heritage Seal */}
+          {/* Heritage Seal */}
           <p className="text-[11px] text-[#4A0D25] font-bold tracking-widest pt-1 flex items-center justify-center gap-1.5 uppercase">
             <ShieldCheck className="w-3.5 h-3.5 text-[#F6A6BB]" />
             100% Pure Botanical Hydro-Distillate • Copper Deg-Bhapka Heritage

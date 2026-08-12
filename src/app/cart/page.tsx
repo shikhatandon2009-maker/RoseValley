@@ -88,7 +88,8 @@ export default function ViewCartPage() {
         setCouponSuccess(`Coupon "${cleanCode}" applied! ${match.percent}% discount activated.`);
         setCouponInput('');
       } else {
-        setCouponError(`Invalid coupon code "${cleanCode}". Active database coupon: ${availableCoupons.map(c => c.code).join(', ')}`);
+        const codes = availableCoupons.map((c) => c.code).join(', ');
+        setCouponError(`Invalid coupon code "${cleanCode}". Active database coupon: ${codes}`);
       }
       setValidatingCoupon(false);
     }, 500);

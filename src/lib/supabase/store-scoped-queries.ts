@@ -54,8 +54,7 @@ const DEMO_PRODUCTS = [
     compare_at_price: 4500,
     stock: 25,
     images: [
-      '/uploads/hero/ruhkhus1_removebg_preview_1786261510836.png',
-      'https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=1000&auto=format&fit=crop'
+      '/uploads/hero/ai_bottle_1786262186076.png'
     ],
     scent_notes: {
       top: ['Kashmiri Saffron', 'Black Cardamom'],
@@ -75,7 +74,7 @@ const DEMO_PRODUCTS = [
     compare_at_price: 5500,
     stock: 30,
     images: [
-      'https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=1000&auto=format&fit=crop'
+      '/images/hero/champaca-bottle.png'
     ],
     scent_notes: {
       top: ['Bergamot', 'Pink Pepper'],
@@ -115,7 +114,7 @@ const DEMO_PRODUCTS = [
     compare_at_price: 5500,
     stock: 45,
     images: [
-      'https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=1000&auto=format&fit=crop'
+      '/images/hero/champaca-bottle.png'
     ],
     scent_notes: {
       top: ['Bergamot', 'Pink Pepper'],
@@ -134,7 +133,7 @@ const DEMO_PRODUCTS = [
     price: 3200,
     compare_at_price: 3800,
     stock: 30,
-    images: ['https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?q=80&w=1000&auto=format&fit=crop'],
+    images: ['/images/hero/champaca-bottle.png'],
     scent_notes: {
       top: ['Sweet Almond', 'Cardamom'],
       heart: ['Madagascar Vanilla', 'Helichrysum'],
@@ -152,7 +151,7 @@ const DEMO_PRODUCTS = [
     price: 4200,
     compare_at_price: 4900,
     stock: 25,
-    images: ['https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=1000&auto=format&fit=crop'],
+    images: ['/uploads/hero/image__5__1786261765122.png'],
     scent_notes: {
       top: ['Calabrian Bergamot', 'Neroli'],
       heart: ['Night-Blooming Jasmine', 'Ylang Ylang'],
@@ -162,12 +161,30 @@ const DEMO_PRODUCTS = [
     is_featured: true,
     is_bestseller: true,
   },
+  {
+    id: 'prod-jasmine-sambac-absolute',
+    name: 'Jasmine Sambac Absolute',
+    slug: 'jasmine-sambac-absolute',
+    description: 'Pre-dawn harvested Mogra & Jasmine Sambac blossoms distilled into pure botanical absolute.',
+    price: 4500,
+    compare_at_price: 5200,
+    stock: 30,
+    images: ['/uploads/hero/image__5__1786261765122.png'],
+    scent_notes: {
+      top: ['Night-Blooming Jasmine', 'Calabrian Bergamot'],
+      heart: ['Jasmine Sambac Absolute', 'White Floral Accord'],
+      base: ['Mysore Sandalwood Base', 'Golden Amber']
+    },
+    ingredients: ['100% Pure Jasminum Sambac Flower Extract'],
+    is_featured: true,
+    is_bestseller: true,
+  },
 ];
 
 const DEMO_CATEGORIES = [
-  { id: 'c1', name: 'Artisanal Perfumes', slug: 'artisanal-perfumes', description: 'Hand-crafted fine fragrances created by master perfumers using rare natural extracts.', image_url: 'https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=800&auto=format&fit=crop', display_order: 1 },
-  { id: 'c2', name: 'Pure Essential Oils', slug: 'pure-essential-oils', description: '100% pure, single-origin steam-distilled botanical oils for aromatherapy and wellness.', image_url: 'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?q=80&w=800&auto=format&fit=crop', display_order: 2 },
-  { id: 'c3', name: 'Luxury Elixirs & Blends', slug: 'luxury-elixirs-blends', description: 'Complex botanical synergy elixirs formulated to soothe the mind and elevate energy.', image_url: 'https://images.unsplash.com/photo-1616949755610-8c9bbc08f138?q=80&w=800&auto=format&fit=crop', display_order: 3 }
+  { id: 'c1', name: 'Artisanal Perfumes', slug: 'artisanal-perfumes', description: 'Hand-crafted fine fragrances created by master perfumers using rare natural extracts.', image_url: '/images/hero/champaca-bottle.png', display_order: 1 },
+  { id: 'c2', name: 'Pure Essential Oils', slug: 'pure-essential-oils', description: '100% pure, single-origin steam-distilled botanical oils for aromatherapy and wellness.', image_url: '/uploads/hero/ruhkhus1_removebg_preview_1786261510836.png', display_order: 2 },
+  { id: 'c3', name: 'Luxury Elixirs & Blends', slug: 'luxury-elixirs-blends', description: 'Complex botanical synergy elixirs formulated to soothe the mind and elevate energy.', image_url: '/images/hero/champaca-bottle.png', display_order: 3 }
 ];
 
 export async function fetchProducts(options?: { categorySlug?: string; featuredOnly?: boolean; limit?: number }) {
@@ -219,7 +236,8 @@ export async function fetchProductBySlug(slug: string) {
       s.includes(cleanSlug) ||
       (cleanSlug.includes('khus') && s.includes('khus')) ||
       (cleanSlug.includes('rose') && s.includes('rose')) ||
-      (cleanSlug.includes('shamama') && s.includes('shamama'))
+      (cleanSlug.includes('shamama') && s.includes('shamama')) ||
+      (cleanSlug.includes('jasmine') && s.includes('jasmine'))
     );
   });
 
@@ -232,6 +250,16 @@ export async function fetchProductBySlug(slug: string) {
     .replace(/-/g, ' ')
     .replace(/\b\w/g, (char) => char.toUpperCase());
 
+  const lowerSlug = cleanSlug.toLowerCase();
+  let primaryBottleImg = '/images/hero/champaca-bottle.png';
+  if (lowerSlug.includes('jasmine')) {
+    primaryBottleImg = '/uploads/hero/image__5__1786261765122.png';
+  } else if (lowerSlug.includes('khus') || lowerSlug.includes('vetiver')) {
+    primaryBottleImg = '/uploads/hero/ruhkhus1_removebg_preview_1786261510836.png';
+  } else if (lowerSlug.includes('shamama')) {
+    primaryBottleImg = '/uploads/hero/ai_bottle_1786262186076.png';
+  }
+
   return {
     id: `prod-${cleanSlug}`,
     name: formattedTitle || 'Artisanal Perfume',
@@ -241,8 +269,8 @@ export async function fetchProductBySlug(slug: string) {
     compare_at_price: 5500,
     stock: 35,
     images: [
-      '/uploads/hero/ruhkhus1_removebg_preview_1786261510836.png',
-      'https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=1000&auto=format&fit=crop'
+      primaryBottleImg,
+      '/images/hero/champaca-bottle.png'
     ],
     scent_notes: {
       top: ['Damask Rose', 'Calabrian Bergamot'],

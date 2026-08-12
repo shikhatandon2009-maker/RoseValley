@@ -89,7 +89,7 @@ export default function WishlistPage() {
       productId: p.id,
       name: p.name,
       price: p.price,
-      image: p.images?.[0] || 'https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=1000&auto=format&fit=crop',
+      image: p.images?.[0] || '/images/hero/champaca-bottle.png',
     }, 1);
 
     setAddedItemIds((prev) => ({ ...prev, [p.id]: true }));
@@ -105,7 +105,7 @@ export default function WishlistPage() {
         productId: p.id,
         name: p.name,
         price: p.price,
-        image: p.images?.[0] || 'https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=1000&auto=format&fit=crop',
+        image: p.images?.[0] || '/images/hero/champaca-bottle.png',
       }, 1);
     });
   };

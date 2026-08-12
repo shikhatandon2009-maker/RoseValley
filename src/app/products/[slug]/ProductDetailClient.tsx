@@ -46,6 +46,8 @@ export function ProductDetailClient({ product, variants, initialReviews, initial
   const handleAddToCart = () => {
     // Add item to cart state without opening sidebar cart immediately
     const itemId = selectedVariant ? `${product.id}_${selectedVariant.id}` : product.id;
+    const selectedImg = selectedImage || (product.images && product.images[0]) || '';
+
     addItem({
       id: itemId,
       productId: product.id,
@@ -53,7 +55,7 @@ export function ProductDetailClient({ product, variants, initialReviews, initial
       name: product.name,
       variantName: selectedVariant?.name,
       price: currentPrice,
-      image: selectedImage || product.images?.[0] || 'https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=800&auto=format&fit=crop',
+      image: selectedImg,
     }, quantity, false);
 
     setIsFlying(true);

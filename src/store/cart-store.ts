@@ -24,13 +24,11 @@ interface CartState {
   syncLiveCart: () => void;
 }
 
-const DEFAULT_FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=1000&auto=format&fit=crop';
-
 function sanitizeImageUrl(imgUrl: string | undefined): string {
-  if (!imgUrl) return DEFAULT_FALLBACK_IMAGE;
-  // Prevent storing megabytes of raw base64 data URLs in localStorage quota
-  if (imgUrl.startsWith('data:image/') || imgUrl.length > 300) {
-    return DEFAULT_FALLBACK_IMAGE;
+  if (!imgUrl || typeof imgUrl !== 'string') return '';
+  // Prevent storing megabytes of raw base64 data URLs in localStorage quota (>5000 chars)
+  if (imgUrl.startsWith('data:image/') || imgUrl.length > 5000) {
+    return '';
   }
   return imgUrl;
 }
@@ -52,7 +50,6 @@ const safeLocalStorage = {
     } catch (e) {
       console.warn('LocalStorage QuotaExceededError caught in cart-store. Cleaning up & sanitizing...');
       try {
-        // Attempt 1: Parse and sanitize base64 images from cart items
         const parsed = JSON.parse(value);
         if (parsed?.state?.items && Array.isArray(parsed.state.items)) {
           parsed.state.items = parsed.state.items.map((item: CartItem) => ({
@@ -65,7 +62,6 @@ const safeLocalStorage = {
       } catch (innerErr) {}
 
       try {
-        // Attempt 2: Clear old non-essential localStorage items to free space
         for (let i = 0; i < localStorage.length; i++) {
           const key = localStorage.key(i);
           if (key && key !== name && key.startsWith('maison_')) {
@@ -123,7 +119,7 @@ export const useCartStore = create<CartState>()(
 
       addItem: (item, qty = 1, autoOpen = true) => {
         let updatedItems: CartItem[] = [];
-        const cleanImage = sanitizeImageUrl(item.image);
+        const cleanImage = sanitizeImageUrl(item.image) || item.image || '';
         set((state) => {
           const itemId = item.id || (item.variantId ? `${item.productId}_${item.variantId}` : item.productId) || `item_${Date.now()}`;
           const existingIndex = state.items.findIndex(
@@ -134,7 +130,7 @@ export const useCartStore = create<CartState>()(
             const currentQty = newItems[existingIndex].quantity || 1;
             newItems[existingIndex].quantity = Math.min(99, currentQty + qty);
             newItems[existingIndex].id = itemId;
-            newItems[existingIndex].image = cleanImage;
+            newItems[existingIndex].image = cleanImage || newItems[existingIndex].image;
             updatedItems = newItems;
             return { items: newItems, ...(autoOpen ? { isOpen: true } : {}) };
           }
@@ -180,10 +176,10 @@ export const useCartStore = create<CartState>()(
                   newQty = targetQuantityOrDelta;
                 }
                 newQty = Math.min(99, Math.max(1, newQty));
-                return { ...item, id: itemId, image: sanitizeImageUrl(item.image), quantity: newQty };
+                return { ...item, id: itemId, image: item.image, quantity: newQty };
               }
               const cleanQty = item.quantity > 99 ? 1 : Math.max(1, item.quantity);
-              return { ...item, id: itemId, image: sanitizeImageUrl(item.image), quantity: cleanQty };
+              return { ...item, id: itemId, image: item.image, quantity: cleanQty };
             })
             .filter(Boolean) as CartItem[];
           updatedItems = newItems;
@@ -216,4 +212,3 @@ export const useCartStore = create<CartState>()(
     }
   )
 );
-

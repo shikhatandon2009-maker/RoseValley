@@ -70,7 +70,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
   return (
     <div
-      className="group relative bg-white rounded-2xl shadow-sm hover:shadow-luxury overflow-hidden transition-all duration-300 flex flex-col justify-between border border-transparent hover:border-[#F7D1D8]"
+      className="group relative bg-white rounded-2xl shadow-[0_8px_25px_rgba(74,13,37,0.06),0_2px_6px_rgba(246,166,187,0.08)] hover:shadow-[0_20px_45px_rgba(74,13,37,0.16),0_8px_20px_rgba(246,166,187,0.22)] hover:-translate-y-1.5 overflow-hidden transition-all duration-300 ease-out flex flex-col justify-between border border-[#F7D1D8]/60 hover:border-[#F6A6BB]"
       onMouseEnter={() => setShowQuickView(true)}
       onMouseLeave={() => setShowQuickView(false)}
     >

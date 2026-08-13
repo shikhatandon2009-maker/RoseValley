@@ -23,7 +23,8 @@ import {
   DollarSign,
   Tag,
   Boxes,
-  Upload
+  Upload,
+  Copy
 } from 'lucide-react';
 
 interface CategoryOption {
@@ -266,6 +267,48 @@ export default function ProductsAdminPage() {
       : [];
   }, [formData.imagesText]);
 
+const compressImageFile = (file: File, maxWidth = 1000, quality = 0.82): Promise<string> => {
+  return new Promise((resolve) => {
+    if (file.type === 'image/svg+xml' || file.size < 80 * 1024) {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target?.result as string);
+      reader.readAsDataURL(file);
+      return;
+    }
+
+    const img = document.createElement('img');
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      img.src = e.target?.result as string;
+    };
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      let width = img.width;
+      let height = img.height;
+
+      if (width > maxWidth) {
+        height = Math.round((height * maxWidth) / width);
+        width = maxWidth;
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(img, 0, 0, width, height);
+        const compressedDataUrl = canvas.toDataURL('image/webp', quality);
+        resolve(compressedDataUrl);
+      } else {
+        const fallbackReader = new FileReader();
+        fallbackReader.onload = (ev) => resolve(ev.target?.result as string);
+        fallbackReader.readAsDataURL(file);
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+};
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -273,39 +316,31 @@ export default function ProductsAdminPage() {
     e.target.value = '';
   };
 
-  const processImageFiles = (files: File[]) => {
+  const processImageFiles = async (files: File[]) => {
     const validFiles = files.filter((f) => f.type.startsWith('image/'));
     if (validFiles.length === 0) {
       showToast('error', 'Please select valid image files (PNG, JPG, WEBP, etc.).');
       return;
     }
 
-    let loadedCount = 0;
-    const newUrls: string[] = [];
+    try {
+      showToast('success', `Processing ${validFiles.length} image(s)...`);
+      const compressedUrls = await Promise.all(validFiles.map((file) => compressImageFile(file)));
 
-    validFiles.forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const dataUrl = event.target?.result as string;
-        if (dataUrl) {
-          newUrls.push(dataUrl);
-        }
-        loadedCount++;
-        if (loadedCount === validFiles.length) {
-          setFormData((prev) => {
-            const existing = prev.imagesText
-              ? prev.imagesText.split('\n').map((s) => s.trim()).filter(Boolean)
-              : [];
-            return {
-              ...prev,
-              imagesText: [...existing, ...newUrls].join('\n'),
-            };
-          });
-          showToast('success', `${validFiles.length} image(s) uploaded successfully!`);
-        }
-      };
-      reader.readAsDataURL(file);
-    });
+      setFormData((prev) => {
+        const existing = prev.imagesText
+          ? prev.imagesText.split('\n').map((s) => s.trim()).filter(Boolean)
+          : [];
+        return {
+          ...prev,
+          imagesText: [...existing, ...compressedUrls].join('\n'),
+        };
+      });
+      showToast('success', `${validFiles.length} image(s) processed & optimized!`);
+    } catch (err) {
+      console.error(err);
+      showToast('error', 'Failed to process images.');
+    }
   };
 
   const handleRemoveImage = (indexToRemove: number) => {
@@ -455,6 +490,33 @@ export default function ProductsAdminPage() {
       const heartNotes = formData.heartNotesText.split(',').map((s) => s.trim()).filter(Boolean);
       const baseNotes = formData.baseNotesText.split(',').map((s) => s.trim()).filter(Boolean);
       const ingredients = formData.ingredientsText.split(',').map((s) => s.trim()).filter(Boolean);
+      const selectedCats = categoriesList.filter((c) => formData.selectedCategoryIds.includes(c.id));
+
+      const tempId = `temp-${Date.now()}`;
+      const optimisticProduct: Product = {
+        id: tempId,
+        store_id: 'rose-valley-kannauj',
+        name: formData.name.trim(),
+        slug: formData.slug || formData.name.toLowerCase().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-'),
+        description: formData.description,
+        price: Number(formData.price),
+        compare_at_price: formData.compare_at_price ? Number(formData.compare_at_price) : undefined,
+        stock: Number(formData.stock) || 0,
+        images: imagesArray,
+        scent_notes: { top: topNotes, heart: heartNotes, base: baseNotes },
+        ingredients,
+        is_featured: formData.is_featured,
+        is_bestseller: formData.is_bestseller,
+        meta_title: formData.meta_title,
+        meta_description: formData.meta_description,
+        categories: selectedCats,
+        created_at: new Date().toISOString(),
+      };
+
+      // INSTANT UI UPDATE (0ms)
+      setIsAddModalOpen(false);
+      setProducts((prev) => [optimisticProduct, ...prev]);
+      showToast('success', `Product "${formData.name}" created!`);
 
       const payload = {
         name: formData.name,
@@ -480,11 +542,16 @@ export default function ProductsAdminPage() {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to create product');
+      if (!res.ok) {
+        setProducts((prev) => prev.filter((p) => p.id !== tempId));
+        throw new Error(data.error || 'Failed to create product');
+      }
 
-      showToast('success', `Product "${formData.name}" created successfully!`);
-      setIsAddModalOpen(false);
-      fetchProducts();
+      if (data.product) {
+        setProducts((prev) =>
+          prev.map((p) => (p.id === tempId ? { ...data.product, categories: selectedCats } : p))
+        );
+      }
     } catch (err: any) {
       showToast('error', err.message || 'Failed to create product.');
     } finally {
@@ -507,6 +574,32 @@ export default function ProductsAdminPage() {
       const heartNotes = formData.heartNotesText.split(',').map((s) => s.trim()).filter(Boolean);
       const baseNotes = formData.baseNotesText.split(',').map((s) => s.trim()).filter(Boolean);
       const ingredients = formData.ingredientsText.split(',').map((s) => s.trim()).filter(Boolean);
+      const selectedCats = categoriesList.filter((c) => formData.selectedCategoryIds.includes(c.id));
+
+      const updatedProduct: Product = {
+        ...editingProduct,
+        name: formData.name,
+        slug: formData.slug,
+        description: formData.description,
+        price: Number(formData.price),
+        compare_at_price: formData.compare_at_price ? Number(formData.compare_at_price) : undefined,
+        stock: Number(formData.stock) || 0,
+        images: imagesArray,
+        scent_notes: { top: topNotes, heart: heartNotes, base: baseNotes },
+        ingredients,
+        is_featured: formData.is_featured,
+        is_bestseller: formData.is_bestseller,
+        meta_title: formData.meta_title,
+        meta_description: formData.meta_description,
+        categories: selectedCats,
+      };
+
+      // INSTANT UI UPDATE (0ms)
+      setEditingProduct(null);
+      setProducts((prev) =>
+        prev.map((p) => (p.id === editingProduct.id ? updatedProduct : p))
+      );
+      showToast('success', `Product "${formData.name}" updated!`);
 
       const payload = {
         name: formData.name,
@@ -531,12 +624,10 @@ export default function ProductsAdminPage() {
         body: JSON.stringify(payload),
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to update product');
-
-      showToast('success', `Product "${formData.name}" updated successfully.`);
-      setEditingProduct(null);
-      fetchProducts();
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to update product');
+      }
     } catch (err: any) {
       showToast('error', err.message || 'Failed to update product.');
     } finally {
@@ -545,44 +636,119 @@ export default function ProductsAdminPage() {
   };
 
   const handleToggleFlag = async (product: Product, field: 'is_featured' | 'is_bestseller') => {
+    const newValue = !product[field];
+
+    // INSTANT UI UPDATE (0ms)
+    setProducts((prev) =>
+      prev.map((p) => (p.id === product.id ? { ...p, [field]: newValue } : p))
+    );
+    showToast(
+      'success',
+      `Updated ${product.name}: ${field === 'is_featured' ? 'Featured' : 'Bestseller'} is now ${newValue ? 'ON' : 'OFF'}`
+    );
+
     try {
       const res = await fetch(`/api/admin/products/${product.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ [field]: !product[field] }),
+        body: JSON.stringify({ [field]: newValue }),
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to toggle status');
-
-      showToast(
-        'success',
-        `Updated ${product.name}: ${field === 'is_featured' ? 'Featured' : 'Bestseller'} is now ${!product[field] ? 'ON' : 'OFF'}`
-      );
-      fetchProducts();
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to toggle status');
+      }
     } catch (err: any) {
+      // Revert state on error
+      setProducts((prev) =>
+        prev.map((p) => (p.id === product.id ? { ...p, [field]: !newValue } : p))
+      );
       showToast('error', err.message || 'Failed to update status.');
     }
   };
 
   const handleDeleteProduct = async () => {
     if (!deletingProduct) return;
+    const target = deletingProduct;
+    setDeletingProduct(null);
+
+    // INSTANT UI UPDATE (0ms)
+    setProducts((prev) => prev.filter((p) => p.id !== target.id));
+    showToast('success', `Product "${target.name}" deleted.`);
+
     try {
-      setIsSubmitting(true);
-      const res = await fetch(`/api/admin/products/${deletingProduct.id}`, {
+      const res = await fetch(`/api/admin/products/${target.id}`, {
         method: 'DELETE',
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to delete product');
-
-      showToast('success', `Product "${deletingProduct.name}" deleted.`);
-      setDeletingProduct(null);
-      fetchProducts();
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to delete product');
+      }
     } catch (err: any) {
+      // Revert on error
+      setProducts((prev) => [target, ...prev]);
       showToast('error', err.message || 'Failed to delete product.');
-    } finally {
-      setIsSubmitting(false);
+    }
+  };
+
+  const handleDuplicateProduct = async (product: Product) => {
+    const timestamp = Date.now().toString().slice(-4);
+    const duplicateName = `${product.name} (Copy)`;
+    const duplicateSlug = `${product.slug}-copy-${timestamp}`;
+    const tempId = `temp-${Date.now()}`;
+
+    const optimisticProduct: Product = {
+      ...product,
+      id: tempId,
+      name: duplicateName,
+      slug: duplicateSlug,
+      is_featured: false,
+      is_bestseller: false,
+      created_at: new Date().toISOString(),
+    };
+
+    // INSTANT UI UPDATE (0ms)
+    setProducts((prev) => [optimisticProduct, ...prev]);
+    showToast('success', `Product "${duplicateName}" duplicated!`);
+
+    try {
+      const payload = {
+        name: duplicateName,
+        slug: duplicateSlug,
+        description: product.description || '',
+        price: Number(product.price) || 0,
+        compare_at_price: product.compare_at_price ? Number(product.compare_at_price) : null,
+        stock: Number(product.stock) || 0,
+        images: product.images || [],
+        scent_notes: product.scent_notes || { top: [], heart: [], base: [] },
+        ingredients: product.ingredients || [],
+        is_featured: false,
+        is_bestseller: false,
+        meta_title: product.meta_title ? `${product.meta_title} (Copy)` : '',
+        meta_description: product.meta_description || '',
+        category_ids: product.categories ? product.categories.map((c) => c.id) : [],
+      };
+
+      const res = await fetch('/api/admin/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setProducts((prev) => prev.filter((p) => p.id !== tempId));
+        throw new Error(data.error || 'Failed to duplicate product');
+      }
+
+      if (data.product) {
+        setProducts((prev) =>
+          prev.map((p) => (p.id === tempId ? { ...data.product, categories: product.categories || [] } : p))
+        );
+      }
+    } catch (err: any) {
+      showToast('error', err.message || 'Failed to duplicate product.');
     }
   };
 
@@ -915,6 +1081,13 @@ export default function ProductsAdminPage() {
                           title="Edit Product"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDuplicateProduct(p)}
+                          className="p-1.5 rounded-lg bg-stone-100 border border-stone-200 text-stone-600 hover:text-amber-700 hover:border-amber-300 transition-all shadow-xs"
+                          title="Duplicate Product"
+                        >
+                          <Copy className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={() => setDeletingProduct(p)}

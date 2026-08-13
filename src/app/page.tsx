@@ -49,7 +49,7 @@ export default async function Home() {
             <h2 className="font-serif font-bold text-3xl sm:text-5xl text-[#1A0510]">
               World's Largest Producer of Pure Rose Oil
             </h2>
-            <p className="text-xs sm:text-sm text-[#4A0D25] max-w-2xl mx-auto leading-relaxed font-semibold">
+            <p className="text-xs sm:text-sm text-[#4A0D25]/90 max-w-2xl mx-auto leading-relaxed font-normal">
               Distilling over <AnimatedCounter end={12000000} duration={1600} /> kilograms of fresh Damask rose petals annually using authentic Kannauj copper deg-bhapka vessels.
             </p>
           </div>
@@ -59,32 +59,32 @@ export default async function Home() {
               <div className="font-serif font-bold text-3xl sm:text-4xl text-[#1A0510]">
                 <AnimatedCounter end={400} suffix="+" duration={1400} />
               </div>
-              <div className="text-xs text-[#1A0510] font-extrabold uppercase tracking-wider">Years Heritage</div>
-              <div className="text-[11px] text-[#4A0D25] font-semibold">Kannauj Distillation since 1620</div>
+              <div className="text-xs text-[#4A0D25] font-bold uppercase tracking-wider">Years Heritage</div>
+              <div className="text-[11px] text-[#4A0D25]/75 font-normal">Kannauj Distillation since 1620</div>
             </div>
 
             <div className="p-5 rounded-2xl bg-[#FAE6E7]/80 border border-[#F7D1D8] space-y-1 shadow-xs">
               <div className="font-serif font-bold text-3xl sm:text-4xl text-[#1A0510]">
                 <AnimatedCounter end={12000} suffix="+" duration={1500} />
               </div>
-              <div className="text-xs text-[#1A0510] font-extrabold uppercase tracking-wider">Kgs Rose Petals</div>
-              <div className="text-[11px] text-[#4A0D25] font-semibold">Pre-dawn harvest every season</div>
+              <div className="text-xs text-[#4A0D25] font-bold uppercase tracking-wider">Kgs Rose Petals</div>
+              <div className="text-[11px] text-[#4A0D25]/75 font-normal">Pre-dawn harvest every season</div>
             </div>
 
             <div className="p-5 rounded-2xl bg-[#FAE6E7]/80 border border-[#F7D1D8] space-y-1 shadow-xs">
               <div className="font-serif font-bold text-3xl sm:text-4xl text-emerald-800">
                 <AnimatedCounter end={99.98} decimals={2} suffix="%" duration={1600} />
               </div>
-              <div className="text-xs text-[#1A0510] font-extrabold uppercase tracking-wider">Certified Purity</div>
-              <div className="text-[11px] text-[#4A0D25] font-semibold">100% Alcohol-Free Hydro-extract</div>
+              <div className="text-xs text-[#4A0D25] font-bold uppercase tracking-wider">Certified Purity</div>
+              <div className="text-[11px] text-[#4A0D25]/75 font-normal">100% Alcohol-Free Hydro-extract</div>
             </div>
 
             <div className="p-5 rounded-2xl bg-[#FAE6E7]/80 border border-[#F7D1D8] space-y-1 shadow-xs">
               <div className="font-serif font-bold text-3xl sm:text-4xl text-[#1A0510]">
                 <AnimatedCounter end={54} duration={1200} />
               </div>
-              <div className="text-xs text-[#1A0510] font-extrabold uppercase tracking-wider">Countries Exported</div>
-              <div className="text-[11px] text-[#4A0D25] font-semibold">Supplying royal families & perfumers</div>
+              <div className="text-xs text-[#4A0D25] font-bold uppercase tracking-wider">Countries Exported</div>
+              <div className="text-[11px] text-[#4A0D25]/75 font-normal">Supplying royal families & perfumers</div>
             </div>
           </div>
         </SectionWrapper>

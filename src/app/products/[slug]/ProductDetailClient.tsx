@@ -308,29 +308,18 @@ export function ProductDetailClient({ product, variants, initialReviews, initial
             </div>
           </div>
 
-          {/* Product Description (Guaranteed Full 200-Word SEO Description) */}
-          <div className="space-y-2 bg-[#F8E8E8]/40 p-4 rounded-2xl border border-[#F7D1D8]">
-            <h3 className="text-[11px] font-black uppercase tracking-widest text-[#9A2048] flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-[#D45A7A]" /> Product Description & 400-Year Heritage
-            </h3>
-            <div className="text-xs sm:text-sm text-[#4A0D25] leading-relaxed whitespace-pre-line font-serif space-y-2">
-              {(() => {
-                if (product.description && product.description.trim().split(/\s+/).length >= 100) {
-                  return product.description;
-                }
-                const topNotes = product.scent_notes?.top?.join(', ') || `${product.name} Opening Extract, Pink Pepper`;
-                const heartNotes = product.scent_notes?.heart?.join(', ') || `${product.name} Botanical Heart, Saffron Crocus`;
-                const baseNotes = product.scent_notes?.base?.join(', ') || `${product.name} Aged Reserve, Mysore Sandalwood`;
-                const baseText = product.description ? `${product.description}\n\n` : '';
-
-                return `${baseText}Immerse your senses in the opulent luxury of ${product.name}, an extraordinary fragrance masterpiece hand-crafted through 400 years of unbroken Kannauj copper still (Deg-Bhapka) hydro-distillation heritage. Formulated as a 100% alcohol-free pure oil elixir, this creation captures the sacred essence of dawn-harvested botanicals, offering fragrance connoisseurs an unparalleled sensory journey that lingers effortlessly for over 12 hours on skin.
-
-The fragrance opens with radiant top notes of ${topNotes}, establishing an immediate impression of intoxicating floral freshness, warmth, and royal court sophistication. As the opening notes settle, the heart unfolds into a rich, complex melody of ${heartNotes}, infusing the sillage with romantic depth and ancient spice.
-
-Finally, ${product.name} anchors into a deep, mesmerizing drydown foundation of ${baseNotes}, leaving a hypnotic and unforgettable signature. Formulated without synthetic denatured spirits, phthalates, or harsh chemicals, each drop preserves raw botanical integrity and skin-soothing purity. Designed for collectors of rare attars who appreciate heritage and longevity, this authentic Kannauj copper distillate reserve elevates your personal aura to regal heights.`;
-              })()}
-            </div>
-          </div>
+          {/* Clean Short 1-2 Line Excerpt Below Price */}
+          <p className="text-xs sm:text-sm text-[#4A0D25]/90 leading-relaxed font-normal border-y border-[#F7D1D8]/60 py-3 my-2">
+            {(() => {
+              if (!product.description) return '100% Pure botanical hydro-distillate hand-crafted in traditional Kannauj copper deg stills.';
+              const sentences = product.description.trim().split(/(?<=[.!?])\s+/);
+              const firstSentence = sentences[0] || product.description;
+              if (firstSentence.length > 160) {
+                return firstSentence.slice(0, 150) + '...';
+              }
+              return firstSentence;
+            })()}
+          </p>
 
           {/* Variant Selector */}
           {variants.length > 0 && (

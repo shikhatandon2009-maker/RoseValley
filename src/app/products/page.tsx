@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { ProductCard } from '@/components/product/ProductCard';
 import { ProductSortSelect } from '@/components/product/ProductSortSelect';
 import { fetchProducts, fetchCategories } from '@/lib/supabase/store-scoped-queries';
-import { Search, Grid3X3 } from 'lucide-react';
+import { Search, Grid3X3, ArrowUpDown } from 'lucide-react';
 import { LuxuryHeader } from '@/components/layout/LuxuryHeader';
 import { LuxuryFooter } from '@/components/layout/LuxuryFooter';
 
@@ -25,6 +25,61 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   ]);
 
   let products = allProducts;
+
+  // Apply Category filter
+  if (searchParams.category) {
+    const catSlug = searchParams.category.toLowerCase().trim();
+    products = products.filter((p: any) => {
+      if (p.category_slug) {
+        return p.category_slug.toLowerCase() === catSlug;
+      }
+      if (p.category_id) {
+        const cat = categories.find((c: any) => c.id === p.category_id);
+        if (cat) return cat.slug.toLowerCase() === catSlug;
+      }
+
+      // Keyword / slug matching fallback
+      const nameLower = (p.name || '').toLowerCase();
+      const slugLower = (p.slug || '').toLowerCase();
+      const descLower = (p.description || '').toLowerCase();
+
+      if (catSlug === 'artisanal-perfumes') {
+        return (
+          slugLower.includes('perfume') ||
+          slugLower.includes('attar') ||
+          slugLower.includes('cologne') ||
+          descLower.includes('attar') ||
+          descLower.includes('perfume') ||
+          nameLower.includes('gulab') ||
+          nameLower.includes('shamama') ||
+          nameLower.includes('saffron') ||
+          nameLower.includes('rose') ||
+          nameLower.includes('oud')
+        );
+      } else if (catSlug === 'pure-essential-oils') {
+        return (
+          slugLower.includes('oil') ||
+          slugLower.includes('extract') ||
+          slugLower.includes('absolute') ||
+          descLower.includes('essential') ||
+          descLower.includes('absolute') ||
+          nameLower.includes('vetiver') ||
+          nameLower.includes('khus') ||
+          nameLower.includes('jasmine')
+        );
+      } else if (catSlug === 'luxury-elixirs-blends') {
+        return (
+          slugLower.includes('blend') ||
+          slugLower.includes('elixir') ||
+          descLower.includes('blend') ||
+          descLower.includes('elixir') ||
+          nameLower.includes('vanilla') ||
+          nameLower.includes('amber')
+        );
+      }
+      return true;
+    });
+  }
 
   // Apply search filter
   if (searchParams.search) {
@@ -49,12 +104,25 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
       case 'bestseller':
         products = [...products].sort((a: any, b: any) => (b.is_bestseller ? 1 : 0) - (a.is_bestseller ? 1 : 0));
         break;
+      case 'name-asc':
+        products = [...products].sort((a: any, b: any) => a.name.localeCompare(b.name));
+        break;
     }
   }
 
   const activeCategory = searchParams.category
     ? categories.find((c: any) => c.slug === searchParams.category)
     : null;
+
+  // Preserve existing sort and search when selecting category
+  const buildCategoryUrl = (catSlug?: string) => {
+    const params = new URLSearchParams();
+    if (catSlug) params.set('category', catSlug);
+    if (searchParams.search) params.set('search', searchParams.search);
+    if (searchParams.sort) params.set('sort', searchParams.sort);
+    const queryString = params.toString();
+    return `/products${queryString ? `?${queryString}` : ''}`;
+  };
 
   return (
     <div className="min-h-screen bg-[#F7EEED] text-[#1A0510]">
@@ -70,7 +138,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
             {activeCategory?.name || 'Our Collection'}
           </h1>
           <p className="text-sm sm:text-base text-[#4A0D25] leading-relaxed font-medium max-w-xl mx-auto">
-            Pure hydro-distilled Damask Rose attars, aged sandalwood elixirs, and botanical skincare — crafted in Kannauj since 1620.
+            {activeCategory?.description || 'Pure hydro-distilled Damask Rose attars, aged sandalwood elixirs, and botanical skincare — crafted in Kannauj since 1620.'}
           </p>
           <div className="flex items-center justify-center gap-1.5 text-[11px] text-[#4A0D25]/60 font-semibold uppercase tracking-widest">
             <Grid3X3 className="w-3.5 h-3.5" />
@@ -86,10 +154,11 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
           {/* Category Pills */}
           <div className="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0 scrollbar-none">
             <Link
-              href="/products"
-              className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
+              href={buildCategoryUrl()}
+              scroll={false}
+              className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap cursor-pointer ${
                 !searchParams.category
-                  ? 'bg-[#4A0D25] text-white shadow-sm'
+                  ? 'bg-[#4A0D25] text-white shadow-md'
                   : 'bg-[#F7EEED] text-[#1A0510] hover:bg-[#F7D1D8] border border-[#F7D1D8]'
               }`}
             >
@@ -98,10 +167,11 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
             {categories.map((cat: any) => (
               <Link
                 key={cat.id}
-                href={`/products?category=${cat.slug}`}
-                className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
+                href={buildCategoryUrl(cat.slug)}
+                scroll={false}
+                className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap cursor-pointer ${
                   searchParams.category === cat.slug
-                    ? 'bg-[#4A0D25] text-white shadow-sm'
+                    ? 'bg-[#4A0D25] text-white shadow-md'
                     : 'bg-[#F7EEED] text-[#1A0510] hover:bg-[#F7D1D8] border border-[#F7D1D8]'
                 }`}
               >
@@ -125,7 +195,14 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
             </form>
 
             {/* Sort Dropdown */}
-            <ProductSortSelect />
+            <React.Suspense fallback={
+              <div className="inline-flex items-center gap-2 bg-[#F7EEED] border border-[#F7D1D8] rounded-full py-2.5 px-4 text-xs font-bold text-[#1A0510] opacity-80">
+                <ArrowUpDown className="w-3.5 h-3.5 text-[#F6A6BB]" />
+                <span>Sort by</span>
+              </div>
+            }>
+              <ProductSortSelect />
+            </React.Suspense>
           </div>
         </div>
 

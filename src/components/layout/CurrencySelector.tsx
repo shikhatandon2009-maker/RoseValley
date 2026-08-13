@@ -39,7 +39,7 @@ export function CurrencySelector() {
         aria-label="Select Currency"
       >
         <Globe className="w-4 h-4 text-[#4A0D25]" />
-        <span className="font-extrabold">{currentOption.code} ({currentOption.symbol})</span>
+        <span className="font-medium">{currentOption.code} ({currentOption.symbol})</span>
         <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-300 ${open ? 'rotate-180' : ''}`} />
       </button>
 

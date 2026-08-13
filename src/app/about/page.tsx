@@ -32,8 +32,8 @@ export default function AboutUsPage() {
             Four Centuries of
             <span className="block text-[#4A0D25] mt-1">Pure Distillation Mastery</span>
           </h1>
-          <p className="text-base sm:text-lg text-[#4A0D25] max-w-2xl mx-auto leading-relaxed font-medium">
-            Rose Valley Kannauj is the world's largest producer of pure hydro-distilled Damask Rose attars, 
+          <p className="text-base sm:text-lg text-[#4A0D25]/90 max-w-2xl mx-auto leading-relaxed font-normal">
+            Rose Valley Kannauj is the world's largest producer of pure hydro-distilled Damask Rose attars,
             operating authentic copper Deg-Bhapka stills since the Mughal Empire.
           </p>
           <div className="flex items-center justify-center gap-4 pt-2">
@@ -54,37 +54,37 @@ export default function AboutUsPage() {
       </section>
 
       {/* BY THE NUMBERS — DARK PREMIUM PANEL */}
-      <section className="bg-[#4A0D25] text-white py-14 sm:py-20 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10" style={{ background: 'radial-gradient(ellipse at 30% 50%, #F6A6BB, transparent 60%)' }} />
+      <section className="bg-[#3D071E] text-white py-14 sm:py-20 relative overflow-hidden border-y border-[#F7D1D8]/20 shadow-inner">
+        <div className="absolute inset-0 opacity-20" style={{ background: 'radial-gradient(ellipse at 50% 50%, #F6A6BB, transparent 70%)' }} />
         <div className="max-w-6xl mx-auto px-4 relative z-10">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 text-center">
-            <div className="space-y-2">
-              <div className="font-serif font-bold text-4xl sm:text-5xl text-white">
-                <AnimatedCounter end={400} suffix="+" duration={1400} />
+            <div className="space-y-2 p-5 rounded-2xl bg-white/5 backdrop-blur-xs border border-white/10 shadow-sm hover:border-[#F6A6BB]/40 transition-all">
+              <div className="font-serif font-bold text-4xl sm:text-5xl text-[#FFF5F7] tracking-tight drop-shadow-[0_2px_10px_rgba(255,245,247,0.3)]">
+                <AnimatedCounter end={400} suffix="+" duration={1400} className="text-[#FFF5F7] font-serif font-bold text-4xl sm:text-5xl" />
               </div>
-              <div className="text-xs text-[#F6A6BB] font-extrabold uppercase tracking-widest">Years Heritage</div>
-              <div className="text-[11px] text-white/50 font-semibold">Since Mughal Empire Era</div>
+              <div className="text-xs text-[#F6A6BB] font-bold uppercase tracking-widest">Years Heritage</div>
+              <div className="text-[11px] text-white/70 font-normal">Since Mughal Empire Era</div>
             </div>
-            <div className="space-y-2">
-              <div className="font-serif font-bold text-4xl sm:text-5xl text-white">
-                <AnimatedCounter end={12} suffix="M+" duration={1500} />
+            <div className="space-y-2 p-5 rounded-2xl bg-white/5 backdrop-blur-xs border border-white/10 shadow-sm hover:border-[#F6A6BB]/40 transition-all">
+              <div className="font-serif font-bold text-4xl sm:text-5xl text-[#FFF5F7] tracking-tight drop-shadow-[0_2px_10px_rgba(255,245,247,0.3)]">
+                <AnimatedCounter end={12} suffix="M+" duration={1500} className="text-[#FFF5F7] font-serif font-bold text-4xl sm:text-5xl" />
               </div>
-              <div className="text-xs text-[#F6A6BB] font-extrabold uppercase tracking-widest">Kgs Rose Petals</div>
-              <div className="text-[11px] text-white/50 font-semibold">Pre-dawn harvest annually</div>
+              <div className="text-xs text-[#F6A6BB] font-bold uppercase tracking-widest">Kgs Rose Petals</div>
+              <div className="text-[11px] text-white/70 font-normal">Pre-dawn harvest annually</div>
             </div>
-            <div className="space-y-2">
-              <div className="font-serif font-bold text-4xl sm:text-5xl text-emerald-400">
-                <AnimatedCounter end={99.98} decimals={2} suffix="%" duration={1600} />
+            <div className="space-y-2 p-5 rounded-2xl bg-white/5 backdrop-blur-xs border border-white/10 shadow-sm hover:border-[#F6A6BB]/40 transition-all">
+              <div className="font-serif font-bold text-4xl sm:text-5xl text-[#FFF5F7] tracking-tight drop-shadow-[0_2px_10px_rgba(255,245,247,0.3)]">
+                <AnimatedCounter end={99.98} decimals={2} suffix="%" duration={1600} className="text-[#FFF5F7] font-serif font-bold text-4xl sm:text-5xl" />
               </div>
-              <div className="text-xs text-[#F6A6BB] font-extrabold uppercase tracking-widest">Certified Purity</div>
-              <div className="text-[11px] text-white/50 font-semibold">Alcohol-free hydro-extract</div>
+              <div className="text-xs text-[#F6A6BB] font-bold uppercase tracking-widest">Certified Purity</div>
+              <div className="text-[11px] text-white/70 font-normal">Alcohol-free hydro-extract</div>
             </div>
-            <div className="space-y-2">
-              <div className="font-serif font-bold text-4xl sm:text-5xl text-white">
-                <AnimatedCounter end={54} duration={1200} />
+            <div className="space-y-2 p-5 rounded-2xl bg-white/5 backdrop-blur-xs border border-white/10 shadow-sm hover:border-[#F6A6BB]/40 transition-all">
+              <div className="font-serif font-bold text-4xl sm:text-5xl text-[#FFF5F7] tracking-tight drop-shadow-[0_2px_10px_rgba(255,245,247,0.3)]">
+                <AnimatedCounter end={54} suffix="+" duration={1200} className="text-[#FFF5F7] font-serif font-bold text-4xl sm:text-5xl" />
               </div>
-              <div className="text-xs text-[#F6A6BB] font-extrabold uppercase tracking-widest">Countries</div>
-              <div className="text-[11px] text-white/50 font-semibold">Global export network</div>
+              <div className="text-xs text-[#F6A6BB] font-bold uppercase tracking-widest">Countries</div>
+              <div className="text-[11px] text-white/70 font-normal">Global export network</div>
             </div>
           </div>
         </div>
@@ -100,25 +100,25 @@ export default function AboutUsPage() {
             <h2 className="font-serif font-bold text-3xl sm:text-5xl text-[#1A0510] leading-tight">
               Pre-Dawn Petals & Pure Copper Vessels
             </h2>
-            <p className="text-sm text-[#4A0D25] leading-relaxed font-medium">
+            <p className="text-sm text-[#4A0D25]/90 leading-relaxed font-normal">
               Every spring in the fertile Rose Valley of Kannauj, over 12,000,000 kilograms of Rosa Damascena petals are hand-harvested before sunrise. Within hours of picking, the fresh petals are sealed inside traditional copper Degs with natural well water.
             </p>
-            <p className="text-sm text-[#4A0D25] leading-relaxed font-medium">
+            <p className="text-sm text-[#4A0D25]/90 leading-relaxed font-normal">
               Heated over wood fires, the steam travels through bamboo receiver pipes (Chonga) immersed in cold water tanks, condensing into concentrated Ruh Gulab and pure Mysore Sandalwood bases.
             </p>
 
             <div className="grid grid-cols-2 gap-4 pt-2">
-              <div className="p-5 rounded-2xl bg-white border border-[#F7D1D8] shadow-sm">
-                <div className="font-serif font-bold text-3xl text-[#4A0D25]">
-                  <AnimatedCounter end={400} suffix="+" duration={1400} />
+              <div className="p-5 rounded-2xl bg-[#3D071E] border border-[#F6A6BB]/40 shadow-lg text-white space-y-1">
+                <div className="font-serif font-bold text-3xl sm:text-4xl text-[#FFF5F7]">
+                  <AnimatedCounter end={400} suffix="+" duration={1400} className="text-[#FFF5F7] font-serif font-bold text-3xl sm:text-4xl" />
                 </div>
-                <div className="text-[10px] text-[#1A0510] font-bold uppercase tracking-wider mt-1">Years Heritage Still</div>
+                <div className="text-[10px] sm:text-xs text-[#F6A6BB] font-bold uppercase tracking-widest mt-1">Years Heritage Still</div>
               </div>
-              <div className="p-5 rounded-2xl bg-white border border-[#F7D1D8] shadow-sm">
-                <div className="font-serif font-bold text-3xl text-emerald-700">
-                  <AnimatedCounter end={99.98} decimals={2} suffix="%" duration={1600} />
+              <div className="p-5 rounded-2xl bg-[#3D071E] border border-[#F6A6BB]/40 shadow-lg text-white space-y-1">
+                <div className="font-serif font-bold text-3xl sm:text-4xl text-[#FFF5F7]">
+                  <AnimatedCounter end={99.98} decimals={2} suffix="%" duration={1600} className="text-[#FFF5F7] font-serif font-bold text-3xl sm:text-4xl" />
                 </div>
-                <div className="text-[10px] text-[#1A0510] font-bold uppercase tracking-wider mt-1">Alcohol-Free Purity</div>
+                <div className="text-[10px] sm:text-xs text-[#F6A6BB] font-bold uppercase tracking-widest mt-1">Alcohol-Free Purity</div>
               </div>
             </div>
           </div>
@@ -173,11 +173,10 @@ export default function AboutUsPage() {
               return (
                 <div key={idx} className="relative text-center flex flex-col items-center">
                   {/* Dot on timeline */}
-                  <div className={`w-16 h-16 rounded-full flex items-center justify-center z-10 shadow-md mb-4 ${
-                    isLast
+                  <div className={`w-16 h-16 rounded-full flex items-center justify-center z-10 shadow-md mb-4 ${isLast
                       ? 'bg-[#4A0D25] text-white ring-4 ring-[#F6A6BB]/30'
                       : 'bg-white border-2 border-[#F7D1D8] text-[#4A0D25]'
-                  }`}>
+                    }`}>
                     <Icon className={`w-6 h-6 ${isLast ? 'text-[#F6A6BB]' : 'text-[#F6A6BB]'}`} />
                   </div>
                   <span className={`font-mono text-sm font-bold ${isLast ? 'text-[#4A0D25]' : 'text-[#F6A6BB]'} mb-1`}>
@@ -219,7 +218,7 @@ export default function AboutUsPage() {
             <p className="text-sm text-[#4A0D25] leading-relaxed font-medium">
               Our Master Perfumer represents the 7th generation of a Kannauj distilling dynasty that has served royal courts across the Indian subcontinent. Trained since childhood in the art of copper deg hydro-distillation, they bring unparalleled expertise to every batch.
             </p>
-            <p className="text-sm text-[#4A0D25] leading-relaxed font-medium">
+            <p className="text-sm text-[#4A0D25]/90 leading-relaxed font-normal">
               Each fragrance is personally supervised from pre-dawn petal harvest through the 72-hour distillation cycle, ensuring the 99.98% purity standard that defines our house.
             </p>
             <blockquote className="border-l-4 border-[#F6A6BB] pl-4 italic text-sm text-[#1A0510] font-medium">

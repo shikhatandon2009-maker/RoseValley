@@ -9,6 +9,9 @@ interface AnimatedCounterProps {
   prefix?: string;
   suffix?: string;
   className?: string;
+  prefixClassName?: string;
+  suffixClassName?: string;
+  highlightSymbols?: boolean;
 }
 
 export function AnimatedCounter({
@@ -18,6 +21,9 @@ export function AnimatedCounter({
   prefix = '',
   suffix = '',
   className = '',
+  prefixClassName = '',
+  suffixClassName = '',
+  highlightSymbols = true,
 }: AnimatedCounterProps) {
   const [count, setCount] = useState(0);
   const [hasAnimated, setHasAnimated] = useState(false);
@@ -62,11 +68,16 @@ export function AnimatedCounter({
     ? count.toFixed(decimals)
     : Math.floor(count).toLocaleString('en-US');
 
+  const renderSuffix = () => {
+    if (!suffix) return null;
+    return <span className={suffixClassName}>{suffix}</span>;
+  };
+
   return (
     <span ref={containerRef} className={className}>
-      {prefix}
+      {prefix && <span className={prefixClassName}>{prefix}</span>}
       {formattedCount}
-      {suffix}
+      {renderSuffix()}
     </span>
   );
 }

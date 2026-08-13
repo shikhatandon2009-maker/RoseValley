@@ -148,8 +148,8 @@ export function RoseOilBottlesOrbitalSpinner({ products }: RoseOilBottlesOrbital
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      {/* Soft radial glow — simplified for performance */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full pointer-events-none z-0 opacity-30" style={{ background: 'radial-gradient(circle, #F6A6BB 0%, #F7D1D8 40%, transparent 70%)' }} />
+      {/* Soft pinkish radial aura glow — matching product detail page */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[450px] h-[450px] sm:w-[600px] sm:h-[600px] bg-gradient-radial from-[#F6A6BB]/50 via-[#F4BBC9]/30 to-transparent rounded-full blur-[90px] pointer-events-none z-0 animate-pulse" />
 
       {/* Background product name watermark */}
       <div className="absolute top-[38%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] max-w-[500px] flex justify-center text-center pointer-events-none overflow-hidden opacity-[0.08] z-0">
@@ -225,24 +225,24 @@ export function RoseOilBottlesOrbitalSpinner({ products }: RoseOilBottlesOrbital
                           : 'scale-90 opacity-30'
                       }`}
                     >
-                      {/* Simplified aura glow for active bottle */}
+                      {/* Soft pinkish radial aura glow for active bottle — matching product detail page */}
                       {isActive && (
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[320px] h-[320px] sm:w-[400px] sm:h-[400px] rounded-full pointer-events-none z-0 animate-pulse opacity-40" style={{ background: 'radial-gradient(circle, #F6A6BB 0%, #F4BBC9 35%, transparent 65%)' }} />
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[320px] h-[320px] sm:w-[420px] sm:h-[420px] bg-gradient-radial from-[#F6A6BB]/60 via-[#F4BBC9]/40 to-transparent rounded-full blur-[80px] pointer-events-none z-0 animate-pulse" />
                       )}
 
-                      {/* Studio Ground Shadow */}
+                      {/* Light Studio Ground Shadow */}
                       {isActive && (
-                        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-2/3 h-6 bg-[#4A0D25]/15 rounded-full blur-xl pointer-events-none z-10" />
+                        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-2/3 h-6 bg-[#4A0D25]/10 rounded-full blur-xl pointer-events-none z-10" />
                       )}
 
-                      {/* Bottle Image */}
+                      {/* Bottle Image with soft rose drop shadow */}
                       <Image
                         src={bottle.image}
                         alt={bottle.name}
                         fill
                         priority={idx === 0}
                         loading={idx === 0 ? 'eager' : 'lazy'}
-                        className="object-contain mix-blend-multiply drop-shadow-lg hover:scale-105 transition-transform duration-700 ease-out z-20 relative"
+                        className="object-contain mix-blend-multiply drop-shadow-[0_20px_50px_rgba(246,166,187,0.4)] hover:scale-105 transition-transform duration-700 ease-out z-20 relative"
                         sizes="(max-width: 768px) 320px, 420px"
                       />
                     </div>

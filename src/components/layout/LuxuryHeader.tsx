@@ -7,7 +7,7 @@ import {
   Sparkles, ShoppingBag, User, Heart, ChevronDown, ChevronRight,
   Menu, X, Award, Droplet, ArrowRight, ShieldCheck, Trash2,
   ShoppingCart, CheckCircle2, QrCode, MapPin, BookOpen, Newspaper,
-  Search, Phone, Mail, Package, Star, Gift, Flame, Crown, LogIn, LogOut
+  Search, Phone, Mail, Package, Star, Gift, Flame, Crown, LogIn, LogOut, Globe
 } from 'lucide-react';
 import { useCartStore } from '@/store/cart-store';
 import { useWishlistStore } from '@/store/wishlist-store';
@@ -80,7 +80,7 @@ export function LuxuryHeader() {
                 });
                 return;
               }
-            } catch (e) {}
+            } catch (e) { }
           }
           setCurrentUser(null);
         } else {
@@ -204,7 +204,7 @@ export function LuxuryHeader() {
         {/* 2. ROW 1: UTILITIES (LEFT), CENTERED LOGO (CENTER), ACTIONS (RIGHT) */}
         <div className="luxury-header-top-row">
           {/* Left: Mobile Toggle, Currency Selector & Notification */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3">
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="luxury-mobile-menu-btn lg:hidden luxury-icon-btn"
@@ -212,7 +212,7 @@ export function LuxuryHeader() {
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
-            <div className="hidden sm:flex items-center gap-3">
+            <div className="flex items-center gap-1.5 sm:gap-3">
               <CurrencySelector />
 
               {/* Notification/Wishlist Dropdown */}
@@ -302,10 +302,15 @@ export function LuxuryHeader() {
 
           {/* Center: Brand Logo */}
           <Link href="/" className="luxury-brand-link-centered">
-            <h1 className="luxury-brand-title">
+            {/* Desktop Brand Title */}
+            <h1 className="luxury-brand-title hidden sm:block">
               ROSE VALLEY KANNAUJ
             </h1>
-            <span className={`luxury-brand-subtitle ${scrolled ? 'luxury-brand-subtitle-hidden' : ''}`}>
+            {/* Mobile Compact Monogram */}
+            <h1 className="luxury-brand-title block sm:hidden text-xl font-serif font-extrabold tracking-[0.25em] text-[#1A0510]">
+              Rose Valley
+            </h1>
+            <span className={`luxury-brand-subtitle hidden sm:block ${scrolled ? 'luxury-brand-subtitle-hidden' : ''}`}>
               Est. 1620 • Pure Hydro-Distillates
             </span>
           </Link>
@@ -827,6 +832,14 @@ export function LuxuryHeader() {
           </button>
         </div>
 
+        {/* Mobile Side Menu Currency Selector Bar */}
+        <div className="px-5 py-3 bg-[#FAE6E7]/80 border-b border-[#F7D1D8] flex items-center justify-between">
+          <span className="text-xs font-black uppercase tracking-wider text-[#4A0D25] flex items-center gap-1.5">
+            <Globe className="w-4 h-4 text-[#F6A6BB]" /> Currency:
+          </span>
+          <CurrencySelector />
+        </div>
+
         {/* Drawer Nav */}
         <nav className="luxury-mobile-nav">
           <Link
@@ -981,7 +994,7 @@ export function LuxuryHeader() {
         onClose={() => setCheckoutChoiceOpen(false)}
         onContinueGuest={() => {
           setCheckoutChoiceOpen(false);
-          try { sessionStorage.setItem('active_guest_checkout', 'true'); } catch (e) {}
+          try { sessionStorage.setItem('active_guest_checkout', 'true'); } catch (e) { }
           router.push('/checkout');
         }}
       />

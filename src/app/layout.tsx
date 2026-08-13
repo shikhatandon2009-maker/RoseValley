@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Playfair_Display, Plus_Jakarta_Sans, Montserrat, Cinzel } from 'next/font/google';
+import { Playfair_Display, Plus_Jakarta_Sans, Pinyon_Script } from 'next/font/google';
 import './globals.css';
 import { CartDrawer } from '@/components/cart/CartDrawer';
 import { ThemeProvider } from '@/components/layout/ThemeProvider';
@@ -7,7 +7,7 @@ import { FontProvider } from '@/components/layout/FontProvider';
 
 const playfair = Playfair_Display({
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800', '900'],
+  weight: ['400', '500', '600', '700'],
   variable: '--font-serif',
   display: 'swap',
   preload: true,
@@ -15,24 +15,16 @@ const playfair = Playfair_Display({
 
 const plusJakarta = Plus_Jakarta_Sans({
   subsets: ['latin'],
-  weight: ['300', '400', '500', '600', '700', '800'],
+  weight: ['300', '400', '500'],
   variable: '--font-jakarta',
   display: 'swap',
   preload: true,
 });
 
-const montserrat = Montserrat({
+const pinyonScript = Pinyon_Script({
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800', '900'],
-  variable: '--font-montserrat',
-  display: 'swap',
-  preload: false,
-});
-
-const cinzel = Cinzel({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800', '900'],
-  variable: '--font-cinzel',
+  weight: ['400'],
+  variable: '--font-script',
   display: 'swap',
   preload: false,
 });
@@ -56,7 +48,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${playfair.variable} ${plusJakarta.variable} ${montserrat.variable} ${cinzel.variable}`}>
+    <html lang="en" className={`${playfair.variable} ${plusJakarta.variable} ${pinyonScript.variable}`}>
       <body className="font-sans min-h-screen flex flex-col justify-between selection:bg-[#F6A6BB] selection:text-neutral-950 relative">
         <FontProvider>
           <ThemeProvider>

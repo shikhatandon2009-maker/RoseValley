@@ -197,12 +197,12 @@ export function ProductCard({ product }: ProductCardProps) {
         <button
           onClick={handleAddToCart}
           disabled={isOutOfStock}
-          className={`mt-4 w-full font-extrabold text-xs py-3 rounded-xl transition-all flex items-center justify-center gap-2 shadow-xs ${
+          className={`mt-4 w-full font-black text-xs uppercase tracking-wider py-3 rounded-full border border-[#F7D1D8] transition-all flex items-center justify-center gap-2 shadow-xs cursor-pointer ${
             isOutOfStock
-              ? 'bg-stone-100 text-stone-400 cursor-not-allowed'
+              ? 'bg-stone-100 text-stone-400 border-stone-200 cursor-not-allowed'
               : added
-              ? 'bg-[#4A0D25] text-white ring-1 ring-[#F6A6BB]'
-              : 'bg-[#FAE6E7] hover:bg-[#F6A6BB] text-[#4A0D25] hover:shadow-md'
+              ? 'bg-[#4A0D25] text-white'
+              : 'bg-gradient-to-r from-[#F6A6BB] to-[#F4BBC9] hover:from-[#F4BBC9] hover:to-[#F7D1D8] text-[#4A0D25] hover:shadow-md'
           }`}
         >
           {isOutOfStock ? (

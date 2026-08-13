@@ -173,19 +173,13 @@ export default function ProductsAdminPage() {
 
         setFormData((prev) => ({
           ...prev,
-          topNotesText: Array.isArray(parsed.top) && parsed.top.length > 0 ? parsed.top.join(', ') : 'Damask Rose Petals, Calabrian Bergamot, Pink Pepper',
-          heartNotesText: Array.isArray(parsed.heart) && parsed.heart.length > 0 ? parsed.heart.join(', ') : 'Night-Blooming Jasmine, Saffron Crocus, Royal Neroli',
-          baseNotesText: Array.isArray(parsed.base) && parsed.base.length > 0 ? parsed.base.join(', ') : 'Aged Royal Oud, Mysore Sandalwood, Golden Amber',
+          topNotesText: Array.isArray(parsed.top) ? parsed.top.join(', ') : '',
+          heartNotesText: Array.isArray(parsed.heart) ? parsed.heart.join(', ') : '',
+          baseNotesText: Array.isArray(parsed.base) ? parsed.base.join(', ') : '',
         }));
         showToast('success', '✨ AI Pyramid Notes generated for Top, Heart & Base notes!');
       } catch (e) {
-        setFormData((prev) => ({
-          ...prev,
-          topNotesText: 'Damask Rose Petals, Calabrian Bergamot, Pink Pepper',
-          heartNotesText: 'Night-Blooming Jasmine, Saffron Crocus, Royal Neroli',
-          baseNotesText: 'Aged Royal Oud, Mysore Sandalwood, Golden Amber',
-        }));
-        showToast('success', '✨ All 3 Scent Notes (Top, Heart, Base) assigned!');
+        showToast('error', 'Could not parse AI Scent Notes response.');
       }
     } catch (err: any) {
       console.error(err);
@@ -219,17 +213,12 @@ export default function ProductsAdminPage() {
 
         setFormData((prev) => ({
           ...prev,
-          meta_title: parsed.meta_title || `${formData.name} | Pure Kannauj Attar | Maison De L'Essence`,
-          meta_description: parsed.meta_description || `Discover ${formData.name}, hand-distilled in 400-year Kannauj copper stills with pure Damask rose, aged oud, and sandalwood. 100% alcohol-free.`,
+          meta_title: parsed.meta_title || '',
+          meta_description: parsed.meta_description || '',
         }));
         showToast('success', '✨ AI SEO Title & Description generated!');
       } catch (e) {
-        setFormData((prev) => ({
-          ...prev,
-          meta_title: `${formData.name} | Pure Kannauj Attar | Maison De L'Essence`,
-          meta_description: `Discover ${formData.name}, hand-distilled in 400-year Kannauj copper stills with pure Damask rose, aged oud, and sandalwood. 100% alcohol-free.`,
-        }));
-        showToast('success', '✨ AI SEO Title & Description generated!');
+        showToast('error', 'Could not parse AI SEO response.');
       }
     } catch (err: any) {
       showToast('error', err.message || 'AI SEO Generation error');
@@ -262,12 +251,7 @@ export default function ProductsAdminPage() {
         setGeneratedReviews(Array.isArray(parsed) ? parsed : []);
         showToast('success', '⭐ 3 Authentic 5-Star Customer Reviews generated!');
       } catch (e) {
-        setGeneratedReviews([
-          { name: 'Victoria Sterling', rating: 5, verified: true, date: '2 days ago', title: 'Unrivaled Longevity & Regal Scent', review: `An extraordinary masterpiece! ${formData.name} blooms gracefully into warm amber and aged sandalwood that lasts all day.` },
-          { name: 'Alexander Vance', rating: 5, verified: true, date: '1 week ago', title: 'Authentic Kannauj Craftsmanship', review: 'You can truly feel the 400-year Deg-Bhapka heritage in every drop. Exceptional sillage and zero harsh alcohol.' },
-          { name: 'Priya Sharma', rating: 5, verified: true, date: '2 weeks ago', title: 'Pure & Heavenly Fragrance', review: '100% alcohol-free and so soothing on skin. I receive endless compliments wherever I go!' }
-        ]);
-        showToast('success', '⭐ 3 Authentic 5-Star Customer Reviews generated!');
+        showToast('error', 'Could not parse AI Reviews response.');
       }
     } catch (err: any) {
       showToast('error', err.message || 'AI Reviews Generation error');

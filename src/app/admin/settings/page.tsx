@@ -282,12 +282,6 @@ export default function SiteSettingsAdminPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <Link
-            href="/admin/homepage-sections"
-            className="px-3.5 py-2.5 rounded-xl bg-white border border-stone-300 text-stone-700 text-xs font-bold hover:bg-stone-50 transition-all flex items-center gap-2 shadow-sm"
-          >
-            <Layout className="w-4 h-4 text-amber-600" /> Homepage Layout Manager
-          </Link>
           <button
             onClick={handleSaveSettings}
             disabled={isSaving}

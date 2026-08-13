@@ -20,7 +20,6 @@ import {
   MessageSquare,
   Settings,
   Globe,
-  Layout,
   FileText,
   Mail,
   ChevronDown,
@@ -143,19 +142,9 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
           icon: Settings,
         },
         {
-          label: 'Typography & Fonts',
-          href: '/admin/fonts',
-          icon: Type,
-        },
-        {
           label: 'Countries & Addresses',
           href: '/admin/countries',
           icon: Globe,
-        },
-        {
-          label: 'Homepage Sections',
-          href: '/admin/homepage-sections',
-          icon: Layout,
         },
         {
           label: 'Pages (Static & Blog)',

@@ -262,6 +262,67 @@ export default function CheckoutPage() {
   const [showGstinInput, setShowGstinInput] = useState(false);
   const [gstinNumber, setGstinNumber] = useState('');
   const [companyName, setCompanyName] = useState('');
+  const [gstAutoPopulated, setGstAutoPopulated] = useState(false);
+
+  // Auto lookup & populate GSTIN from company record or database
+  const lookupAndPopulateGstin = async (company: string, userId?: string) => {
+    const cleanComp = (company || '').trim();
+    if (!cleanComp && !userId) return;
+
+    // Check cached localStorage
+    if (cleanComp) {
+      try {
+        const cached = localStorage.getItem(`company_gstin_${cleanComp.toLowerCase()}`);
+        if (cached && cached.length >= 10) {
+          setGstinNumber(cached.toUpperCase());
+          setShowGstinInput(true);
+          setGstAutoPopulated(true);
+          return;
+        }
+      } catch (e) {}
+    }
+
+    try {
+      const params = new URLSearchParams();
+      if (cleanComp) params.append('company', cleanComp);
+      if (userId) params.append('user_id', userId);
+
+      const res = await fetch(`/api/admin/users/company-gst?${params.toString()}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.found && data.gstin) {
+          setGstinNumber(data.gstin.toUpperCase());
+          setShowGstinInput(true);
+          setGstAutoPopulated(true);
+          if (cleanComp) {
+            try {
+              localStorage.setItem(`company_gstin_${cleanComp.toLowerCase()}`, data.gstin.toUpperCase());
+            } catch (e) {}
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('Company GST lookup notice:', err);
+    }
+  };
+
+  const handleCompanyNameChange = (val: string) => {
+    setCompanyName(val);
+    if (val.trim().length >= 3 && (!gstinNumber || gstAutoPopulated)) {
+      lookupAndPopulateGstin(val, currentUser?.id);
+    }
+  };
+
+  const handleGstinNumberChange = (val: string) => {
+    const upper = val.toUpperCase();
+    setGstinNumber(upper);
+    setGstAutoPopulated(false);
+    if (upper.length >= 10 && companyName.trim()) {
+      try {
+        localStorage.setItem(`company_gstin_${companyName.trim().toLowerCase()}`, upper);
+      } catch (e) {}
+    }
+  };
 
   // Payment Method State: 'razorpay' or 'paypal'
   const [paymentMethod, setPaymentMethod] = useState<'razorpay' | 'paypal'>('razorpay');
@@ -323,11 +384,18 @@ export default function CheckoutPage() {
                 if (defaultAddr) {
                   setSavedAddressId(defaultAddr.id);
                   setFullName(defaultAddr.full_name || data.user.full_name || '');
-                  setCompanyName(defaultAddr.company_name || defaultAddr.business_name || '');
+                  const currentComp = defaultAddr.company_name || defaultAddr.business_name || '';
+                  setCompanyName(currentComp);
+                  
                   if (defaultAddr.gstin) {
                     setGstinNumber(defaultAddr.gstin);
                     setShowGstinInput(true);
+                    setGstAutoPopulated(true);
+                  } else if (currentComp) {
+                    // Auto populate GST number from records for this company
+                    lookupAndPopulateGstin(currentComp, data.user.id);
                   }
+
                   setStreetAddress1(defaultAddr.street_address || defaultAddr.street || '');
                   setCity(defaultAddr.city || '');
                   setState(defaultAddr.state || 'Uttar Pradesh');
@@ -899,7 +967,7 @@ export default function CheckoutPage() {
                   <input
                     type="text"
                     value={companyName}
-                    onChange={(e) => setCompanyName(e.target.value)}
+                    onChange={(e) => handleCompanyNameChange(e.target.value)}
                     placeholder="e.g. Royal Aromatics Pvt. Ltd. / Heritage Boutique"
                     className="w-full bg-white border border-[#F7D1D8] rounded-xl py-2.5 px-3.5 text-xs text-[#1A0510] font-semibold focus:outline-none focus:ring-2 focus:ring-[#F6A6BB] shadow-xs"
                   />
@@ -1051,11 +1119,18 @@ export default function CheckoutPage() {
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="space-y-1">
-                      <label className="text-[11px] font-bold text-[#4A0D25]">Buyer GST Number (GSTIN) *</label>
+                      <div className="flex items-center justify-between">
+                        <label className="text-[11px] font-bold text-[#4A0D25]">Buyer GST Number (GSTIN) *</label>
+                        {gstAutoPopulated && gstinNumber && (
+                          <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 animate-fade-in flex items-center gap-1">
+                            <span>✓</span> Company Record Auto-filled
+                          </span>
+                        )}
+                      </div>
                       <input
                         type="text"
                         value={gstinNumber}
-                        onChange={(e) => setGstinNumber(e.target.value.toUpperCase())}
+                        onChange={(e) => handleGstinNumberChange(e.target.value)}
                         placeholder="09AAAAA0000A1Z5"
                         maxLength={15}
                         className="w-full bg-white border border-[#F7D1D8] rounded-xl py-2 px-3 text-xs text-[#1A0510] font-mono font-bold uppercase focus:outline-none focus:ring-2 focus:ring-[#F6A6BB]"
@@ -1066,7 +1141,7 @@ export default function CheckoutPage() {
                       <input
                         type="text"
                         value={companyName}
-                        onChange={(e) => setCompanyName(e.target.value)}
+                        onChange={(e) => handleCompanyNameChange(e.target.value)}
                         placeholder="Maison Luxe Private Ltd"
                         className="w-full bg-white border border-[#F7D1D8] rounded-xl py-2 px-3 text-xs text-[#1A0510] font-semibold focus:outline-none focus:ring-2 focus:ring-[#F6A6BB]"
                       />

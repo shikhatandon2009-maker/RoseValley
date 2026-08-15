@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -31,9 +31,16 @@ export function CartDrawer() {
     }
   }, [isOpen]);
 
-  if (!isOpen && !checkoutChoiceOpen) return null;
+  const totalINR = useMemo(() => {
+    if (!items || items.length === 0) return 0;
+    return items.reduce((sum, item) => {
+      const p = Number(item.price) || 0;
+      const q = Number(item.quantity) || 1;
+      return sum + p * Math.max(1, q);
+    }, 0);
+  }, [items]);
 
-  const totalINR = getTotalINR();
+  if (!isOpen && !checkoutChoiceOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden animate-fade-in">

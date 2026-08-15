@@ -446,7 +446,7 @@ export function LuxuryHeader() {
               >
                 <User className="luxury-cart-icon" />
                 <span className="luxury-cart-text hidden sm:inline" suppressHydrationWarning>
-                  {currentUser?.full_name ? currentUser.full_name.split(' ')[0] : 'Login'}
+                  {mounted && currentUser?.full_name ? currentUser.full_name.split(' ')[0] : 'Login'}
                 </span>
                 <ChevronDown className={`w-3.5 h-3.5 text-[#4A0D25] transition-transform duration-300 hidden sm:block ${accountOpen ? 'rotate-180' : ''}`} />
               </button>
@@ -474,7 +474,7 @@ export function LuxuryHeader() {
                           { href: '/account', icon: ShoppingBag, label: 'My Orders', desc: 'Track orders & AWB receipts' },
                           { href: '/wishlist', icon: Heart, label: 'My Wishlist', desc: `Saved attars (${mounted ? productIds.length : 0})` },
                           { href: '/account', icon: MapPin, label: 'My Profile & Addresses', desc: 'Saved shipping address book' },
-                          { href: '/provenance-passport', icon: ShieldCheck, label: 'Authenticity Passports', desc: 'Verify batch QR purity spectrum' },
+                          { href: '/account', icon: Mail, label: 'Personal Communications', desc: 'Queries & concierge desk' },
                         ].map((item) => (
                           <Link
                             key={item.label}
@@ -628,15 +628,15 @@ export function LuxuryHeader() {
                               <div className="flex items-center justify-between mt-1">
                                 <div className="luxury-cart-hover-qty-controls border border-[#F7D1D8] rounded-lg px-2 py-0.5 bg-white">
                                   <button
-                                    onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
-                                    className="text-xs font-bold text-stone-600 hover:text-[#4A0D25]"
+                                    onClick={() => updateQuantity(item.id, -1)}
+                                    className="text-xs font-bold text-stone-600 hover:text-[#4A0D25] cursor-pointer"
                                   >
                                     -
                                   </button>
                                   <span className="text-xs font-extrabold text-[#1A0510]">{item.quantity}</span>
                                   <button
-                                    onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                                    className="text-xs font-bold text-stone-600 hover:text-[#4A0D25]"
+                                    onClick={() => updateQuantity(item.id, 1)}
+                                    className="text-xs font-bold text-stone-600 hover:text-[#4A0D25] cursor-pointer"
                                   >
                                     +
                                   </button>

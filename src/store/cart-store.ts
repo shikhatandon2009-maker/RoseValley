@@ -196,9 +196,12 @@ export const useCartStore = create<CartState>()(
       toggleCart: (open) => set((state) => ({ isOpen: open !== undefined ? open : !state.isOpen })),
 
       getTotalINR: () => {
-        return get().items.reduce((sum, item) => {
-          const qty = item.quantity > 99 ? 1 : Math.max(1, item.quantity);
-          return sum + item.price * qty;
+        const currentItems = get().items || [];
+        return currentItems.reduce((sum, item) => {
+          const p = Number(item.price) || 0;
+          const q = Number(item.quantity) || 1;
+          const qty = q > 99 ? 1 : Math.max(1, q);
+          return sum + p * qty;
         }, 0);
       },
 

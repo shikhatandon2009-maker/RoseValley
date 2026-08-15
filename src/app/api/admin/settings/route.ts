@@ -30,6 +30,7 @@ export async function GET(request: NextRequest) {
       contact_phone: '+91 98765 43210',
       shipping_rates: { standard: 150, express: 300, free_threshold: 2500 },
       tax_rate: 18.00,
+      store_gstin: '09AAACR1234F1Z5',
       social_links: {
         instagram: 'https://instagram.com',
         facebook: 'https://facebook.com',
@@ -37,6 +38,11 @@ export async function GET(request: NextRequest) {
     };
 
     const resultSettings = settings ? { ...defaultSettings, ...settings } : defaultSettings;
+
+    // Resolve store_gstin if stored in social_links
+    if ((resultSettings.social_links as any)?._store_gstin && !resultSettings.store_gstin) {
+      resultSettings.store_gstin = (resultSettings.social_links as any)._store_gstin;
+    }
 
     // Resolve use_text_logo: check social_links._use_text_logo fallback first if set, or column value
     let useTextLogo = false;
@@ -74,6 +80,7 @@ export async function PUT(request: NextRequest) {
       contact_phone,
       shipping_rates = { standard: 150, express: 300, free_threshold: 2500 },
       tax_rate = 18.00,
+      store_gstin = '09AAACR1234F1Z5',
       social_links = {},
     } = body;
 
@@ -85,6 +92,7 @@ export async function PUT(request: NextRequest) {
     const mergedSocialLinks = {
       ...(typeof social_links === 'object' && social_links ? social_links : {}),
       _use_text_logo: Boolean(use_text_logo),
+      _store_gstin: String(store_gstin || '09AAACR1234F1Z5').trim(),
     };
 
     const payload = {
@@ -118,13 +126,14 @@ export async function PUT(request: NextRequest) {
         .single();
 
       if (!fallbackError && fallbackSettings) {
-        updatedSettings = { ...fallbackSettings, use_text_logo: Boolean(use_text_logo) };
+        updatedSettings = { ...fallbackSettings, use_text_logo: Boolean(use_text_logo), store_gstin: String(store_gstin) };
         error = null;
       } else {
         error = fallbackError;
       }
     } else if (updatedSettings) {
       updatedSettings.use_text_logo = Boolean(use_text_logo);
+      updatedSettings.store_gstin = String(store_gstin);
     }
 
     if (error) {

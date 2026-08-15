@@ -20,6 +20,7 @@ import {
   Star,
   HelpCircle,
   MessageSquare,
+  MessageCircle,
   Settings,
   Globe,
   FileText,
@@ -36,6 +37,25 @@ import {
 interface AdminSidebarProps {
   isOpen?: boolean;
   onClose?: () => void;
+}
+
+interface NavChildItem {
+  label: string;
+  href: string;
+  icon?: any;
+}
+
+interface NavItem {
+  label: string;
+  href: string;
+  icon: any;
+  badge?: string;
+  children?: NavChildItem[];
+}
+
+interface NavGroup {
+  title: string;
+  items: NavItem[];
 }
 
 export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
@@ -125,6 +145,12 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
     {
       title: 'COMMUNITY & FEEDBACK',
       items: [
+        {
+          label: 'Customer Inquiries & Desk',
+          href: '/admin/inquiries',
+          icon: MessageCircle,
+          badge: 'Live',
+        },
         {
           label: 'Reviews & Votes',
           href: '/admin/reviews',

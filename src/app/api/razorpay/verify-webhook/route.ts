@@ -20,6 +20,11 @@ export async function POST(request: Request) {
       guestEmail,
       userId,
       totalAmount,
+      taxAmount,
+      taxRate = 18.00,
+      taxableAmount,
+      gstin,
+      paymentMethod = 'razorpay',
       currency = 'INR',
       isMock = false,
     } = body;
@@ -34,19 +39,34 @@ export async function POST(request: Request) {
 
     const supabase = getSupabaseServerClient();
 
+    const businessName = shippingAddress?.companyName || shippingAddress?.company_name || shippingAddress?.business_name || null;
+
+    const enhancedShippingAddress = {
+      ...(typeof shippingAddress === 'object' && shippingAddress ? shippingAddress : {}),
+      gstin: gstin || shippingAddress?.gstin || null,
+      company_name: businessName,
+      business_name: businessName,
+      tax_amount: taxAmount || 0,
+      tax_rate: taxRate || 18.00,
+      taxable_amount: taxableAmount || totalAmount,
+      payment_method: paymentMethod,
+    };
+
     // 1. Create order record in database with store_id
     const { data: newOrder, error: orderErr } = await supabase
       .from('orders')
       .insert({
         store_id: STORE_ID,
-        order_number: orderNumber || `MDE-${Date.now()}`,
+        order_number: orderNumber || `RVK-${Date.now()}`,
         user_id: userId || null,
         guest_email: guestEmail || null,
         status: 'paid',
         payment_status: 'paid',
         total_amount: totalAmount,
         currency,
-        shipping_address: shippingAddress,
+        shipping_address: enhancedShippingAddress,
+        company_name: businessName,
+        business_name: businessName,
         razorpay_order_id: razorpayOrderId,
         razorpay_payment_id: razorpayPaymentId,
       })

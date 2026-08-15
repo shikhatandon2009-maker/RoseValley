@@ -53,6 +53,8 @@ interface Order {
   total_amount: number;
   currency: string;
   shipping_address: any;
+  company_name?: string;
+  business_name?: string;
   payment_status: 'unpaid' | 'paid' | 'failed';
   razorpay_order_id?: string;
   razorpay_payment_id?: string;
@@ -704,29 +706,170 @@ export default function OrdersAdminPage() {
               </div>
 
               {/* Total & Payment Details */}
-              <div className="p-4 rounded-2xl bg-[#F7EEED] border border-[#F7D1D8] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="space-y-1">
-                  <div className="text-xs text-[#4A0D25] font-bold">
-                    Payment Status: <span className="font-black text-emerald-800 uppercase px-2 py-0.5 rounded-full bg-emerald-100 border border-emerald-300 ml-1">{selectedOrder.payment_status}</span>
+              {(() => {
+                const totalAmt = Number(selectedOrder.total_amount || 0);
+                const sAddr = (selectedOrder.shipping_address as any) || {};
+                const taxRate = sAddr.tax_rate || 18.00;
+                const taxableVal = sAddr.taxable_amount || Math.round(totalAmt / (1 + taxRate / 100));
+                const taxAmt = sAddr.tax_amount || (totalAmt - taxableVal);
+                const buyerGstin = sAddr.gstin || null;
+                const businessName = sAddr.company_name || sAddr.business_name || sAddr.companyName || selectedOrder.company_name || selectedOrder.business_name || null;
+                const payMethod = sAddr.payment_method || (selectedOrder.razorpay_payment_id?.startsWith('PAYPAL') ? 'paypal' : 'razorpay');
+
+                return (
+                  <div className="space-y-3">
+                    {(businessName || buyerGstin) && (
+                      <div className="p-3 bg-emerald-50 rounded-2xl border border-emerald-200 text-xs text-emerald-900 flex flex-wrap items-center justify-between font-bold gap-2">
+                        <div className="flex items-center gap-1.5">
+                          <span>🏢 B2B Entity / Tax Credit:</span>
+                          {businessName && <span className="font-black text-[#1A0510]">{businessName}</span>}
+                        </div>
+                        {buyerGstin && (
+                          <span className="font-mono bg-white px-2 py-0.5 rounded border border-emerald-300">
+                            GSTIN: {buyerGstin}
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="p-4 rounded-2xl bg-[#F7EEED] border border-[#F7D1D8] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="space-y-1">
+                        <div className="text-xs text-[#4A0D25] font-bold">
+                          Payment Method: <span className="font-black text-stone-900 uppercase px-2 py-0.5 rounded-full bg-white border border-[#F7D1D8] ml-1">{payMethod === 'paypal' ? 'PayPal Express' : 'Razorpay Gateway'}</span>
+                        </div>
+                        <div className="text-xs text-[#4A0D25] font-bold">
+                          Payment Status: <span className="font-black text-emerald-800 uppercase px-2 py-0.5 rounded-full bg-emerald-100 border border-emerald-300 ml-1">{selectedOrder.payment_status}</span>
+                        </div>
+                        {selectedOrder.razorpay_payment_id && (
+                          <div className="font-mono text-xs text-stone-600 font-bold">Txn Ref: {selectedOrder.razorpay_payment_id}</div>
+                        )}
+                      </div>
+
+                      <div className="text-right space-y-1 text-xs">
+                        <div className="text-stone-600">Taxable Value: <strong className="text-stone-900">₹{Number(taxableVal).toLocaleString()}</strong></div>
+                        <div className="text-[#4A0D25] font-bold">GST Tax ({taxRate}%): <strong>₹{Number(taxAmt).toLocaleString()}</strong></div>
+                        <div className="text-xs text-[#4A0D25] font-extrabold uppercase tracking-wider pt-1 border-t border-[#F7D1D8]">Grand Total</div>
+                        <div className="text-2xl font-black font-serif text-[#4A0D25]">₹{totalAmt.toLocaleString()}</div>
+                      </div>
+                    </div>
                   </div>
-                  {selectedOrder.razorpay_payment_id && (
-                    <div className="font-mono text-xs text-stone-600 font-bold">Razorpay Pay ID: {selectedOrder.razorpay_payment_id}</div>
-                  )}
-                </div>
-                <div className="text-right">
-                  <div className="text-xs text-[#4A0D25] font-extrabold uppercase tracking-wider">Total Order Value</div>
-                  <div className="text-2xl font-black font-serif text-[#4A0D25]">₹{Number(selectedOrder.total_amount).toLocaleString()}</div>
-                </div>
-              </div>
+                );
+              })()}
             </div>
 
-            <div className="pt-4 flex items-center justify-between border-t border-[#F7D1D8]">
-              <button
-                onClick={() => handleOpenFulfillmentModal(selectedOrder)}
-                className="px-5 py-2.5 rounded-xl bg-[#F6A6BB] text-[#4A0D25] text-xs font-black uppercase tracking-wider hover:bg-[#F4BBC9] transition-all flex items-center gap-2 shadow-xs"
-              >
-                <Truck className="w-4 h-4" /> Update Shipment Tracking
-              </button>
+            <div className="pt-4 flex flex-wrap items-center justify-between gap-3 border-t border-[#F7D1D8]">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleOpenFulfillmentModal(selectedOrder)}
+                  className="px-4 py-2.5 rounded-xl bg-[#F6A6BB] text-[#4A0D25] text-xs font-black uppercase tracking-wider hover:bg-[#F4BBC9] transition-all flex items-center gap-2 shadow-xs"
+                >
+                  <Truck className="w-4 h-4" /> Shipment Tracking
+                </button>
+                <button
+                  onClick={() => {
+                    const printWindow = window.open('', '_blank');
+                    if (printWindow) {
+                      const sAddr = (selectedOrder.shipping_address as any) || {};
+                      const totalAmt = Number(selectedOrder.total_amount || 0);
+                      const taxRate = sAddr.tax_rate || 18.00;
+                      const taxableVal = sAddr.taxable_amount || Math.round(totalAmt / (1 + taxRate / 100));
+                      const taxAmt = sAddr.tax_amount || (totalAmt - taxableVal);
+                      const buyerGstin = sAddr.gstin || 'N/A (B2C Retail)';
+                      const businessName = sAddr.company_name || sAddr.business_name || sAddr.companyName || selectedOrder.company_name || selectedOrder.business_name || '';
+
+                      printWindow.document.write(`
+                        <html>
+                          <head>
+                            <title>Tax Invoice - #${selectedOrder.order_number}</title>
+                            <style>
+                              body { font-family: Arial, sans-serif; padding: 30px; color: #111; }
+                              .header { border-bottom: 2px solid #8b0000; padding-bottom: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; }
+                              .title { font-size: 24px; font-weight: bold; color: #8b0000; }
+                              .meta { margin-bottom: 20px; font-size: 13px; line-height: 1.6; }
+                              table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+                              th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 12px; }
+                              th { background-color: #f8f8f8; }
+                              .total-box { margin-top: 20px; float: right; width: 300px; font-size: 13px; }
+                              .total-box tr td { border: none; padding: 5px; }
+                            </style>
+                          </head>
+                          <body>
+                            <div class="header">
+                              <div>
+                                <div class="title">ROSE VALLEY KANNAUJ</div>
+                                <p style="margin: 4px 0; font-size: 12px; color: #666;">Maison Fragrances & Hydro-Distillates • Kannauj, Uttar Pradesh</p>
+                                <p style="margin: 2px 0; font-size: 12px; font-weight: bold;">Store GSTIN: 09AAACR1234F1Z5 | HSN Code: 330300</p>
+                              </div>
+                              <div style="text-align: right;">
+                                <h3 style="margin: 0; color: #8b0000;">TAX INVOICE</h3>
+                                <p style="margin: 4px 0; font-size: 13px;"><strong>Invoice #:</strong> ${selectedOrder.order_number}</p>
+                                <p style="margin: 2px 0; font-size: 12px;">Date: ${new Date(selectedOrder.created_at).toLocaleDateString()}</p>
+                              </div>
+                            </div>
+
+                            <div class="meta">
+                              <strong>Billed & Shipped To:</strong><br/>
+                              ${businessName ? `<strong>${businessName}</strong> (Attn: ${sAddr.fullName || selectedOrder.users?.full_name || 'Client'})<br/>` : `${sAddr.fullName || selectedOrder.users?.full_name || 'Client'}<br/>`}
+                              ${sAddr.streetAddress1 || 'Main Street'}, ${sAddr.city || 'Kannauj'}, ${sAddr.state || ''} ${sAddr.postalCode || ''}<br/>
+                              Phone: ${sAddr.phone || 'N/A'} | Email: ${sAddr.email || selectedOrder.guest_email || 'N/A'}<br/>
+                              ${businessName ? `<strong>Business Name:</strong> ${businessName}<br/>` : ''}
+                              <strong>Buyer GSTIN:</strong> ${buyerGstin}
+                            </div>
+
+                            <table>
+                              <thead>
+                                <tr>
+                                  <th>Item Description</th>
+                                  <th>HSN</th>
+                                  <th>Qty</th>
+                                  <th>Rate (₹)</th>
+                                  <th>Taxable Amount (₹)</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                ${(selectedOrder.items || []).map((it: any) => `
+                                  <tr>
+                                    <td>${it.product_name}</td>
+                                    <td>330300</td>
+                                    <td>${it.quantity}</td>
+                                    <td>₹${Number(it.price).toLocaleString()}</td>
+                                    <td>₹${(Number(it.price) * it.quantity).toLocaleString()}</td>
+                                  </tr>
+                                `).join('')}
+                              </tbody>
+                            </table>
+
+                            <table class="total-box">
+                              <tr>
+                                <td><strong>Taxable Base Subtotal:</strong></td>
+                                <td style="text-align: right;">₹${Number(taxableVal).toLocaleString()}</td>
+                              </tr>
+                              <tr>
+                                <td><strong>GST Tax (${taxRate}%):</strong></td>
+                                <td style="text-align: right;">₹${Number(taxAmt).toLocaleString()}</td>
+                              </tr>
+                              <tr>
+                                <td><strong>Shipping:</strong></td>
+                                <td style="text-align: right;">FREE</td>
+                              </tr>
+                              <tr style="border-top: 2px solid #8b0000; font-size: 16px; font-weight: bold; color: #8b0000;">
+                                <td>Grand Total:</td>
+                                <td style="text-align: right;">₹${totalAmt.toLocaleString()}</td>
+                              </tr>
+                            </table>
+                            <script>window.onload = function() { window.print(); }</script>
+                          </body>
+                        </html>
+                      `);
+                      printWindow.document.close();
+                    }
+                  }}
+                  className="px-4 py-2.5 rounded-xl bg-stone-100 border border-stone-300 text-[#1A0510] text-xs font-bold hover:bg-stone-200 transition-all flex items-center gap-1.5"
+                >
+                  <Printer className="w-4 h-4 text-stone-700" /> Print Tax Invoice
+                </button>
+              </div>
+
               <button
                 onClick={() => setSelectedOrder(null)}
                 className="px-5 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-xs font-extrabold text-[#1A0510] transition-colors"

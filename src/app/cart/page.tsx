@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -18,8 +18,9 @@ const DEFAULT_COUPONS = [
     code: 'ROYAL15',
     flag: '👑',
     name: 'Royal Heritage 15% OFF',
-    desc: '15% OFF on pure Kannauj attars & luxury perfumes',
+    desc: '15% OFF on pure Kannauj attars & luxury perfumes (Min. spend ₹2,500)',
     percent: 15,
+    min_spend: 2500,
   },
 ];
 
@@ -30,7 +31,7 @@ export default function ViewCartPage() {
 
   const [availableCoupons, setAvailableCoupons] = useState(DEFAULT_COUPONS);
   const [couponInput, setCouponInput] = useState('');
-  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; percent: number; name: string } | null>(null);
+  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; percent: number; name: string; min_spend?: number } | null>(null);
   const [validatingCoupon, setValidatingCoupon] = useState(false);
   const [couponError, setCouponError] = useState('');
   const [couponSuccess, setCouponSuccess] = useState('');
@@ -51,22 +52,43 @@ export default function ViewCartPage() {
       .then((res) => res.json())
       .then((data) => {
         if (data.coupons && Array.isArray(data.coupons) && data.coupons.length > 0) {
-          const formatted = data.coupons.map((c: any) => ({
-            code: c.code,
-            flag: '👑',
-            name: `${c.code} ${c.discount_value}${c.discount_type === 'percentage' ? '% OFF' : ' OFF'}`,
-            desc: c.min_spend > 0 ? `Min. spend ₹${c.min_spend} • Valid on pure Kannauj attars` : `${c.discount_value}${c.discount_type === 'percentage' ? '% OFF' : ' OFF'} discount on luxury collection`,
-            percent: c.discount_type === 'percentage' ? Number(c.discount_value) || 15 : 15,
-          }));
+          const formatted = data.coupons.map((c: any) => {
+            const minSpend = Number(c.min_spend) || 0;
+            return {
+              code: c.code,
+              flag: '👑',
+              name: `${c.code} ${c.discount_value}${c.discount_type === 'percentage' ? '% OFF' : ' OFF'}`,
+              desc: minSpend > 0 ? `Min. spend ₹${minSpend.toLocaleString()} • Valid on pure Kannauj attars` : `${c.discount_value}${c.discount_type === 'percentage' ? '% OFF' : ' OFF'} discount on luxury collection`,
+              percent: c.discount_type === 'percentage' ? Number(c.discount_value) || 15 : 15,
+              min_spend: minSpend,
+            };
+          });
           setAvailableCoupons(formatted);
         }
       })
       .catch((err) => console.warn('Coupons fetch info:', err));
   }, []);
 
-  const subtotalINR = getTotalINR();
+  const subtotalINR = useMemo(() => {
+    if (!items || items.length === 0) return 0;
+    return items.reduce((sum, item) => {
+      const p = Number(item.price) || 0;
+      const q = Number(item.quantity) || 1;
+      return sum + p * Math.max(1, q);
+    }, 0);
+  }, [items]);
+
+  // Auto-invalidation if cart items change and subtotal drops below coupon min_spend
+  useEffect(() => {
+    if (appliedCoupon?.min_spend && subtotalINR < appliedCoupon.min_spend) {
+      setCouponError(`Coupon "${appliedCoupon.code}" removed: Minimum order spend of ₹${appliedCoupon.min_spend.toLocaleString()} is required (Current: ₹${subtotalINR.toLocaleString()}).`);
+      setAppliedCoupon(null);
+      setCouponSuccess('');
+    }
+  }, [subtotalINR, appliedCoupon]);
+
   const discountPercent = appliedCoupon ? appliedCoupon.percent : 0;
-  const discountAmount = (subtotalINR * discountPercent) / 100;
+  const discountAmount = Math.round((subtotalINR * discountPercent) / 100);
   const finalTotalINR = Math.max(0, subtotalINR - discountAmount);
 
   const handleApplyCustomCoupon = (e: React.FormEvent) => {
@@ -84,7 +106,12 @@ export default function ViewCartPage() {
     setTimeout(() => {
       const match = availableCoupons.find((c) => c.code.toUpperCase() === cleanCode);
       if (match) {
-        setAppliedCoupon({ code: match.code, percent: match.percent, name: match.name });
+        if (match.min_spend && subtotalINR < match.min_spend) {
+          setCouponError(`Coupon "${cleanCode}" requires a minimum order spend of ₹${match.min_spend.toLocaleString()}. (Your current order is ₹${subtotalINR.toLocaleString()})`);
+          setValidatingCoupon(false);
+          return;
+        }
+        setAppliedCoupon({ code: match.code, percent: match.percent, name: match.name, min_spend: match.min_spend });
         setCouponSuccess(`Coupon "${cleanCode}" applied! ${match.percent}% discount activated.`);
         setCouponInput('');
       } else {
@@ -248,6 +275,8 @@ export default function ViewCartPage() {
                     <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
                       {availableCoupons.map((coupon) => {
                         const isSelected = appliedCoupon?.code === coupon.code;
+                        const isEligible = !coupon.min_spend || subtotalINR >= coupon.min_spend;
+
                         return (
                           <div
                             key={coupon.code}
@@ -255,7 +284,12 @@ export default function ViewCartPage() {
                               if (isSelected) {
                                 handleRemoveCoupon();
                               } else {
-                                setAppliedCoupon({ code: coupon.code, percent: coupon.percent, name: coupon.name });
+                                if (coupon.min_spend && subtotalINR < coupon.min_spend) {
+                                  setCouponError(`Coupon "${coupon.code}" requires a minimum spend of ₹${coupon.min_spend.toLocaleString()}. Add ₹${(coupon.min_spend - subtotalINR).toLocaleString()} more to your bag.`);
+                                  setCouponSuccess('');
+                                  return;
+                                }
+                                setAppliedCoupon({ code: coupon.code, percent: coupon.percent, name: coupon.name, min_spend: coupon.min_spend });
                                 setCouponSuccess(`Coupon "${coupon.code}" applied! ${coupon.percent}% discount activated.`);
                                 setCouponError('');
                               }
@@ -263,6 +297,8 @@ export default function ViewCartPage() {
                             className={`p-3 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-between gap-3 shadow-xs ${
                               isSelected
                                 ? 'bg-emerald-50 border-emerald-500 shadow-md'
+                                : !isEligible
+                                ? 'bg-[#FAE6E7]/30 border-[#F7D1D8]/60 opacity-80 hover:opacity-100 hover:border-[#F6A6BB]'
                                 : 'bg-white border-[#F7D1D8] hover:border-[#F6A6BB] hover:bg-[#FAE6E7]'
                             }`}
                           >
@@ -282,6 +318,11 @@ export default function ViewCartPage() {
                                   >
                                     {coupon.percent}% OFF
                                   </span>
+                                  {!isEligible && (
+                                    <span className="px-1.5 py-0.5 rounded text-[8px] font-extrabold uppercase bg-amber-100 text-amber-900 border border-amber-300">
+                                      Min. ₹{coupon.min_spend.toLocaleString()}
+                                    </span>
+                                  )}
                                 </div>
                                 <p className="text-[10px] text-[#4A0D25] font-bold mt-0.5 line-clamp-1">
                                   {coupon.desc}
@@ -294,10 +335,12 @@ export default function ViewCartPage() {
                               className={`px-3 py-1.5 rounded-xl font-extrabold text-[11px] uppercase tracking-wider transition-all flex-shrink-0 ${
                                 isSelected
                                   ? 'bg-emerald-600 text-white shadow-xs'
+                                  : !isEligible
+                                  ? 'bg-stone-100 border border-stone-300 text-stone-600'
                                   : 'bg-[#FAE6E7] border border-[#F7D1D8] text-[#4A0D25] hover:bg-[#F6A6BB] hover:text-[#4A0D25]'
                               }`}
                             >
-                              {isSelected ? 'Applied ✓' : 'Apply'}
+                              {isSelected ? 'Applied ✓' : !isEligible ? 'Min ₹' + coupon.min_spend.toLocaleString() : 'Apply'}
                             </button>
                           </div>
                         );

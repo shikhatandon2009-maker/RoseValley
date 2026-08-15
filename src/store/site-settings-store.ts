@@ -16,6 +16,7 @@ export interface SiteSettings {
     free_threshold: number;
   };
   tax_rate: number;
+  store_gstin?: string;
   social_links: Record<string, string>;
 }
 
@@ -30,6 +31,7 @@ const DEFAULT_SETTINGS: SiteSettings = {
   contact_phone: '+91 98765 43210',
   shipping_rates: { standard: 150, express: 300, free_threshold: 2500 },
   tax_rate: 18.00,
+  store_gstin: '09AAACR1234F1Z5',
   social_links: {
     instagram: 'https://instagram.com',
     facebook: 'https://facebook.com',

@@ -42,6 +42,7 @@ interface SiteSettings {
     free_threshold: number;
   };
   tax_rate: number;
+  store_gstin?: string;
   social_links: {
     instagram?: string;
     facebook?: string;
@@ -78,6 +79,7 @@ export default function SiteSettingsAdminPage() {
     contact_phone: '+91 98765 43210',
     shipping_rates: { standard: 150, express: 300, free_threshold: 2500 },
     tax_rate: 18.00,
+    store_gstin: '09AAACR1234F1Z5',
     social_links: {
       instagram: 'https://instagram.com',
       facebook: 'https://facebook.com',
@@ -732,13 +734,13 @@ export default function SiteSettingsAdminPage() {
             )}
           </div>
 
-          {/* SECTION 4: Shipping Rates & Taxes */}
+          {/* SECTION 4: Shipping Rates & GST Tax Configuration */}
           <div className="p-6 rounded-2xl bg-white border border-stone-200 space-y-6 shadow-sm">
             <div className="flex items-center gap-2 text-stone-900 font-serif font-bold text-lg border-b border-stone-200 pb-3">
-              <Truck className="w-5 h-5 text-amber-600" /> Shipping Fees & GST Tax Rates
+              <Truck className="w-5 h-5 text-amber-600" /> Shipping Rates & Logistics Parameters
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
                 <label className="block text-xs font-bold text-stone-800 mb-1">Standard Shipping Fee (₹)</label>
                 <input
@@ -755,7 +757,7 @@ export default function SiteSettingsAdminPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-stone-800 mb-1">Express Shipping Fee (₹)</label>
+                <label className="block text-xs font-bold text-stone-800 mb-1">Express Courier Fee (₹)</label>
                 <input
                   type="number"
                   value={settings.shipping_rates?.express || 300}
@@ -783,17 +785,66 @@ export default function SiteSettingsAdminPage() {
                   className="w-full px-3.5 py-2.5 rounded-xl bg-stone-50 border border-stone-300 text-xs text-stone-900 focus:outline-none focus:border-amber-600"
                 />
               </div>
+            </div>
+          </div>
+
+          {/* SECTION 5: GST / Tax & Invoicing Configuration */}
+          <div className="p-6 rounded-2xl bg-white border border-stone-200 space-y-6 shadow-sm">
+            <div className="flex items-center justify-between border-b border-stone-200 pb-3">
+              <div className="flex items-center gap-2 text-stone-900 font-serif font-bold text-lg">
+                <Settings className="w-5 h-5 text-amber-600" /> GST Tax & Invoicing Rules
+              </div>
+              <span className="px-3 py-1 rounded-full bg-emerald-100 border border-emerald-300 text-emerald-900 text-[10px] font-black uppercase tracking-wider">
+                Every Invoice is Taxable (18% Default)
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-stone-800 mb-1">
+                  Applicable GST / Tax Rate (%) *
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    value={settings.tax_rate ?? 18.00}
+                    onChange={(e) => setSettings({ ...settings, tax_rate: Number(e.target.value) })}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-stone-50 border border-stone-300 text-xs text-stone-900 font-bold focus:outline-none focus:border-amber-600 pr-10"
+                  />
+                  <span className="absolute right-3.5 top-2.5 text-xs text-stone-500 font-bold">%</span>
+                </div>
+                <p className="text-[11px] text-stone-500 font-medium mt-1">
+                  Standard fragrance & luxury perfume GST rate is 18%. Applied dynamically on checkout taxable subtotal.
+                </p>
+              </div>
 
               <div>
-                <label className="block text-xs font-bold text-stone-800 mb-1">Applicable GST Tax Rate (%)</label>
+                <label className="block text-xs font-bold text-stone-800 mb-1">
+                  Maison Store GSTIN Number (For Tax Invoices) *
+                </label>
                 <input
-                  type="number"
-                  step="0.01"
-                  value={settings.tax_rate || 18.00}
-                  onChange={(e) => setSettings({ ...settings, tax_rate: Number(e.target.value) })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-stone-50 border border-stone-300 text-xs text-stone-900 focus:outline-none focus:border-amber-600"
+                  type="text"
+                  required
+                  placeholder="09AAACR1234F1Z5"
+                  value={settings.store_gstin || '09AAACR1234F1Z5'}
+                  onChange={(e) => setSettings({ ...settings, store_gstin: e.target.value.toUpperCase() })}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-stone-50 border border-stone-300 text-xs text-stone-900 font-mono font-bold uppercase focus:outline-none focus:border-amber-600"
                 />
+                <p className="text-[11px] text-stone-500 font-medium mt-1">
+                  Printed on all customer and business invoices alongside HSN Code 330300 (Perfumes & Toilet Waters).
+                </p>
               </div>
+            </div>
+
+            <div className="p-4 rounded-xl bg-amber-50/70 border border-amber-200 text-xs text-amber-900 space-y-1">
+              <div className="font-bold flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-amber-700" /> B2B Buyer GST Credit Support
+              </div>
+              <p className="text-[11px] text-amber-800">
+                Customers can optionally enter their GST Number during checkout. The generated invoice will automatically attach their GST credit credentials and separate CGST (9%) + SGST (9%) or IGST (18%).
+              </p>
             </div>
           </div>
 

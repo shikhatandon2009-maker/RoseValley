@@ -40,6 +40,9 @@ export async function POST(request: NextRequest) {
     const {
       user_id,
       full_name,
+      company_name = '',
+      business_name = '',
+      gstin = '',
       street_address,
       city,
       state,
@@ -74,6 +77,8 @@ export async function POST(request: NextRequest) {
           store_id: STORE_ID,
           user_id,
           full_name: full_name.trim(),
+          company_name: (company_name || business_name || '').trim(),
+          gstin: (gstin || '').trim().toUpperCase(),
           street_address: street_address.trim(),
           city: city.trim(),
           state: state.trim(),
@@ -114,6 +119,9 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const {
       full_name,
+      company_name,
+      business_name,
+      gstin,
       street_address,
       city,
       state,
@@ -143,6 +151,10 @@ export async function PUT(request: NextRequest) {
 
     const updates: Record<string, any> = {};
     if (full_name !== undefined) updates.full_name = full_name.trim();
+    if (company_name !== undefined || business_name !== undefined) {
+      updates.company_name = (company_name || business_name || '').trim();
+    }
+    if (gstin !== undefined) updates.gstin = (gstin || '').trim().toUpperCase();
     if (street_address !== undefined) updates.street_address = street_address.trim();
     if (city !== undefined) updates.city = city.trim();
     if (state !== undefined) updates.state = state.trim();

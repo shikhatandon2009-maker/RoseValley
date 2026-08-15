@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Mail,
@@ -17,13 +17,16 @@ import {
   Lock,
   RefreshCw,
   Globe2,
-  Check
+  Check,
+  UserCheck,
+  ExternalLink
 } from 'lucide-react';
 import { LuxuryHeader } from '@/components/layout/LuxuryHeader';
 import { LuxuryFooter } from '@/components/layout/LuxuryFooter';
 import { SectionWrapper } from '@/components/common/SectionWrapper';
 
 export default function ContactUsPage() {
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -36,7 +39,26 @@ export default function ContactUsPage() {
   const [isVerifyingRecaptcha, setIsVerifyingRecaptcha] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedSuccess, setSubmittedSuccess] = useState(false);
+  const [inquiryResult, setInquiryResult] = useState<{ inquiryRef?: string; isRecorded?: boolean } | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Check if customer is already logged in & auto-fill details
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.authenticated && data.user) {
+          setCurrentUser(data.user);
+          setFormData((prev) => ({
+            ...prev,
+            name: data.user.full_name || prev.name,
+            email: data.user.email || prev.email,
+            phone: data.user.phone || prev.phone,
+          }));
+        }
+      })
+      .catch((err) => console.warn('User auth check notice:', err));
+  }, []);
 
   const handleRecaptchaCheck = () => {
     if (recaptchaVerified) return;
@@ -58,19 +80,42 @@ export default function ContactUsPage() {
       setIsSubmitting(true);
       setErrorMsg(null);
       
-      // Simulate API submission
-      await new Promise((resolve) => setTimeout(resolve, 1200));
+      const payload = {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        subject: formData.subject,
+        message: formData.message,
+        user_id: currentUser ? currentUser.id : null,
+        is_guest: !currentUser,
+      };
 
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to submit inquiry');
+      }
+
+      setInquiryResult({
+        inquiryRef: data.inquiry_ref,
+        isRecorded: data.is_recorded,
+      });
       setSubmittedSuccess(true);
       setFormData({
-        name: '',
-        email: '',
-        phone: '',
+        name: currentUser?.full_name || '',
+        email: currentUser?.email || '',
+        phone: currentUser?.phone || '',
         subject: 'order',
         message: '',
       });
     } catch (err: any) {
-      setErrorMsg('Failed to send message. Please try again.');
+      setErrorMsg(err.message || 'Failed to send message. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -187,21 +232,47 @@ export default function ContactUsPage() {
                 </p>
               </div>
 
+              {/* Logged in User Status Banner */}
+              {currentUser && (
+                <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-300 flex items-center justify-between gap-3 text-xs text-emerald-900 font-bold shadow-xs">
+                  <div className="flex items-center gap-2">
+                    <UserCheck className="w-4 h-4 text-emerald-700" />
+                    <span>Logged In: <strong>{currentUser.full_name || currentUser.email}</strong></span>
+                  </div>
+                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-950 text-[10px] font-black uppercase tracking-wider">
+                    Auto-Linked to Account
+                  </span>
+                </div>
+              )}
+
               {submittedSuccess ? (
                 <div className="p-8 rounded-2xl bg-emerald-50 border-2 border-emerald-300 text-center space-y-4 animate-fade-in">
                   <div className="w-12 h-12 rounded-full bg-emerald-600 text-white flex items-center justify-center mx-auto shadow-md">
                     <CheckCircle2 className="w-6 h-6" />
                   </div>
-                  <h4 className="font-serif font-extrabold text-xl text-emerald-950">Message Sent Successfully!</h4>
+                  <h4 className="font-serif font-extrabold text-xl text-emerald-950">Inquiry Dispatched Successfully!</h4>
                   <p className="text-xs text-emerald-800 font-bold max-w-md mx-auto">
-                    Thank you for reaching out. Our client concierge has received your inquiry and will respond to your email within 24 business hours.
+                    Reference ID: <strong className="font-mono text-emerald-950">{inquiryResult?.inquiryRef || 'INQ-94821'}</strong>.<br />
+                    {inquiryResult?.isRecorded
+                      ? 'This inquiry has been permanently recorded in your Maison Account Portal. Our concierge will reply within 24 business hours.'
+                      : 'Our concierge desk has received your guest inquiry and will reply to your email address within 24 business hours.'}
                   </p>
-                  <button
-                    onClick={() => setSubmittedSuccess(false)}
-                    className="px-6 py-2.5 rounded-xl bg-emerald-600 text-white font-black text-xs uppercase tracking-wider hover:bg-emerald-700 transition-all shadow-xs"
-                  >
-                    Send Another Inquiry
-                  </button>
+                  <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                    {currentUser && (
+                      <Link
+                        href="/account"
+                        className="px-6 py-2.5 rounded-xl bg-white border border-emerald-300 text-emerald-950 font-black text-xs uppercase tracking-wider hover:bg-emerald-100 transition-all shadow-xs flex items-center gap-1.5"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" /> View In My Account Portal
+                      </Link>
+                    )}
+                    <button
+                      onClick={() => setSubmittedSuccess(false)}
+                      className="px-6 py-2.5 rounded-xl bg-emerald-600 text-white font-black text-xs uppercase tracking-wider hover:bg-emerald-700 transition-all shadow-xs"
+                    >
+                      Send Another Inquiry
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <form className="space-y-4" onSubmit={handleSubmit}>
@@ -257,10 +328,11 @@ export default function ContactUsPage() {
                         onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                         className="w-full px-4 py-3 rounded-xl bg-white border border-[#F7D1D8] text-xs text-[#1A0510] font-extrabold focus:outline-none focus:ring-2 focus:ring-[#F6A6BB]"
                       >
-                        <option value="order">Order Tracking & Receipt</option>
-                        <option value="wholesale">Wholesale & Export Distillates</option>
-                        <option value="custom">Custom Fragrance Formulation</option>
-                        <option value="provenance">Provenance & QR Authenticity</option>
+                        <option value="Order Tracking & Invoice Query">Order Tracking & Tax Invoice Query</option>
+                        <option value="Wholesale & Bulk Distillates">Wholesale & Export Distillates</option>
+                        <option value="Custom Attar Formulation">Custom Attar Formulation</option>
+                        <option value="Provenance & QR Authenticity">Provenance & QR Authenticity</option>
+                        <option value="General Concierge Query">General Concierge Query</option>
                       </select>
                     </div>
                   </div>
@@ -272,7 +344,7 @@ export default function ContactUsPage() {
                       required
                       value={formData.message}
                       onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                      placeholder="Write your inquiry or specific order details..."
+                      placeholder="Write your personal communication, question, or specific order details..."
                       className="w-full px-4 py-3 rounded-xl bg-white border border-[#F7D1D8] text-xs text-[#1A0510] font-bold focus:outline-none focus:ring-2 focus:ring-[#F6A6BB]"
                     />
                   </div>
@@ -311,7 +383,7 @@ export default function ContactUsPage() {
                   <button
                     type="submit"
                     disabled={isSubmitting || !recaptchaVerified}
-                    className="w-full py-4 rounded-xl bg-[#F6A6BB] hover:bg-[#F4BBC9] text-[#4A0D25] font-black text-xs uppercase tracking-widest transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-50"
+                    className="w-full py-4 rounded-xl bg-[#F6A6BB] hover:bg-[#F4BBC9] text-[#4A0D25] font-black text-xs uppercase tracking-widest transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
                   >
                     {isSubmitting ? (
                       <>

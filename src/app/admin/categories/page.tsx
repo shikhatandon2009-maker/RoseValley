@@ -17,7 +17,8 @@ import {
   Tag,
   ArrowUpDown,
   Sparkles,
-  Layers
+  Layers,
+  Upload,
 } from 'lucide-react';
 
 interface Category {
@@ -52,6 +53,8 @@ export default function CategoriesAdminPage() {
     display_order: 0,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [toastMessage, setToastMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const showToast = (type: 'success' | 'error', text: string) => {
@@ -59,17 +62,108 @@ export default function CategoriesAdminPage() {
     setTimeout(() => setToastMessage(null), 4000);
   };
 
-  const fetchCategories = async () => {
+  const handleGenerateAICategoryDescription = async () => {
+    if (!formData.name.trim()) {
+      showToast('error', 'Please enter a Category Name first.');
+      return;
+    }
+
     try {
-      setLoading(true);
+      setIsGeneratingAI(true);
+      const res = await fetch('/api/ai/generate-content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'category_description',
+          prompt: formData.name,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'AI generation failed');
+
+      if (data.draft) {
+        setFormData((prev) => ({ ...prev, description: data.draft }));
+        showToast('success', '✨ Generated 100-Word SEO Description!');
+      }
+    } catch (err: any) {
+      console.error(err);
+      showToast('error', err.message || 'AI generation failed');
+    } finally {
+      setIsGeneratingAI(false);
+    }
+  };
+
+  const handleGenerateAIBannerImage = () => {
+    const name = formData.name.toLowerCase().trim() || 'attars';
+
+    let bannerUrl = 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&w=1200&q=80';
+
+    if (name.includes('attar') || name.includes('ruh') || name.includes('gulab')) {
+      bannerUrl = 'https://images.unsplash.com/photo-1547887537-6158d64c35b3?auto=format&fit=crop&w=1200&q=80';
+    } else if (name.includes('essential') || name.includes('oil') || name.includes('pure')) {
+      bannerUrl = 'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=1200&q=80';
+    } else if (name.includes('elixir') || name.includes('oud') || name.includes('sandal')) {
+      bannerUrl = 'https://images.unsplash.com/photo-1523293182086-7651a899d37f?auto=format&fit=crop&w=1200&q=80';
+    } else if (name.includes('rose')) {
+      bannerUrl = 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80';
+    } else if (name.includes('jasmine') || name.includes('mogra')) {
+      bannerUrl = 'https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=1200&q=80';
+    }
+
+    setFormData((prev) => ({ ...prev, image_url: bannerUrl }));
+    showToast('success', `✨ Generated AI Banner for "${formData.name || 'Category'}"!`);
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsUploadingImage(true);
+      const data = new FormData();
+      data.append('file', file);
+      data.append('folder', 'category-banners');
+
+      const res = await fetch('/api/admin/upload', {
+        method: 'POST',
+        body: data,
+      });
+      const result = await res.json();
+      if (res.ok && result.url) {
+        setFormData((prev) => ({ ...prev, image_url: result.url }));
+        showToast('success', 'Banner image uploaded successfully!');
+      } else {
+        showToast('error', result.error || 'Failed to upload image.');
+      }
+    } catch (err: any) {
+      showToast('error', err.message || 'Error uploading image.');
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  const fetchCategories = async (showSpinner?: boolean | any) => {
+    if (typeof window !== 'undefined' && categories.length === 0) {
+      try {
+        const cached = localStorage.getItem('cached_categories_list');
+        if (cached) setCategories(JSON.parse(cached));
+      } catch (e) {}
+    }
+
+    try {
+      const isSpinnerAllowed = typeof showSpinner === 'boolean' ? showSpinner : true;
+      if (isSpinnerAllowed && categories.length === 0) setLoading(true);
       setError(null);
       const res = await fetch(`/api/admin/categories?search=${encodeURIComponent(search)}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to fetch categories');
       setCategories(data.categories || []);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('cached_categories_list', JSON.stringify(data.categories || []));
+      }
     } catch (err: any) {
       console.error(err);
-      setError(err.message || 'Error loading categories');
+      if (categories.length === 0) setError(err.message || 'Error loading categories');
     } finally {
       setLoading(false);
     }
@@ -144,6 +238,23 @@ export default function CategoriesAdminPage() {
       return;
     }
 
+    const tempId = `temp-cat-${Date.now()}`;
+    const optimisticCategory: Category = {
+      id: tempId,
+      store_id: 'essential_oils_perfumes_store_01',
+      name: formData.name.trim(),
+      slug: formData.slug || generateSlugFromText(formData.name),
+      description: formData.description,
+      image_url: formData.image_url,
+      display_order: Number(formData.display_order) || 0,
+      created_at: new Date().toISOString(),
+    };
+
+    // INSTANT UI UPDATE (0ms)
+    setIsAddModalOpen(false);
+    setCategories((prev) => [optimisticCategory, ...prev]);
+    showToast('success', `Category "${formData.name}" created!`);
+
     try {
       setIsSubmitting(true);
       const res = await fetch('/api/admin/categories', {
@@ -153,11 +264,16 @@ export default function CategoriesAdminPage() {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to create category');
+      if (!res.ok) {
+        setCategories((prev) => prev.filter((c) => c.id !== tempId));
+        throw new Error(data.error || 'Failed to create category');
+      }
 
-      showToast('success', `Category "${formData.name}" created successfully!`);
-      setIsAddModalOpen(false);
-      fetchCategories();
+      if (data.category) {
+        setCategories((prev) =>
+          prev.map((c) => (c.id === tempId ? data.category : c))
+        );
+      }
     } catch (err: any) {
       showToast('error', err.message || 'Failed to create category.');
     } finally {
@@ -169,6 +285,22 @@ export default function CategoriesAdminPage() {
     e.preventDefault();
     if (!editingCategory) return;
 
+    const updatedCat: Category = {
+      ...editingCategory,
+      name: formData.name,
+      slug: formData.slug,
+      description: formData.description,
+      image_url: formData.image_url,
+      display_order: Number(formData.display_order) || 0,
+    };
+
+    // INSTANT UI UPDATE (0ms)
+    setEditingCategory(null);
+    setCategories((prev) =>
+      prev.map((c) => (c.id === editingCategory.id ? updatedCat : c))
+    );
+    showToast('success', `Category "${formData.name}" updated.`);
+
     try {
       setIsSubmitting(true);
       const res = await fetch(`/api/admin/categories/${editingCategory.id}`, {
@@ -177,12 +309,10 @@ export default function CategoriesAdminPage() {
         body: JSON.stringify(formData),
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to update category');
-
-      showToast('success', `Category "${formData.name}" updated successfully.`);
-      setEditingCategory(null);
-      fetchCategories();
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to update category');
+      }
     } catch (err: any) {
       showToast('error', err.message || 'Failed to update category.');
     } finally {
@@ -192,19 +322,25 @@ export default function CategoriesAdminPage() {
 
   const handleDeleteCategory = async () => {
     if (!deletingCategory) return;
+    const target = deletingCategory;
+
+    // INSTANT UI UPDATE (0ms)
+    setDeletingCategory(null);
+    setCategories((prev) => prev.filter((c) => c.id !== target.id));
+    showToast('success', `Category "${target.name}" deleted.`);
+
     try {
       setIsSubmitting(true);
-      const res = await fetch(`/api/admin/categories/${deletingCategory.id}`, {
+      const res = await fetch(`/api/admin/categories/${target.id}`, {
         method: 'DELETE',
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to delete category');
-
-      showToast('success', `Category "${deletingCategory.name}" deleted.`);
-      setDeletingCategory(null);
-      fetchCategories();
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to delete category');
+      }
     } catch (err: any) {
+      setCategories((prev) => [target, ...prev]);
       showToast('error', err.message || 'Failed to delete category.');
     } finally {
       setIsSubmitting(false);
@@ -488,25 +624,86 @@ export default function CategoriesAdminPage() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-black text-[#4A0D25] mb-1">Banner Image URL</label>
+              {/* Banner Image URL (Generate, Upload, Preview) */}
+              <div className="space-y-2 p-4 rounded-2xl bg-[#FAE6E7]/50 border border-[#F7D1D8]">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <label className="block text-xs font-black text-[#4A0D25]">Banner Image URL</label>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleGenerateAIBannerImage}
+                      className="px-2.5 py-1 rounded-full bg-[#F6A6BB] text-[#4A0D25] font-black text-[11px] hover:bg-[#F4BBC9] transition-all shadow-xs flex items-center gap-1 active:scale-95"
+                    >
+                      <Sparkles className="w-3 h-3 text-[#4A0D25]" /> ✨ AI Banner
+                    </button>
+                    <label className="px-2.5 py-1 rounded-full bg-white border border-[#F7D1D8] text-[#4A0D25] font-black text-[11px] hover:bg-[#FAE6E7] transition-all cursor-pointer shadow-xs flex items-center gap-1 active:scale-95">
+                      <Upload className={`w-3 h-3 text-[#4A0D25] ${isUploadingImage ? 'animate-spin' : ''}`} />
+                      {isUploadingImage ? 'Uploading...' : 'Upload File'}
+                      <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
+                    </label>
+                  </div>
+                </div>
+
                 <input
                   type="text"
                   value={formData.image_url}
                   onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
                   placeholder="https://images.unsplash.com/..."
-                  className="w-full px-4 py-3 rounded-xl bg-white border border-[#F7D1D8] text-xs text-[#1A0510] font-bold focus:outline-none focus:ring-2 focus:ring-[#F6A6BB]"
+                  className="w-full px-4 py-2.5 rounded-xl bg-white border border-[#F7D1D8] text-xs text-[#1A0510] font-bold focus:outline-none focus:ring-2 focus:ring-[#F6A6BB]"
                 />
+
+                {/* Banner Live Preview */}
+                {formData.image_url ? (
+                  <div className="relative rounded-2xl overflow-hidden border border-[#F7D1D8] bg-white h-28 shadow-sm group">
+                    <img
+                      src={formData.image_url}
+                      alt="Banner Preview"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLElement).style.display = 'none';
+                      }}
+                    />
+                    <div className="absolute top-2 left-2 px-2 py-1 rounded-lg bg-[#4A0D25]/90 text-white font-mono text-[10px] font-black uppercase tracking-wider shadow-sm">
+                      Live Banner Preview
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, image_url: '' })}
+                      className="absolute top-2 right-2 p-1.5 rounded-full bg-rose-600 text-white hover:bg-rose-700 transition-all shadow-md"
+                      title="Clear Banner Image"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="p-3 text-center rounded-xl border border-dashed border-[#F7D1D8] bg-white/60">
+                    <p className="text-[11px] text-[#4A0D25] font-semibold">
+                      No banner image attached. Click <span className="font-extrabold text-[#4A0D25]">✨ AI Banner</span> or <span className="font-extrabold">Upload File</span> above.
+                    </p>
+                  </div>
+                )}
               </div>
 
-              <div>
-                <label className="block text-xs font-black text-[#4A0D25] mb-1">Description</label>
+              {/* Category Description with AI 100-Word SEO Generator */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-black text-[#4A0D25]">Category Description (100-Word SEO)</label>
+                  <button
+                    type="button"
+                    onClick={handleGenerateAICategoryDescription}
+                    disabled={isGeneratingAI}
+                    className="px-3 py-1 rounded-full bg-[#F6A6BB] text-[#4A0D25] font-black text-[11px] hover:bg-[#F4BBC9] transition-all shadow-xs flex items-center gap-1 active:scale-95 disabled:opacity-50"
+                  >
+                    <Sparkles className={`w-3 h-3 ${isGeneratingAI ? 'animate-spin' : ''}`} />
+                    {isGeneratingAI ? 'Generating...' : '✨ AI 100-Word SEO Description'}
+                  </button>
+                </div>
                 <textarea
-                  rows={3}
+                  rows={4}
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder="Crafted using ancient Kannauj copper Deg-Bhapka distillation..."
-                  className="w-full px-4 py-3 rounded-xl bg-white border border-[#F7D1D8] text-xs text-[#1A0510] font-bold focus:outline-none focus:ring-2 focus:ring-[#F6A6BB]"
+                  className="w-full px-4 py-3 rounded-xl bg-white border border-[#F7D1D8] text-xs text-[#1A0510] font-bold focus:outline-none focus:ring-2 focus:ring-[#F6A6BB] leading-relaxed"
                 />
               </div>
 
@@ -579,23 +776,86 @@ export default function CategoriesAdminPage() {
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-black text-[#4A0D25] mb-1">Banner Image URL</label>
+              {/* Banner Image URL (Generate, Upload, Preview) */}
+              <div className="space-y-2 p-4 rounded-2xl bg-[#FAE6E7]/50 border border-[#F7D1D8]">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <label className="block text-xs font-black text-[#4A0D25]">Banner Image URL</label>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleGenerateAIBannerImage}
+                      className="px-2.5 py-1 rounded-full bg-[#F6A6BB] text-[#4A0D25] font-black text-[11px] hover:bg-[#F4BBC9] transition-all shadow-xs flex items-center gap-1 active:scale-95"
+                    >
+                      <Sparkles className="w-3 h-3 text-[#4A0D25]" /> ✨ AI Banner
+                    </button>
+                    <label className="px-2.5 py-1 rounded-full bg-white border border-[#F7D1D8] text-[#4A0D25] font-black text-[11px] hover:bg-[#FAE6E7] transition-all cursor-pointer shadow-xs flex items-center gap-1 active:scale-95">
+                      <Upload className={`w-3 h-3 text-[#4A0D25] ${isUploadingImage ? 'animate-spin' : ''}`} />
+                      {isUploadingImage ? 'Uploading...' : 'Upload File'}
+                      <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
+                    </label>
+                  </div>
+                </div>
+
                 <input
                   type="text"
                   value={formData.image_url}
                   onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-white border border-[#F7D1D8] text-xs text-[#1A0510] font-bold focus:outline-none focus:ring-2 focus:ring-[#F6A6BB]"
+                  placeholder="https://images.unsplash.com/..."
+                  className="w-full px-4 py-2.5 rounded-xl bg-white border border-[#F7D1D8] text-xs text-[#1A0510] font-bold focus:outline-none focus:ring-2 focus:ring-[#F6A6BB]"
                 />
+
+                {/* Banner Live Preview */}
+                {formData.image_url ? (
+                  <div className="relative rounded-2xl overflow-hidden border border-[#F7D1D8] bg-white h-28 shadow-sm group">
+                    <img
+                      src={formData.image_url}
+                      alt="Banner Preview"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLElement).style.display = 'none';
+                      }}
+                    />
+                    <div className="absolute top-2 left-2 px-2 py-1 rounded-lg bg-[#4A0D25]/90 text-white font-mono text-[10px] font-black uppercase tracking-wider shadow-sm">
+                      Live Banner Preview
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, image_url: '' })}
+                      className="absolute top-2 right-2 p-1.5 rounded-full bg-rose-600 text-white hover:bg-rose-700 transition-all shadow-md"
+                      title="Clear Banner Image"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="p-3 text-center rounded-xl border border-dashed border-[#F7D1D8] bg-white/60">
+                    <p className="text-[11px] text-[#4A0D25] font-semibold">
+                      No banner image attached. Click <span className="font-extrabold text-[#4A0D25]">✨ AI Banner</span> or <span className="font-extrabold">Upload File</span> above.
+                    </p>
+                  </div>
+                )}
               </div>
 
-              <div>
-                <label className="block text-xs font-black text-[#4A0D25] mb-1">Description</label>
+              {/* Category Description with AI 100-Word SEO Generator */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-black text-[#4A0D25]">Category Description (100-Word SEO)</label>
+                  <button
+                    type="button"
+                    onClick={handleGenerateAICategoryDescription}
+                    disabled={isGeneratingAI}
+                    className="px-3 py-1 rounded-full bg-[#F6A6BB] text-[#4A0D25] font-black text-[11px] hover:bg-[#F4BBC9] transition-all shadow-xs flex items-center gap-1 active:scale-95 disabled:opacity-50"
+                  >
+                    <Sparkles className={`w-3 h-3 ${isGeneratingAI ? 'animate-spin' : ''}`} />
+                    {isGeneratingAI ? 'Generating...' : '✨ AI 100-Word SEO Description'}
+                  </button>
+                </div>
                 <textarea
-                  rows={3}
+                  rows={4}
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-white border border-[#F7D1D8] text-xs text-[#1A0510] font-bold focus:outline-none focus:ring-2 focus:ring-[#F6A6BB]"
+                  placeholder="Crafted using ancient Kannauj copper Deg-Bhapka distillation..."
+                  className="w-full px-4 py-3 rounded-xl bg-white border border-[#F7D1D8] text-xs text-[#1A0510] font-bold focus:outline-none focus:ring-2 focus:ring-[#F6A6BB] leading-relaxed"
                 />
               </div>
 

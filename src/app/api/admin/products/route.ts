@@ -79,6 +79,19 @@ export async function GET(request: NextRequest) {
       }
     });
 
+    // Fetch all variants for lookup
+    const { data: allVariants } = await supabase
+      .from('product_variants')
+      .select('*')
+      .eq('store_id', STORE_ID);
+
+    const variantsLookup = new Map<string, any[]>();
+    (allVariants || []).forEach((v: any) => {
+      const existing = variantsLookup.get(v.product_id) || [];
+      existing.push(v);
+      variantsLookup.set(v.product_id, existing);
+    });
+
     if (categoryId && categoryId !== 'all') {
       const productIdsInCategory = new Set(
         (junctions || [])
@@ -91,6 +104,7 @@ export async function GET(request: NextRequest) {
     const enrichedProducts = filteredProducts.map((p: any) => ({
       ...p,
       categories: productCategoryLookup.get(p.id) || [],
+      variants: variantsLookup.get(p.id) || [],
     }));
 
     // Aggregate statistics
@@ -134,6 +148,7 @@ export async function POST(request: NextRequest) {
       meta_title = '',
       meta_description = '',
       category_ids = [],
+      variants = [],
     } = body;
 
     if (!name || name.trim() === '') {
@@ -199,8 +214,29 @@ export async function POST(request: NextRequest) {
       await supabase.from('product_categories').insert(junctionRows);
     }
 
+    // Insert variants if provided
+    let createdVariants: any[] = [];
+    if (Array.isArray(variants) && variants.length > 0) {
+      const variantRows = variants.map((v: any) => ({
+        store_id: STORE_ID,
+        product_id: newProduct.id,
+        name: String(v.name || 'Default Variant').trim(),
+        sku: v.sku ? String(v.sku).trim() : null,
+        price: Number(v.price) || Number(price) || 0,
+        compare_at_price: v.compare_at_price ? Number(v.compare_at_price) : null,
+        stock: Number(v.stock) || 0,
+      }));
+
+      const { data: insertedVariants } = await supabase
+        .from('product_variants')
+        .insert(variantRows)
+        .select('*');
+      
+      createdVariants = insertedVariants || [];
+    }
+
     return NextResponse.json(
-      { message: 'Product created successfully', product: newProduct },
+      { message: 'Product created successfully', product: { ...newProduct, variants: createdVariants } },
       { status: 201 }
     );
   } catch (err: any) {

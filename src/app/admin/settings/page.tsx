@@ -18,8 +18,14 @@ import {
   Key,
   Copy,
   Clock,
-  Check
+  Check,
+  Upload,
+  UploadCloud,
+  ImageIcon,
+  Type
 } from 'lucide-react';
+import { formatImageUrl } from '@/lib/format-image';
+import { useSiteSettingsStore } from '@/store/site-settings-store';
 
 interface SiteSettings {
   store_id: string;
@@ -27,6 +33,7 @@ interface SiteSettings {
   tagline: string;
   logo_url: string;
   favicon_url: string;
+  use_text_logo: boolean;
   contact_email: string;
   contact_phone: string;
   shipping_rates: {
@@ -62,11 +69,12 @@ interface PasswordResetItem {
 export default function SiteSettingsAdminPage() {
   const [settings, setSettings] = useState<SiteSettings>({
     store_id: 'essential_oils_perfumes_store_01',
-    site_name: "Maison De L'Essence",
+    site_name: 'Rose Valley Kannauj',
     tagline: 'Artisanal Attars & Pure Distillates • Kannauj',
-    logo_url: '',
-    favicon_url: '',
-    contact_email: 'support@maisonessence.com',
+    logo_url: '/images/rvk-logo.png',
+    favicon_url: '/images/rvk-logo.png',
+    use_text_logo: false,
+    contact_email: 'support@rosevalleykannauj.com',
     contact_phone: '+91 98765 43210',
     shipping_rates: { standard: 150, express: 300, free_threshold: 2500 },
     tax_rate: 18.00,
@@ -98,9 +106,42 @@ export default function SiteSettingsAdminPage() {
 
   const [toastMessage, setToastMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+
   const showToast = (type: 'success' | 'error', text: string) => {
     setToastMessage({ type, text });
     setTimeout(() => setToastMessage(null), 4000);
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, targetField: 'logo_url' | 'favicon_url') => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setUploadingLogo(true);
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('folder', 'logos');
+
+      const res = await fetch('/api/admin/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (res.ok && data.url) {
+        const formattedUrl = formatImageUrl(data.url, '/images/rvk-logo.png');
+        setSettings((prev) => ({ ...prev, [targetField]: formattedUrl }));
+        useSiteSettingsStore.getState().setSettings({ [targetField]: formattedUrl });
+        showToast('success', `${targetField === 'logo_url' ? 'Logo' : 'Favicon'} uploaded successfully!`);
+      } else {
+        showToast('error', data.error || 'Failed to upload image');
+      }
+    } catch (err: any) {
+      showToast('error', err.message || 'Error uploading file');
+    } finally {
+      setUploadingLogo(false);
+    }
   };
 
   const fetchSettings = async () => {
@@ -109,7 +150,13 @@ export default function SiteSettingsAdminPage() {
       const res = await fetch('/api/admin/settings');
       const data = await res.json();
       if (res.ok && data.settings) {
-        setSettings(data.settings);
+        const formattedSettings = {
+          ...data.settings,
+          logo_url: formatImageUrl(data.settings.logo_url, '/images/rvk-logo.png'),
+          favicon_url: formatImageUrl(data.settings.favicon_url, '/images/rvk-logo.png'),
+        };
+        setSettings(formattedSettings);
+        useSiteSettingsStore.getState().setSettings(formattedSettings);
       }
     } catch (e) {
       console.error(e);
@@ -152,17 +199,31 @@ export default function SiteSettingsAdminPage() {
     e.preventDefault();
     try {
       setIsSaving(true);
+      const formattedSettingsPayload = {
+        ...settings,
+        logo_url: formatImageUrl(settings.logo_url, '/images/rvk-logo.png'),
+        favicon_url: formatImageUrl(settings.favicon_url, '/images/rvk-logo.png'),
+      };
+
       const res = await fetch('/api/admin/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(settings),
+        body: JSON.stringify(formattedSettingsPayload),
       });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to save settings');
 
-      showToast('success', 'Site settings saved successfully!');
-      if (data.settings) setSettings(data.settings);
+      showToast('success', 'Site settings saved successfully! Logo & Favicon updated.');
+      if (data.settings) {
+        const updated = {
+          ...data.settings,
+          logo_url: formatImageUrl(data.settings.logo_url, '/images/rvk-logo.png'),
+          favicon_url: formatImageUrl(data.settings.favicon_url, '/images/rvk-logo.png'),
+        };
+        setSettings(updated);
+        useSiteSettingsStore.getState().setSettings(updated);
+      }
     } catch (err: any) {
       showToast('error', err.message || 'Failed to save site settings.');
     } finally {
@@ -349,26 +410,174 @@ export default function SiteSettingsAdminPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-stone-800 mb-1">Logo Image URL</label>
-                <input
-                  type="text"
-                  value={settings.logo_url}
-                  onChange={(e) => setSettings({ ...settings, logo_url: e.target.value })}
-                  placeholder="https://..."
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-stone-50 border border-stone-300 text-xs text-stone-900 focus:outline-none focus:border-amber-600"
-                />
+            {/* Logo and Favicon Section with Upload & Live Preview */}
+            <div className="space-y-4 pt-2">
+              {/* Logo Mode Selector */}
+              <div className="p-4 rounded-xl bg-amber-50 border border-amber-200/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div>
+                  <h4 className="text-xs font-bold text-amber-950 flex items-center gap-1.5">
+                    <Type className="w-4 h-4 text-amber-700" />
+                    <span>Logo Display Mode</span>
+                  </h4>
+                  <p className="text-[11px] text-amber-800 font-medium">
+                    Choose whether to display an uploaded image logo or render your Site Title text directly as the logo.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const updated = { ...settings, use_text_logo: false };
+                      setSettings(updated);
+                      useSiteSettingsStore.getState().setSettings(updated);
+                    }}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                      !settings.use_text_logo
+                        ? 'bg-amber-700 text-white shadow-sm'
+                        : 'bg-white text-stone-700 border border-stone-300 hover:bg-stone-50'
+                    }`}
+                  >
+                    <ImageIcon className="w-3.5 h-3.5" />
+                    <span>Image Logo</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const updated = { ...settings, use_text_logo: true };
+                      setSettings(updated);
+                      useSiteSettingsStore.getState().setSettings(updated);
+                    }}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                      settings.use_text_logo
+                        ? 'bg-amber-700 text-white shadow-sm'
+                        : 'bg-white text-stone-700 border border-stone-300 hover:bg-stone-50'
+                    }`}
+                  >
+                    <Type className="w-3.5 h-3.5" />
+                    <span>Use Brand Text</span>
+                  </button>
+                </div>
               </div>
-              <div>
-                <label className="block text-xs font-bold text-stone-800 mb-1">Favicon URL</label>
-                <input
-                  type="text"
-                  value={settings.favicon_url}
-                  onChange={(e) => setSettings({ ...settings, favicon_url: e.target.value })}
-                  placeholder="https://..."
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-stone-50 border border-stone-300 text-xs text-stone-900 focus:outline-none focus:border-amber-600"
-                />
+
+              <div className="p-4 rounded-xl bg-stone-50 border border-stone-200 flex flex-col md:flex-row items-center gap-6">
+                <div className="flex-1 space-y-4 w-full">
+                  <div>
+                    <label className="block text-xs font-bold text-stone-800 mb-1">
+                      Logo Image URL (Supports File Upload, Direct Links, & Google Drive links)
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={settings.logo_url}
+                        onChange={(e) => setSettings({ ...settings, logo_url: e.target.value })}
+                        onBlur={(e) => {
+                          const formatted = formatImageUrl(e.target.value, '/images/rvk-logo.png');
+                          setSettings({ ...settings, logo_url: formatted });
+                        }}
+                        disabled={settings.use_text_logo}
+                        placeholder="/images/rvk-logo.png or https://drive.google.com/file/d/..."
+                        className="flex-1 px-3.5 py-2.5 rounded-xl bg-white border border-stone-300 text-xs text-stone-900 focus:outline-none focus:border-amber-600 font-mono disabled:opacity-50"
+                      />
+                      <label className={`px-4 py-2.5 bg-amber-700 hover:bg-amber-800 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors flex-shrink-0 ${settings.use_text_logo ? 'opacity-50 pointer-events-none' : ''}`}>
+                        <UploadCloud className="w-4 h-4" />
+                        <span>{uploadingLogo ? 'Uploading...' : 'Upload Logo'}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleFileUpload(e, 'logo_url')}
+                          className="hidden"
+                          disabled={uploadingLogo || settings.use_text_logo}
+                        />
+                      </label>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-stone-800 mb-1">
+                      Favicon URL (Tab Icon)
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={settings.favicon_url}
+                        onChange={(e) => setSettings({ ...settings, favicon_url: e.target.value })}
+                        onBlur={(e) => {
+                          const formatted = formatImageUrl(e.target.value, '/images/rvk-logo.png');
+                          setSettings({ ...settings, favicon_url: formatted });
+                        }}
+                        placeholder="/images/rvk-logo.png or https://drive.google.com/file/d/..."
+                        className="flex-1 px-3.5 py-2.5 rounded-xl bg-white border border-stone-300 text-xs text-stone-900 focus:outline-none focus:border-amber-600 font-mono"
+                      />
+                      <label className="px-4 py-2.5 bg-stone-700 hover:bg-stone-800 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors flex-shrink-0">
+                        <UploadCloud className="w-4 h-4" />
+                        <span>Upload Favicon</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleFileUpload(e, 'favicon_url')}
+                          className="hidden"
+                          disabled={uploadingLogo}
+                        />
+                      </label>
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-stone-500 font-medium italic">
+                    💡 Tip: Google Drive view links (e.g., <code className="text-amber-700 font-bold">drive.google.com/file/d/...</code>) are automatically converted to direct raw image links!
+                  </p>
+                </div>
+
+                {/* Live Previews Box */}
+                <div className="w-full md:w-72 p-4 rounded-xl bg-white border border-stone-200 shadow-xs text-center space-y-3 flex flex-col items-center justify-center">
+                  <span className="text-[10px] uppercase tracking-widest font-black text-stone-500 flex items-center gap-1">
+                    <ImageIcon className="w-3.5 h-3.5 text-amber-600" /> Active Previews
+                  </span>
+                  
+                  <div className="grid grid-cols-2 gap-2 w-full">
+                    {/* Logo Preview */}
+                    <div className="p-2.5 bg-[#F7EEED] border border-[#F7D1D8] rounded-xl flex flex-col items-center justify-center space-y-1">
+                      <span className="text-[9px] uppercase tracking-wider font-extrabold text-[#4A0D25]">Store Logo</span>
+                      {settings.use_text_logo ? (
+                        <div className="text-center px-1 py-1">
+                          <span className="font-serif font-extrabold text-xs text-[#1A0510] uppercase tracking-wider block line-clamp-1">
+                            {settings.site_name || 'Rose Valley'}
+                          </span>
+                          <span className="text-[8px] font-black text-[#4A0D25] tracking-widest block uppercase">
+                            [TEXT LOGO MODE]
+                          </span>
+                        </div>
+                      ) : settings.logo_url ? (
+                        <img
+                          src={formatImageUrl(settings.logo_url)}
+                          alt="Logo Preview"
+                          className="max-h-12 w-auto object-contain"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = '/images/rvk-logo.png';
+                          }}
+                        />
+                      ) : (
+                        <span className="text-[10px] text-stone-400 font-semibold">No logo</span>
+                      )}
+                    </div>
+
+                    {/* Favicon Preview */}
+                    <div className="p-2.5 bg-[#F7EEED] border border-[#F7D1D8] rounded-xl flex flex-col items-center justify-center space-y-1">
+                      <span className="text-[9px] uppercase tracking-wider font-extrabold text-[#4A0D25]">Tab Favicon</span>
+                      {settings.favicon_url ? (
+                        <img
+                          src={formatImageUrl(settings.favicon_url)}
+                          alt="Favicon Preview"
+                          className="w-8 h-8 object-contain rounded-md"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = '/images/rvk-logo.png';
+                          }}
+                        />
+                      ) : (
+                        <span className="text-[10px] text-stone-400 font-semibold">No favicon</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

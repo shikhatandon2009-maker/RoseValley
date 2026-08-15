@@ -17,6 +17,7 @@ ALTER TABLE IF EXISTS review_votes ADD COLUMN IF NOT EXISTS store_id VARCHAR(100
 ALTER TABLE IF EXISTS product_questions ADD COLUMN IF NOT EXISTS store_id VARCHAR(100) NOT NULL DEFAULT 'essential_oils_perfumes_store_01';
 ALTER TABLE IF EXISTS product_answers ADD COLUMN IF NOT EXISTS store_id VARCHAR(100) NOT NULL DEFAULT 'essential_oils_perfumes_store_01';
 ALTER TABLE IF EXISTS site_settings ADD COLUMN IF NOT EXISTS store_id VARCHAR(100) NOT NULL DEFAULT 'essential_oils_perfumes_store_01';
+ALTER TABLE IF EXISTS site_settings ADD COLUMN IF NOT EXISTS use_text_logo BOOLEAN DEFAULT FALSE;
 ALTER TABLE IF EXISTS homepage_sections ADD COLUMN IF NOT EXISTS store_id VARCHAR(100) NOT NULL DEFAULT 'essential_oils_perfumes_store_01';
 ALTER TABLE IF EXISTS pages ADD COLUMN IF NOT EXISTS store_id VARCHAR(100) NOT NULL DEFAULT 'essential_oils_perfumes_store_01';
 ALTER TABLE IF EXISTS addresses ADD COLUMN IF NOT EXISTS store_id VARCHAR(100) NOT NULL DEFAULT 'essential_oils_perfumes_store_01';

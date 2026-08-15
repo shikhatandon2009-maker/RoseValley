@@ -84,6 +84,7 @@ export async function PUT(
       meta_title,
       meta_description,
       category_ids,
+      variants,
     } = body;
 
     const updates: Record<string, any> = {
@@ -141,7 +142,46 @@ export async function PUT(
       }
     }
 
-    return NextResponse.json({ message: 'Product updated successfully', product: updatedProduct });
+    // Sync product_variants if variants passed
+    let updatedVariants: any[] = [];
+    if (Array.isArray(variants)) {
+      await supabase
+        .from('product_variants')
+        .delete()
+        .eq('store_id', STORE_ID)
+        .eq('product_id', id);
+
+      if (variants.length > 0) {
+        const variantRows = variants.map((v: any) => ({
+          store_id: STORE_ID,
+          product_id: id,
+          name: String(v.name || 'Default Variant').trim(),
+          sku: v.sku ? String(v.sku).trim() : null,
+          price: Number(v.price) || Number(price || 0),
+          compare_at_price: v.compare_at_price ? Number(v.compare_at_price) : null,
+          stock: Number(v.stock) || 0,
+        }));
+
+        const { data: insertedVariants } = await supabase
+          .from('product_variants')
+          .insert(variantRows)
+          .select('*');
+
+        updatedVariants = insertedVariants || [];
+      }
+    } else {
+      const { data: existingVariants } = await supabase
+        .from('product_variants')
+        .select('*')
+        .eq('store_id', STORE_ID)
+        .eq('product_id', id);
+      updatedVariants = existingVariants || [];
+    }
+
+    return NextResponse.json({
+      message: 'Product updated successfully',
+      product: { ...updatedProduct, variants: updatedVariants },
+    });
   } catch (err: any) {
     return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });
   }

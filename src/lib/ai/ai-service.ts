@@ -101,7 +101,7 @@ Format MUST be strictly valid JSON:
 ]`;
 
     case 'category_description':
-      return `Write a captivating 2-sentence category description for "${req.prompt}".`;
+      return `Write a rich, poetic, and high-converting 100-word SEO category description specifically tailored to the luxury perfume & attar category "${req.prompt}". Highlight 400-year Kannauj copper still (Deg-Bhapka) hydro-distillation heritage, 100% alcohol-free botanical purity, high sillage, and target luxury fragrance keywords.`;
     case 'blog_post':
       return `Draft an inspiring journal entry about perfume crafting or aromatherapy on the topic: "${req.prompt}".`;
     case 'qa_answer':
@@ -227,8 +227,10 @@ Finally, ${name} anchors into a deep, mesmerizing drydown foundation of ${baseNo
         2
       );
 
-    case 'category_description':
-      return `Discover our curated collection of ${name}, crafted with unyielding dedication to 100% botanical purity, luxury, and Kannauj hydro-distillation mastery.`;
+    case 'category_description': {
+      const categoryName = req.prompt || 'Artisanal Perfumes & Pure Attars';
+      return `Explore our world-renowned ${categoryName} collection, hand-crafted through 400 years of unbroken Kannauj copper still (Deg-Bhapka) hydro-distillation tradition. Every creation in this luxury collection is formulated with 100% alcohol-free pure botanical extracts, precious Rosa Damascena, and rare Mysore Sandalwood oil. Designed for discerning fragrance connoisseurs, our ${categoryName} range delivers an intoxicating sillage and 12-hour scent longevity on skin. Immerse your senses in pure, unadulterated artisanal luxury and experience the authentic royal heritage of India's perfume capital.`;
+    }
     case 'blog_post':
       return `The Art of Fragrance Layering: How to Create Your Personal Scent Signature with ${name}...`;
     case 'qa_answer':

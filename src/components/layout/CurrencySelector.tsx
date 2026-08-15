@@ -6,8 +6,13 @@ import { Globe, ChevronDown, Check } from 'lucide-react';
 
 export function CurrencySelector() {
   const { currency, setCurrency } = useCurrencyStore();
+  const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const options = [
     { code: 'INR', symbol: '₹', name: 'Indian Rupee', flag: '🇮🇳' },
@@ -17,7 +22,8 @@ export function CurrencySelector() {
     { code: 'AED', symbol: 'د.إ', name: 'UAE Dirham', flag: '🇦🇪' },
   ];
 
-  const currentOption = options.find((opt) => opt.code === currency) || options[0];
+  const activeCode = mounted ? currency : 'INR';
+  const currentOption = options.find((opt) => opt.code === activeCode) || options[0];
 
   // Click-outside listener to close currency dropdown
   useEffect(() => {
@@ -39,7 +45,9 @@ export function CurrencySelector() {
         aria-label="Select Currency"
       >
         <Globe className="w-4 h-4 text-[#4A0D25]" />
-        <span className="font-medium">{currentOption.code} ({currentOption.symbol})</span>
+        <span className="font-medium" suppressHydrationWarning>
+          {currentOption.code} ({currentOption.symbol})
+        </span>
         <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-300 ${open ? 'rotate-180' : ''}`} />
       </button>
 

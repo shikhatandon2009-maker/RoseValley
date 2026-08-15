@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useSiteSettingsStore } from '@/store/site-settings-store';
+import { formatImageUrl } from '@/lib/format-image';
 import {
   LayoutDashboard,
   Users,
@@ -27,6 +29,7 @@ import {
   ExternalLink,
   Sparkles,
   Type,
+  Lock,
   X
 } from 'lucide-react';
 
@@ -37,9 +40,20 @@ interface AdminSidebarProps {
 
 export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
   const pathname = usePathname();
+  const { settings, fetchSettings } = useSiteSettingsStore();
+
+  useEffect(() => {
+    fetchSettings();
+  }, [fetchSettings]);
+
+  const handleLockPortal = () => {
+    localStorage.removeItem('rv_admin_pin_unlocked_198411');
+    sessionStorage.removeItem('rv_admin_pin_unlocked_198411');
+    window.dispatchEvent(new Event('lock_admin_portal'));
+  };
+
   const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({
-    products: true,
-    orders: true,
+    orders: false,
     settings: false,
   });
 
@@ -75,11 +89,6 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
           label: 'Products',
           href: '/admin/products',
           icon: Package,
-          children: [
-            { label: 'All Products', href: '/admin/products', icon: Layers },
-            { label: 'Product Variants', href: '/admin/products/variants', icon: Tags },
-            { label: 'Product Categories', href: '/admin/products/categories', icon: FolderTree },
-          ],
         },
       ],
     },
@@ -185,42 +194,61 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
           ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}
       >
-        {/* Brand Header */}
-        <div className="p-5 border-b border-[#F7D1D8] bg-[#FAE6E7]/80 flex items-center justify-between">
-          <Link href="/admin" className="flex items-center gap-3 group" onClick={handleLinkClick}>
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#F6A6BB] via-[#F4BBC9] to-[#F7D1D8] p-0.5 shadow-md flex-shrink-0">
-              <div className="w-full h-full bg-[#4A0D25] rounded-[10px] flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-[#F6A6BB] group-hover:rotate-12 transition-transform duration-300" />
+        {/* Brand Header & Top Left Lock Portal */}
+        <div className="px-3 py-2.5 border-b border-[#F7D1D8] bg-[#FAE6E7]/80 flex flex-col gap-1.5">
+          <div className="flex items-center justify-between">
+            <Link href="/admin" className="flex items-center gap-2 group" onClick={handleLinkClick}>
+              {!settings.use_text_logo && (
+                <div className="p-0.5 rounded-lg bg-white border border-[#F7D1D8] shadow-xs">
+                  <img 
+                    src={formatImageUrl(settings.logo_url, '/images/rvk-logo.png')} 
+                    alt={settings.site_name || "Rose Valley Kannauj"} 
+                    className="h-8 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/images/rvk-logo.png';
+                    }}
+                  />
+                </div>
+              )}
+              <div>
+                <h1 className="font-serif font-extrabold text-[#1A0510] text-xs tracking-wider group-hover:text-[#4A0D25] transition-colors leading-tight uppercase">
+                  {settings.site_name || 'ROSE VALLEY'}
+                </h1>
+                <p className="text-[8px] tracking-widest text-[#4A0D25] uppercase font-black">
+                  Executive Admin Suite
+                </p>
               </div>
-            </div>
-            <div>
-              <h1 className="font-serif font-extrabold text-[#1A0510] text-lg tracking-wider group-hover:text-[#4A0D25] transition-colors leading-tight">
-                ROSE VALLEY
-              </h1>
-              <p className="text-[10px] tracking-widest text-[#4A0D25] uppercase font-black">
-                Admin Suite
-              </p>
-            </div>
-          </Link>
+            </Link>
 
-          {/* Mobile close button */}
+            {/* Mobile close button */}
+            <button
+              onClick={onClose}
+              className="lg:hidden p-1.5 rounded-lg bg-[#F7EEED] border border-[#F7D1D8] text-[#4A0D25] hover:bg-[#F7D1D8] transition-all"
+              aria-label="Close sidebar"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {/* Lock Portal Button — Situated in Top Left Corner below Logo / Text */}
           <button
-            onClick={onClose}
-            className="lg:hidden p-2 rounded-xl bg-[#F7EEED] border border-[#F7D1D8] text-[#4A0D25] hover:bg-[#F7D1D8] transition-all"
-            aria-label="Close sidebar"
+            onClick={handleLockPortal}
+            className="w-full py-1 px-2.5 rounded-lg bg-white hover:bg-[#F6A6BB]/50 border border-[#F7D1D8] text-[#4A0D25] font-black text-[11px] flex items-center justify-center gap-1.5 transition-all shadow-2xs hover:shadow-xs active:scale-98"
+            title="Lock Admin Portal"
           >
-            <X className="w-4 h-4" />
+            <Lock className="w-3 h-3 text-[#4A0D25]" />
+            <span>Lock Portal</span>
           </button>
         </div>
 
-        {/* Navigation List */}
-        <div className="flex-1 overflow-y-auto px-3 py-5 space-y-5">
+        {/* Navigation List — Compact Vertical Spacing */}
+        <div className="flex-1 overflow-y-auto px-2 py-2 space-y-2">
           {navGroups.map((group, idx) => (
-            <div key={idx} className="space-y-1.5">
-              <div className="px-3 text-[10px] font-black tracking-widest text-[#4A0D25]/60 uppercase">
+            <div key={idx} className="space-y-0.5">
+              <div className="px-2 py-0.5 text-[8.5px] font-black tracking-widest text-[#4A0D25]/70 uppercase">
                 {group.title}
               </div>
-              <nav className="space-y-1">
+              <nav className="space-y-0.5">
                 {group.items.map((item) => {
                   const Icon = item.icon;
                   const hasChildren = item.children && item.children.length > 0;
@@ -232,25 +260,25 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                       <div key={item.href} className="space-y-0.5">
                         <button
                           onClick={() => toggleSubmenu(item.label.toLowerCase().replace(/\s+/g, ''))}
-                          className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-[13px] font-extrabold transition-all duration-200 ${
+                          className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-extrabold transition-all duration-200 ${
                             isActive
-                              ? 'bg-[#4A0D25] text-white shadow-sm'
+                              ? 'bg-[#4A0D25] text-white shadow-xs'
                               : 'text-[#1A0510] hover:text-[#4A0D25] hover:bg-[#FAE6E7]/70'
                           }`}
                         >
-                          <div className="flex items-center gap-2.5">
-                            <Icon className={`w-4 h-4 ${isActive ? 'text-[#F6A6BB]' : 'text-[#4A0D25]'}`} />
+                          <div className="flex items-center gap-2">
+                            <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-[#F6A6BB]' : 'text-[#4A0D25]'}`} />
                             <span>{item.label}</span>
                           </div>
                           {isSubmenuOpen ? (
-                            <ChevronDown className={`w-3.5 h-3.5 ${isActive ? 'text-[#F6A6BB]' : 'text-[#4A0D25]'}`} />
+                            <ChevronDown className={`w-3 h-3 ${isActive ? 'text-[#F6A6BB]' : 'text-[#4A0D25]'}`} />
                           ) : (
-                            <ChevronRight className={`w-3.5 h-3.5 ${isActive ? 'text-[#F6A6BB]' : 'text-[#4A0D25]'}`} />
+                            <ChevronRight className={`w-3 h-3 ${isActive ? 'text-[#F6A6BB]' : 'text-[#4A0D25]'}`} />
                           )}
                         </button>
 
                         {isSubmenuOpen && (
-                          <div className="pl-7 space-y-0.5 border-l-2 border-[#F6A6BB]/40 ml-4 py-0.5">
+                          <div className="pl-5 space-y-0.5 border-l-2 border-[#F6A6BB]/40 ml-3.5 py-0.5">
                             {item.children?.map((child) => {
                               const isChildActive = pathname === child.href;
                               const ChildIcon = child.icon;
@@ -259,13 +287,13 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                                   key={child.href}
                                   href={child.href}
                                   onClick={handleLinkClick}
-                                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all ${
+                                  className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-bold transition-all ${
                                     isChildActive
-                                      ? 'bg-[#FAE6E7] text-[#4A0D25] border border-[#F6A6BB] shadow-xs'
+                                      ? 'bg-[#FAE6E7] text-[#4A0D25] border border-[#F6A6BB] shadow-2xs'
                                       : 'text-[#1A0510] hover:text-[#4A0D25] hover:bg-[#FAE6E7]/60'
                                   }`}
                                 >
-                                  {ChildIcon && <ChildIcon className="w-3.5 h-3.5 text-[#F6A6BB]" />}
+                                  {ChildIcon && <ChildIcon className="w-3 h-3 text-[#F6A6BB]" />}
                                   <span>{child.label}</span>
                                 </Link>
                               );
@@ -281,18 +309,18 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                       key={item.href}
                       href={item.href}
                       onClick={handleLinkClick}
-                      className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-[13px] font-extrabold transition-all duration-200 ${
+                      className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-extrabold transition-all duration-200 ${
                         isActive
-                          ? 'bg-[#4A0D25] text-white shadow-sm'
+                          ? 'bg-[#4A0D25] text-white shadow-xs'
                           : 'text-[#1A0510] hover:text-[#4A0D25] hover:bg-[#FAE6E7]/70'
                       }`}
                     >
-                      <div className="flex items-center gap-2.5">
-                        <Icon className={`w-4 h-4 ${isActive ? 'text-[#F6A6BB]' : 'text-[#4A0D25]'}`} />
+                      <div className="flex items-center gap-2">
+                        <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-[#F6A6BB]' : 'text-[#4A0D25]'}`} />
                         <span>{item.label}</span>
                       </div>
                       {item.badge && (
-                        <span className="px-2 py-0.5 text-[10px] font-black rounded-full bg-[#F6A6BB] text-[#4A0D25]">
+                        <span className="px-1.5 py-0.2 text-[9px] font-black rounded-full bg-[#F6A6BB] text-[#4A0D25]">
                           {item.badge}
                         </span>
                       )}
@@ -305,22 +333,19 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
         </div>
 
         {/* Footer Quick Action */}
-        <div className="p-3 border-t border-[#F7D1D8] bg-[#FAE6E7]/80 space-y-1.5">
+        <div className="p-2 px-3 border-t border-[#F7D1D8] bg-[#FAE6E7]/80 flex items-center justify-between">
           <Link
             href="/"
             target="_blank"
             onClick={handleLinkClick}
-            className="flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold text-[#4A0D25] hover:text-[#1A0510] hover:bg-white transition-all"
+            className="flex items-center gap-1.5 py-1 px-2 rounded-lg text-[11px] font-bold text-[#4A0D25] hover:text-[#1A0510] hover:bg-white transition-all"
           >
-            <span className="flex items-center gap-2">
-              <ExternalLink className="w-3.5 h-3.5 text-[#F6A6BB]" /> View Storefront
-            </span>
+            <ExternalLink className="w-3 h-3 text-[#F6A6BB]" />
+            <span>Storefront</span>
           </Link>
-          <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-white border border-[#F7D1D8] text-[10px] text-[#1A0510] shadow-xs">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-emerald-600 animate-ping" />
-              <span className="font-black">Connected</span>
-            </div>
+          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-white border border-[#F7D1D8] text-[9px] text-[#1A0510] shadow-2xs">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-ping" />
+            <span className="font-black">Online</span>
           </div>
         </div>
       </aside>

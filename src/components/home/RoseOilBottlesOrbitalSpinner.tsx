@@ -148,8 +148,8 @@ export function RoseOilBottlesOrbitalSpinner({ products }: RoseOilBottlesOrbital
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      {/* Soft pinkish radial aura glow — matching product detail page */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[450px] h-[450px] sm:w-[600px] sm:h-[600px] bg-gradient-radial from-[#F6A6BB]/50 via-[#F4BBC9]/30 to-transparent rounded-full blur-[90px] pointer-events-none z-0 animate-pulse" />
+      {/* Soft pinkish radial aura glow — responsive circular spotlight */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[220px] h-[220px] sm:w-[380px] sm:h-[380px] md:w-[480px] md:h-[480px] bg-gradient-radial from-[#F6A6BB]/25 via-[#F4BBC9]/10 to-transparent rounded-full blur-2xl sm:blur-3xl pointer-events-none z-0" />
 
       {/* Background product name watermark */}
       <div className="absolute top-[38%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] max-w-[500px] flex justify-center text-center pointer-events-none overflow-hidden opacity-[0.08] z-0">
@@ -225,9 +225,9 @@ export function RoseOilBottlesOrbitalSpinner({ products }: RoseOilBottlesOrbital
                           : 'scale-90 opacity-30'
                       }`}
                     >
-                      {/* Soft pinkish radial aura glow for active bottle — matching product detail page */}
+                      {/* Soft pinkish radial aura glow for active bottle — soft circular backlight */}
                       {isActive && (
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[320px] h-[320px] sm:w-[420px] sm:h-[420px] bg-gradient-radial from-[#F6A6BB]/60 via-[#F4BBC9]/40 to-transparent rounded-full blur-[80px] pointer-events-none z-0 animate-pulse" />
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[180px] h-[180px] sm:w-[260px] sm:h-[260px] md:w-[320px] md:h-[320px] bg-gradient-radial from-[#F6A6BB]/30 via-[#F4BBC9]/15 to-transparent rounded-full blur-xl sm:blur-2xl pointer-events-none z-0" />
                       )}
 
                       {/* Light Studio Ground Shadow */}

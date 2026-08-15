@@ -11,6 +11,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'No file uploaded' }, { status: 400 });
     }
 
+    const folderParam = (formData.get('folder') as string) || (formData.get('type') as string) || 'uploads';
+    const safeFolder = folderParam.replace(/[^a-z0-9_-]/gi, '');
+
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
@@ -23,13 +26,13 @@ export async function POST(request: Request) {
     const filename = `${cleanBasename}_${Date.now()}${fileExtension}`;
 
     // Target upload directory
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'hero');
+    const uploadDir = path.join(process.cwd(), 'public', 'uploads', safeFolder);
     await mkdir(uploadDir, { recursive: true });
 
     const filePath = path.join(uploadDir, filename);
     await writeFile(filePath, buffer);
 
-    const publicUrl = `/uploads/hero/${filename}`;
+    const publicUrl = `/uploads/${safeFolder}/${filename}`;
 
     return NextResponse.json({
       success: true,

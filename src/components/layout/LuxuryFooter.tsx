@@ -1,19 +1,45 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { Sparkles, Award, Droplet, Shield } from 'lucide-react';
+import { useSiteSettingsStore } from '@/store/site-settings-store';
+import { formatImageUrl } from '@/lib/format-image';
 
 export function LuxuryFooter() {
+  const { settings, fetchSettings } = useSiteSettingsStore();
+
+  useEffect(() => {
+    fetchSettings();
+  }, [fetchSettings]);
+
   return (
     <footer className="bg-[#F7EEED] text-[#1A0510] border-t border-[#F7D1D8] pt-16 pb-12 font-sans relative overflow-hidden select-none">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16 relative z-10">
         {/* Brand Authority Row */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-12 border-b border-[#F7D1D8]">
           <div className="space-y-3">
-            <h2 className="font-serif font-bold text-2xl text-[#1A0510] tracking-wider">
-              ROSE VALLEY KANNAUJ
-            </h2>
+            <Link href="/" className="inline-block group">
+              {settings.use_text_logo ? (
+                <div className="flex flex-col">
+                  <span className="font-serif font-black text-2xl text-[#1A0510] uppercase tracking-widest group-hover:text-[#4A0D25] transition-colors">
+                    {settings.site_name || 'Rose Valley Kannauj'}
+                  </span>
+                  <span className="text-[10px] font-bold text-[#4A0D25] tracking-widest uppercase">
+                    {settings.tagline || 'Est. 1620 • Pure Hydro-Distillates'}
+                  </span>
+                </div>
+              ) : (
+                <img 
+                  src={formatImageUrl(settings.logo_url, '/images/rvk-logo.png')} 
+                  alt={settings.site_name || "Rose Valley Kannauj"} 
+                  className="h-14 sm:h-16 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/images/rvk-logo.png';
+                  }}
+                />
+              )}
+            </Link>
             <p className="text-xs text-[#4A0D25] leading-relaxed max-w-sm font-medium">
               World’s Largest Producer of Pure Rose Oil. Distilling rare Rosa Damascena and hydro-distilled botanical attars in Kannauj copper stills for over four centuries.
             </p>

@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { ShieldCheck, Lock, Sparkles, KeyRound, AlertCircle, LogOut } from 'lucide-react';
+import { useSiteSettingsStore } from '@/store/site-settings-store';
+import { formatImageUrl } from '@/lib/format-image';
 
 const CORRECT_PIN = '198411';
 const STORAGE_KEY = 'rv_admin_pin_unlocked_198411';
@@ -12,14 +14,16 @@ export function AdminPinGate({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState(false);
   const [mounted, setMounted] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const { settings, fetchSettings } = useSiteSettingsStore();
 
   useEffect(() => {
     setMounted(true);
+    fetchSettings();
     const savedPin = localStorage.getItem(STORAGE_KEY) || sessionStorage.getItem(STORAGE_KEY);
     if (savedPin === CORRECT_PIN) {
       setUnlocked(true);
     }
-  }, []);
+  }, [fetchSettings]);
 
   const handleDigitChange = (index: number, value: string) => {
     if (!/^\d*$/.test(value)) return;
@@ -62,6 +66,12 @@ export function AdminPinGate({ children }: { children: React.ReactNode }) {
     setPin(['', '', '', '', '', '']);
   };
 
+  useEffect(() => {
+    const handleCustomLock = () => handleLock();
+    window.addEventListener('lock_admin_portal', handleCustomLock);
+    return () => window.removeEventListener('lock_admin_portal', handleCustomLock);
+  }, []);
+
   if (!mounted) return null;
 
   if (!unlocked) {
@@ -72,28 +82,41 @@ export function AdminPinGate({ children }: { children: React.ReactNode }) {
           <div className="absolute -top-24 -left-24 w-48 h-48 bg-[#F6A6BB]/20 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-[#F4BBC9]/20 rounded-full blur-3xl pointer-events-none" />
 
-          {/* Icon Header */}
-          <div className="relative inline-flex items-center justify-center">
-            <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-[#F6A6BB] via-[#F4BBC9] to-[#F7D1D8] p-0.5 shadow-md">
-              <div className="w-full h-full bg-[#4A0D25] rounded-[22px] flex items-center justify-center">
-                <Lock className={`w-8 h-8 ${error ? 'text-rose-400 animate-bounce' : 'text-[#F6A6BB]'}`} />
-              </div>
+          {/* Icon & Logo Header */}
+          <div className="flex flex-col items-center justify-center space-y-3">
+            <div className="relative p-4 rounded-2xl bg-white border border-[#F7D1D8] shadow-md flex flex-col items-center justify-center">
+              {settings.use_text_logo ? (
+                <div className="text-center px-4 py-2">
+                  <span className="font-serif font-black text-xl sm:text-2xl text-[#1A0510] uppercase tracking-wider block">
+                    {settings.site_name || 'Rose Valley'}
+                  </span>
+                  <span className="text-[10px] font-bold text-[#4A0D25] tracking-widest block uppercase mt-0.5">
+                    Executive Suite
+                  </span>
+                </div>
+              ) : (
+                <img 
+                  src={formatImageUrl(settings.logo_url, '/images/rvk-logo.png')} 
+                  alt={settings.site_name || "Rose Valley Kannauj"} 
+                  className="h-16 sm:h-20 w-auto object-contain"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/images/rvk-logo.png';
+                  }}
+                />
+              )}
+              <span className="absolute -bottom-2 -right-2 p-1.5 rounded-full bg-[#F6A6BB] text-[#4A0D25] shadow-sm">
+                <ShieldCheck className="w-4 h-4 text-[#4A0D25]" />
+              </span>
             </div>
-            <span className="absolute -bottom-2 -right-2 p-1.5 rounded-full bg-[#F6A6BB] text-[#4A0D25] shadow-sm">
-              <Sparkles className="w-4 h-4 text-[#4A0D25]" />
-            </span>
           </div>
 
           {/* Title & Description */}
           <div className="space-y-2">
-            <h1 className="font-serif font-extrabold text-2xl sm:text-3xl tracking-wider text-[#1A0510]">
-              ROSE VALLEY KANNAUJ
-            </h1>
             <p className="text-xs uppercase font-black tracking-widest text-[#4A0D25]">
-              Admin Security Gate
+              Executive Admin Security Gate
             </p>
             <p className="text-xs text-[#4A0D25] font-bold max-w-xs mx-auto">
-              Enter 6-digit security PIN to access Executive Suite
+              Enter 6-digit security PIN to access Executive Management Suite
             </p>
           </div>
 
@@ -141,18 +164,6 @@ export function AdminPinGate({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="relative">
-      {/* Top Header Lock Button injection context */}
-      <div className="fixed top-3.5 right-4 z-50">
-        <button
-          onClick={handleLock}
-          className="px-3.5 py-1.5 rounded-full bg-[#FAE6E7] border border-[#F7D1D8] text-[#4A0D25] hover:bg-[#F6A6BB] font-black text-xs flex items-center gap-1.5 transition-all shadow-xs"
-          title="Lock Admin Portal"
-        >
-          <Lock className="w-3.5 h-3.5 text-[#4A0D25]" />
-          <span>Lock Portal</span>
-        </button>
-      </div>
-
       {children}
     </div>
   );

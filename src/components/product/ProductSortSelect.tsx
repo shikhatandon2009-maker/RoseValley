@@ -25,7 +25,7 @@ export function ProductSortSelect() {
     setMounted(true);
   }, []);
 
-  const currentSort = mounted ? (searchParams.get('sort') || '') : '';
+  const currentSort = mounted ? (searchParams?.get('sort') || '') : '';
   const activeOption = SORT_OPTIONS.find((o) => o.id === currentSort) || SORT_OPTIONS[0];
 
   useEffect(() => {
@@ -39,7 +39,7 @@ export function ProductSortSelect() {
   }, []);
 
   const handleSelect = (sortId: string) => {
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(searchParams?.toString() || '');
     if (sortId) {
       params.set('sort', sortId);
     } else {

@@ -2,12 +2,10 @@ import React from 'react';
 import Link from 'next/link';
 import { SectionWrapper } from '@/components/common/SectionWrapper';
 import { RoseOilBottlesOrbitalSpinner } from '@/components/home/RoseOilBottlesOrbitalSpinner';
-import { LiveDistilleryFeedWidget } from '@/components/home/LiveDistilleryFeedWidget';
-import { ScentMemoryAIWidget } from '@/components/home/ScentMemoryAIWidget';
 import { AnimatedCounter } from '@/components/common/AnimatedCounter';
 import { ProductCard } from '@/components/product/ProductCard';
 import { fetchProducts } from '@/lib/supabase/store-scoped-queries';
-import { Award, Sparkles, ArrowRight, CheckCircle2, QrCode, ShieldCheck, Clock, Truck, RotateCcw, Lock, CreditCard, Star } from 'lucide-react';
+import { Award, Sparkles, ArrowRight, CheckCircle2, ShieldCheck, Clock, Truck, RotateCcw, Lock, CreditCard, Star } from 'lucide-react';
 import { NewsletterSignup } from '@/components/home/NewsletterSignup';
 import { LuxuryHeader } from '@/components/layout/LuxuryHeader';
 import { LuxuryFooter } from '@/components/layout/LuxuryFooter';
@@ -28,10 +26,10 @@ export default async function Home() {
       {/* 🔥 TRUST BAR — Social proof strip */}
       <div className="bg-[#4A0D25] text-white py-2.5 px-4 overflow-hidden">
         <div className="max-w-7xl mx-auto flex items-center justify-center gap-6 sm:gap-10 text-[10px] sm:text-xs font-bold uppercase tracking-widest flex-wrap">
-          <span className="flex items-center gap-1.5"><Truck className="w-3.5 h-3.5 text-[#F6A6BB]" /> Free Shipping ₹999+</span>
-          <span className="hidden sm:flex items-center gap-1.5"><RotateCcw className="w-3.5 h-3.5 text-[#F6A6BB]" /> 7-Day Returns</span>
+          <span className="flex items-center gap-1.5"><Truck className="w-3.5 h-3.5 text-[#F6A6BB]" /> Free Shipping ₹2000+</span>
+          <span className="hidden sm:flex items-center gap-1.5"><RotateCcw className="w-3.5 h-3.5 text-[#F6A6BB]" /> Highest Quality </span>
           <span className="flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5 text-[#F6A6BB]" /> 100% Authentic</span>
-          <span className="hidden sm:flex items-center gap-1.5"><CreditCard className="w-3.5 h-3.5 text-[#F6A6BB]" /> COD Available</span>
+          <span className="hidden sm:flex items-center gap-1.5"><CreditCard className="w-3.5 h-3.5 text-[#F6A6BB]" /> COA Available</span>
           <span className="flex items-center gap-1.5"><Lock className="w-3.5 h-3.5 text-[#F6A6BB]" /> Secure Checkout</span>
         </div>
       </div>
@@ -89,37 +87,7 @@ export default async function Home() {
           </div>
         </SectionWrapper>
 
-        {/* 3. SOCIAL PROOF — RECENT PURCHASES TICKER */}
-        <div className="bg-[#FAE6E7] border-b border-[#F7D1D8] py-3 overflow-hidden">
-          <div className="flex items-center gap-6 animate-marquee whitespace-nowrap">
-            {[
-              { name: 'Priya S.', city: 'Mumbai', product: 'Gulab Khas Ruh Gulab', time: '2 min ago' },
-              { name: 'Aisha K.', city: 'Dubai', product: 'Saffron Crocus Attar', time: '5 min ago' },
-              { name: 'Rajan M.', city: 'Delhi', product: 'Royal Rose Oud Perfume', time: '8 min ago' },
-              { name: 'Victoria L.', city: 'London', product: 'Shamama Kannauj Attar', time: '12 min ago' },
-              { name: 'Fatima A.', city: 'Riyadh', product: 'Ruh Khus Vetiver', time: '15 min ago' },
-              { name: 'Priya S.', city: 'Mumbai', product: 'Gulab Khas Ruh Gulab', time: '2 min ago' },
-              { name: 'Aisha K.', city: 'Dubai', product: 'Saffron Crocus Attar', time: '5 min ago' },
-              { name: 'Rajan M.', city: 'Delhi', product: 'Royal Rose Oud Perfume', time: '8 min ago' },
-            ].map((purchase, idx) => (
-              <span key={idx} className="inline-flex items-center gap-2 text-xs font-semibold text-[#4A0D25]">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="font-bold">{purchase.name}</span>
-                <span className="text-[#4A0D25]/60">from {purchase.city} purchased</span>
-                <span className="font-bold text-[#1A0510]">{purchase.product}</span>
-                <span className="text-[#4A0D25]/50">— {purchase.time}</span>
-                <span className="text-[#F7D1D8] mx-2">|</span>
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {/* 4. LIVE DISTILLERY FEED WIDGET */}
-        <SectionWrapper className="bg-[#F7EEED] border-b border-[#F7D1D8] content-auto">
-          <LiveDistilleryFeedWidget />
-        </SectionWrapper>
-
-        {/* 5. DYNAMIC PRODUCTS GRID (LIVE FROM SUPABASE DATABASE) */}
+        {/* 3. DYNAMIC PRODUCTS GRID (LIVE FROM SUPABASE DATABASE) */}
         <SectionWrapper id="featured" className="bg-[#F7EEED] border-b border-[#F7D1D8]">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#F7D1D8] pb-4 mb-8">
             <div>
@@ -146,7 +114,7 @@ export default async function Home() {
           </div>
         </SectionWrapper>
 
-        {/* 6. TESTIMONIALS SECTION */}
+        {/* 4. TESTIMONIALS SECTION */}
         <SectionWrapper className="bg-[#F7EEED] border-b border-[#F7D1D8]">
           <div className="text-center space-y-3 mb-8">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#FAE6E7] border border-[#F7D1D8] text-[#4A0D25] text-xs font-extrabold uppercase tracking-widest">
@@ -205,12 +173,7 @@ export default async function Home() {
           </div>
         </SectionWrapper>
 
-        {/* 7. UNIQUE SCENT MEMORY AI */}
-        <SectionWrapper className="bg-[#F7EEED] border-b border-[#F7D1D8] content-auto">
-          <ScentMemoryAIWidget />
-        </SectionWrapper>
-
-        {/* 8. KANNAUJ HERITAGE TIMELINE (1620 → TODAY) */}
+        {/* 5. KANNAUJ HERITAGE TIMELINE (1620 → TODAY) */}
         <SectionWrapper className="bg-[#F7EEED] border-b border-[#F7D1D8] content-auto">
           <div className="text-center space-y-2 mb-10">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#FAE6E7] border border-[#F7D1D8] text-[#4A0D25] text-xs font-extrabold uppercase tracking-widest">
@@ -256,49 +219,7 @@ export default async function Home() {
           </div>
         </SectionWrapper>
 
-        {/* 9. PROVENANCE PASSPORT FEATURE SHOWCASE */}
-        <SectionWrapper className="bg-[#F7EEED] border-b border-[#F7D1D8] content-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-            <div className="space-y-4 text-left">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#FAE6E7] border border-[#F7D1D8] text-[#4A0D25] text-xs font-extrabold uppercase tracking-widest">
-                <QrCode className="w-3.5 h-3.5 text-[#F6A6BB]" /> Digital Authenticity Verification
-              </div>
-              <h2 className="font-serif font-bold text-3xl sm:text-4xl text-[#1A0510] leading-tight">
-                Cryptographic Rose Oil Provenance Passport
-              </h2>
-              <p className="text-xs sm:text-sm text-[#4A0D25] leading-relaxed font-semibold">
-                Every bottle of Rose Valley Kannauj pure elixir carries a tamper-proof QR certificate tracing its exact harvest date, copper deg vessel batch ID, hydro-distillation timestamp, and GC-MS purity spectrum.
-              </p>
-              <div className="pt-2">
-                <Link
-                  href="/provenance-passport"
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#4A0D25] text-white text-xs font-extrabold uppercase tracking-widest hover:bg-[#F6A6BB] hover:text-[#4A0D25] transition-all shadow-xs"
-                >
-                  <ShieldCheck className="w-4 h-4 text-[#F6A6BB]" /> Verify Batch Passport
-                </Link>
-              </div>
-            </div>
-
-            <div className="p-8 rounded-3xl bg-[#FAE6E7]/80 border border-[#F7D1D8] text-center space-y-4 relative overflow-hidden shadow-xs">
-              <div className="w-24 h-24 mx-auto rounded-2xl bg-white p-3 flex items-center justify-center shadow-xs">
-                <QrCode className="w-full h-full text-[#4A0D25]" />
-              </div>
-              <div>
-                <span className="text-[10px] font-mono text-[#4A0D25] uppercase tracking-widest font-bold block">
-                  Batch Code: #DEG-2026-R88
-                </span>
-                <h3 className="font-serif font-bold text-xl text-[#1A0510] mt-1">
-                  Authentic Damask Hydro-Extract
-                </h3>
-                <p className="text-xs text-[#4A0D25] font-semibold mt-1">
-                  99.98% Purity • Harvested April 2026 • Kannauj Distillation
-                </p>
-              </div>
-            </div>
-          </div>
-        </SectionWrapper>
-
-        {/* 10. NEWSLETTER SIGNUP */}
+        {/* 6. NEWSLETTER SIGNUP */}
         <NewsletterSignup />
       </div>
 

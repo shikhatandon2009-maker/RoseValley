@@ -12,6 +12,8 @@ import {
 import { useCartStore } from '@/store/cart-store';
 import { useWishlistStore } from '@/store/wishlist-store';
 import { useCurrencyStore } from '@/store/currency-store';
+import { useSiteSettingsStore } from '@/store/site-settings-store';
+import { formatImageUrl } from '@/lib/format-image';
 import { CurrencySelector } from './CurrencySelector';
 import { CheckoutChoiceModal } from '../checkout/CheckoutChoiceModal';
 
@@ -41,7 +43,6 @@ export function LuxuryHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<'collection' | 'inspiration' | null>(null);
   const [cartHoverOpen, setCartHoverOpen] = useState(false);
-  const [notificationOpen, setNotificationOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [categories, setCategories] = useState<CategoryItem[]>(cachedHeaderCategories || []);
   const [mounted, setMounted] = useState(false);
@@ -50,14 +51,60 @@ export function LuxuryHeader() {
   const [currentUser, setCurrentUser] = useState<UserSession | null>(null);
   const [checkoutChoiceOpen, setCheckoutChoiceOpen] = useState(false);
 
+  // Product Search state & refs
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const allProductsCache = useRef<any[]>([]);
+
   // Refs for outside-click
   const cartDropdownRef = useRef<HTMLDivElement>(null);
-  const notificationRef = useRef<HTMLDivElement>(null);
   const accountRef = useRef<HTMLDivElement>(null);
   const dropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const { items, toggleCart, updateQuantity, removeItem, getTotalINR } = useCartStore();
   const { productIds } = useWishlistStore();
+
+  // Pre-fetch / live search products
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
+    const query = searchQuery.toLowerCase().trim();
+
+    // 0ms instant local search from cache if available
+    if (allProductsCache.current.length > 0) {
+      const matched = allProductsCache.current.filter((p: any) =>
+        p.name?.toLowerCase().includes(query) ||
+        p.slug?.toLowerCase().includes(query) ||
+        p.description?.toLowerCase().includes(query) ||
+        JSON.stringify(p.scent_notes || {}).toLowerCase().includes(query)
+      );
+      setSearchResults(matched.slice(0, 6));
+    }
+
+    const timer = setTimeout(() => {
+      fetch(`/api/admin/products?search=${encodeURIComponent(query)}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.products && Array.isArray(data.products)) {
+            setSearchResults(data.products.slice(0, 6));
+            allProductsCache.current = data.products;
+          }
+        })
+        .catch((err) => console.error('Search fetch error:', err))
+        .finally(() => setIsSearching(false));
+    }, 120);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   // Auth session check
   const checkAuthSession = useCallback(() => {
@@ -105,9 +152,12 @@ export function LuxuryHeader() {
     router.refresh();
   };
 
-  // Mount + fetch categories
+  const { settings, fetchSettings } = useSiteSettingsStore();
+
+  // Mount + fetch categories & settings
   useEffect(() => {
     setMounted(true);
+    fetchSettings();
     if (cachedHeaderCategories && cachedHeaderCategories.length > 0) {
       setCategories(cachedHeaderCategories);
       return;
@@ -121,7 +171,7 @@ export function LuxuryHeader() {
         }
       })
       .catch((err) => console.error('Categories fetch error:', err));
-  }, []);
+  }, [fetchSettings]);
 
   // Scroll-aware header
   useEffect(() => {
@@ -139,11 +189,11 @@ export function LuxuryHeader() {
   // Close dropdowns on outside click
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setSearchOpen(false);
+      }
       if (cartDropdownRef.current && !cartDropdownRef.current.contains(event.target as Node)) {
         setCartHoverOpen(false);
-      }
-      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
-        setNotificationOpen(false);
       }
       if (accountRef.current && !accountRef.current.contains(event.target as Node)) {
         setAccountOpen(false);
@@ -178,7 +228,7 @@ export function LuxuryHeader() {
 
   // Check if nav link is active
   const isActive = (path: string) => pathname === path;
-  const isActivePrefix = (prefix: string) => pathname.startsWith(prefix);
+  const isActivePrefix = (prefix: string) => Boolean(pathname?.startsWith(prefix));
 
   return (
     <>
@@ -215,104 +265,169 @@ export function LuxuryHeader() {
             <div className="flex items-center gap-1.5 sm:gap-3">
               <CurrencySelector />
 
-              {/* Notification/Wishlist Dropdown */}
-              <div
-                ref={notificationRef}
-                className="luxury-notification-wrapper"
-                onMouseEnter={() => setNotificationOpen(true)}
-              >
+              {/* Product Auto-Complete Search */}
+              <div ref={searchRef} className="relative">
                 <button
-                  onClick={() => setNotificationOpen((prev) => !prev)}
+                  onClick={() => {
+                    setSearchOpen((prev) => !prev);
+                    setTimeout(() => searchInputRef.current?.focus(), 100);
+                  }}
                   className="luxury-icon-btn relative"
-                  title="Notifications & Saved Wishlist"
+                  title="Search Fragrances & Attars"
+                  aria-label="Search Fragrances & Attars"
                 >
-                  <Heart className="w-5 h-5" />
-                  {mounted && productIds.length > 0 && (
-                    <span className="luxury-wishlist-badge">
-                      {productIds.length}
-                    </span>
+                  <Search className="w-5 h-5" />
+                  {searchQuery.trim() && (
+                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-[#F6A6BB] animate-ping" />
                   )}
                 </button>
 
-                {notificationOpen && (
-                  <div
-                    className="luxury-notification-menu"
-                    onMouseEnter={() => setNotificationOpen(true)}
-                  >
-                    <div className="luxury-notification-header">
-                      <h3 className="luxury-notification-title">
-                        Notifications & Reserve
-                      </h3>
-                      <span className="luxury-notification-badge">
-                        {mounted ? productIds.length : 0} ITEMS SAVED
-                      </span>
-                    </div>
-
-                    <div className="luxury-notification-list">
-                      <div className="luxury-notification-item">
-                        <div className="luxury-notification-item-icon">
-                          <Sparkles className="w-4 h-4 text-[#F6A6BB]" />
-                        </div>
-                        <div>
-                          <h4 className="luxury-notification-item-title">
-                            2026 Damask Rose Harvest Live
-                          </h4>
-                          <p className="luxury-notification-item-desc">
-                            Hydro-distillation in progress in Vessel #Deg-04. Limited Ruh Gulab batches reserved.
-                          </p>
-                        </div>
-                      </div>
-
-                      {mounted && productIds.length > 0 ? (
-                        <div className="p-3 rounded-xl bg-[#F7EEED] text-center border border-[#F7D1D8]">
-                          <p className="text-xs text-[#4A0D25] font-bold">
-                            You have {productIds.length} saved item(s) in your Private Reserve Wishlist.
-                          </p>
-                          <button
-                            onClick={() => {
-                              setNotificationOpen(false);
-                              router.push('/wishlist');
-                            }}
-                            className="mt-2 text-xs font-bold text-[#F6A6BB] underline hover:text-[#4A0D25]"
-                          >
-                            View My Saved Wishlist &rarr;
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="text-center py-4 text-xs text-[#4A0D25]">
-                          Your private wishlist is empty. Tap the heart on any fragrance to save.
-                        </div>
+                {searchOpen && (
+                  <div className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 w-80 sm:w-96 rounded-3xl bg-white border-2 border-[#F7D1D8] shadow-2xl p-4 text-left z-50 animate-fade-in">
+                    {/* Search Bar Input */}
+                    <div className="relative mb-3">
+                      <Search className="w-4 h-4 text-[#F6A6BB] absolute left-3.5 top-1/2 -translate-y-1/2" />
+                      <input
+                        ref={searchInputRef}
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search attars, rose oil, oud, scent notes..."
+                        className="w-full pl-10 pr-9 py-2.5 rounded-2xl bg-[#FAE6E7]/60 border border-[#F7D1D8] text-xs font-bold text-[#1A0510] focus:outline-none focus:ring-2 focus:ring-[#F6A6BB]"
+                        autoFocus
+                      />
+                      {searchQuery && (
+                        <button
+                          onClick={() => setSearchQuery('')}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-[#1A0510]"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
                       )}
                     </div>
 
-                    <div className="luxury-notification-footer">
-                      <Link
-                        href="/wishlist"
-                        onClick={() => setNotificationOpen(false)}
-                        className="luxury-notification-footer-btn"
-                      >
-                        Manage Private Reserve Wishlist
-                      </Link>
-                    </div>
+                    {/* Auto-Populating Search Results Dropdown */}
+                    {isSearching && searchResults.length === 0 ? (
+                      <div className="py-6 text-center text-xs text-[#4A0D25] font-bold flex items-center justify-center gap-2">
+                        <Sparkles className="w-4 h-4 text-[#F6A6BB] animate-spin" />
+                        Searching fragrance database...
+                      </div>
+                    ) : searchQuery.trim() && searchResults.length > 0 ? (
+                      <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
+                        <div className="flex items-center justify-between text-[10px] font-black uppercase text-[#4A0D25] tracking-wider px-1 pb-1">
+                          <span>Matching Fragrances ({searchResults.length})</span>
+                          <span className="text-[#F6A6BB]">100% Authentic</span>
+                        </div>
+
+                        {searchResults.map((p) => (
+                          <Link
+                            key={p.id}
+                            href={`/products/${p.slug}`}
+                            onClick={() => {
+                              setSearchOpen(false);
+                              setSearchQuery('');
+                            }}
+                            className="flex items-center gap-3 p-2.5 rounded-2xl hover:bg-[#FAE6E7] transition-all group border border-transparent hover:border-[#F7D1D8]"
+                          >
+                            <img
+                              src={formatImageUrl(p.images?.[0], '/images/rvk-logo.png')}
+                              alt={p.name}
+                              className="w-12 h-12 rounded-xl object-cover border border-[#F7D1D8] bg-[#FAE6E7] flex-shrink-0"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-extrabold text-xs text-[#1A0510] group-hover:text-[#4A0D25] truncate">
+                                {p.name}
+                              </h4>
+                              {p.scent_notes?.top && p.scent_notes.top.length > 0 ? (
+                                <p className="text-[10px] text-stone-500 font-semibold truncate">
+                                  Notes: {p.scent_notes.top.slice(0, 2).join(', ')}
+                                </p>
+                              ) : (
+                                <p className="text-[10px] text-stone-500 font-semibold truncate">
+                                  Pure Kannauj Hydro-Distillate
+                                </p>
+                              )}
+                              <span className="font-serif font-extrabold text-xs text-[#4A0D25] block mt-0.5" suppressHydrationWarning>
+                                {formatPrice(p.price)}
+                              </span>
+                            </div>
+                            <ChevronRight className="w-4 h-4 text-stone-400 group-hover:text-[#4A0D25] transition-transform group-hover:translate-x-0.5" />
+                          </Link>
+                        ))}
+
+                        <div className="pt-2 border-t border-[#F7D1D8]">
+                          <Link
+                            href={`/products?search=${encodeURIComponent(searchQuery)}`}
+                            onClick={() => {
+                              setSearchOpen(false);
+                              setSearchQuery('');
+                            }}
+                            className="w-full py-2 px-3 rounded-xl bg-[#FAE6E7] hover:bg-[#F6A6BB]/40 text-[#4A0D25] text-xs font-black text-center block transition-colors"
+                          >
+                            View all results for "{searchQuery}" &rarr;
+                          </Link>
+                        </div>
+                      </div>
+                    ) : searchQuery.trim() && searchResults.length === 0 ? (
+                      <div className="py-6 text-center space-y-2">
+                        <Package className="w-8 h-8 text-[#F6A6BB] mx-auto opacity-70" />
+                        <p className="text-xs font-bold text-[#1A0510]">No fragrances found for "{searchQuery}"</p>
+                        <p className="text-[11px] text-stone-500 font-medium">Try searching for "Rose", "Oud", "Attar", or "Sandalwood".</p>
+                      </div>
+                    ) : (
+                      /* Popular searches quick pick */
+                      <div className="space-y-2 pt-1">
+                        <span className="text-[10px] font-black uppercase text-[#4A0D25] tracking-wider px-1 block">
+                          Popular Fragrance Searches
+                        </span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {['Ruh Gulab', 'Attar', 'Pure Rose Oil', 'Oud', 'Mysore Sandalwood', 'Khus'].map((term) => (
+                            <button
+                              key={term}
+                              onClick={() => setSearchQuery(term)}
+                              className="px-3 py-1 rounded-full bg-[#FAE6E7] text-[#4A0D25] text-xs font-bold hover:bg-[#F6A6BB] hover:text-[#4A0D25] transition-all"
+                            >
+                              {term}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
+
             </div>
           </div>
 
           {/* Center: Brand Logo */}
-          <Link href="/" className="luxury-brand-link-centered">
-            {/* Desktop Brand Title */}
-            <h1 className="luxury-brand-title hidden sm:block">
-              ROSE VALLEY KANNAUJ
-            </h1>
-            {/* Mobile Compact Monogram */}
-            <h1 className="luxury-brand-title block sm:hidden text-xl font-serif font-extrabold tracking-[0.25em] text-[#1A0510]">
-              Rose Valley
-            </h1>
-            <span className={`luxury-brand-subtitle hidden sm:block ${scrolled ? 'luxury-brand-subtitle-hidden' : ''}`}>
-              Est. 1620 • Pure Hydro-Distillates
-            </span>
+          <Link href="/" className="luxury-brand-link-centered flex flex-col items-center group py-0.5 text-center">
+            {settings.use_text_logo ? (
+              <div className="flex flex-col items-center">
+                <span className={`font-serif font-black tracking-widest text-[#1A0510] uppercase transition-all duration-300 group-hover:text-[#4A0D25] ${scrolled ? 'text-lg sm:text-xl' : 'text-xl sm:text-3xl'}`}>
+                  {settings.site_name || 'Rose Valley Kannauj'}
+                </span>
+                <span className={`luxury-brand-subtitle hidden sm:block ${scrolled ? 'luxury-brand-subtitle-hidden' : ''}`}>
+                  {settings.tagline || 'Est. 1620 • Pure Hydro-Distillates'}
+                </span>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-center">
+                  <img 
+                    src={formatImageUrl(settings.logo_url, '/images/rvk-logo.png')} 
+                    alt={settings.site_name || "Rose Valley Kannauj"} 
+                    className={`w-auto object-contain transition-all duration-300 group-hover:scale-105 ${scrolled ? 'h-9 sm:h-11' : 'h-12 sm:h-16'}`}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/images/rvk-logo.png';
+                    }}
+                  />
+                </div>
+                <span className={`luxury-brand-subtitle hidden sm:block ${scrolled ? 'luxury-brand-subtitle-hidden' : ''}`}>
+                  Est. 1620 • Pure Hydro-Distillates
+                </span>
+              </>
+            )}
           </Link>
 
           {/* Right: Account / Login & Cart */}
@@ -323,31 +438,18 @@ export function LuxuryHeader() {
               className="luxury-cart-hover-wrapper relative inline-block"
               onMouseEnter={() => setAccountOpen(true)}
             >
-              {currentUser ? (
-                <button
-                  onClick={() => setAccountOpen((prev) => !prev)}
-                  className="luxury-cart-btn"
-                  aria-label="Private Client Account"
-                  title={`Account (${currentUser.full_name})`}
-                >
-                  <User className="luxury-cart-icon" />
-                  <span className="luxury-cart-text hidden sm:inline">
-                    {currentUser.full_name ? currentUser.full_name.split(' ')[0] : 'Account'}
-                  </span>
-                  <ChevronDown className={`w-3.5 h-3.5 text-[#4A0D25] transition-transform duration-300 hidden sm:block ${accountOpen ? 'rotate-180' : ''}`} />
-                </button>
-              ) : (
-                <button
-                  onClick={() => setAccountOpen((prev) => !prev)}
-                  className="luxury-cart-btn"
-                  aria-label="Sign In to Account"
-                  title="Sign In to Account"
-                >
-                  <User className="luxury-cart-icon" />
-                  <span className="luxury-cart-text hidden sm:inline">Login</span>
-                  <ChevronDown className={`w-3.5 h-3.5 text-[#4A0D25] transition-transform duration-300 hidden sm:block ${accountOpen ? 'rotate-180' : ''}`} />
-                </button>
-              )}
+              <button
+                onClick={() => setAccountOpen((prev) => !prev)}
+                className="luxury-cart-btn"
+                aria-label={currentUser ? 'Private Client Account' : 'Sign In to Account'}
+                title={currentUser ? `Account (${currentUser.full_name})` : 'Sign In to Account'}
+              >
+                <User className="luxury-cart-icon" />
+                <span className="luxury-cart-text hidden sm:inline" suppressHydrationWarning>
+                  {currentUser?.full_name ? currentUser.full_name.split(' ')[0] : 'Login'}
+                </span>
+                <ChevronDown className={`w-3.5 h-3.5 text-[#4A0D25] transition-transform duration-300 hidden sm:block ${accountOpen ? 'rotate-180' : ''}`} />
+              </button>
 
               {accountOpen && (
                 <div
@@ -819,11 +921,10 @@ export function LuxuryHeader() {
       {/* Drawer */}
       <div className={`luxury-mobile-drawer ${mobileMenuOpen ? 'luxury-mobile-drawer-open' : ''}`}>
         {/* Drawer Header */}
-        <div className="luxury-mobile-drawer-header">
-          <div>
-            <h2 className="font-serif font-extrabold text-lg text-[#1A0510] tracking-wider">ROSE VALLEY</h2>
-            <p className="text-[10px] font-black uppercase tracking-widest text-[#4A0D25]">Est. 1620 • Kannauj</p>
-          </div>
+        <div className="luxury-mobile-drawer-header flex items-center justify-between">
+          <Link href="/" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2">
+            <img src="/images/rvk-logo.png" alt="Rose Valley Kannauj" className="h-10 w-auto object-contain" />
+          </Link>
           <button
             onClick={() => setMobileMenuOpen(false)}
             className="luxury-icon-btn"

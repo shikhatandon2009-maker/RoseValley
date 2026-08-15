@@ -24,8 +24,20 @@ import {
   Tag,
   Boxes,
   Upload,
-  Copy
+  Copy,
+  Download,
+  FileSpreadsheet,
+  UploadCloud
 } from 'lucide-react';
+
+interface ProductVariant {
+  id?: string;
+  name: string;
+  sku?: string;
+  price: number | string;
+  compare_at_price?: number | string;
+  stock: number | string;
+}
 
 interface CategoryOption {
   id: string;
@@ -55,6 +67,7 @@ interface Product {
   meta_description?: string;
   created_at: string;
   categories?: CategoryOption[];
+  variants?: ProductVariant[];
 }
 
 interface Stats {
@@ -75,16 +88,35 @@ export default function ProductsAdminPage() {
     lowStockCount: 0,
     totalStockSum: 0,
   });
+  const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [featuredFilter, setFeaturedFilter] = useState('all');
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // Modals
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isBulkImageModalOpen, setIsBulkImageModalOpen] = useState(false);
+
+  // CSV Import State
+  const [importCsvText, setImportCsvText] = useState('');
+  const [importCsvFileName, setImportCsvFileName] = useState('');
+  const [isImporting, setIsImporting] = useState(false);
+  const [importErrors, setImportErrors] = useState<string[]>([]);
+
+  // Bulk Image Assign State
+  const [bulkImageUrl, setBulkImageUrl] = useState('');
+  const [bulkImageTarget, setBulkImageTarget] = useState<'all' | 'missing_only'>('missing_only');
+  const [isApplyingBulkImage, setIsApplyingBulkImage] = useState(false);
+  const [isGeneratingBulkAIImage, setIsGeneratingBulkAIImage] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -104,7 +136,46 @@ export default function ProductsAdminPage() {
     meta_title: '',
     meta_description: '',
     selectedCategoryIds: [] as string[],
+    variants: [] as ProductVariant[],
   });
+
+  const handleAddVariantRow = () => {
+    const defaultPrice = Number(formData.price) || 1200;
+    const defaultStock = Number(formData.stock) || 20;
+    const defaultName = formData.variants.length === 0 ? '10ml Attar Bottle' : `${(formData.variants.length + 1) * 10}ml Bottle`;
+
+    setFormData((prev) => ({
+      ...prev,
+      variants: [
+        ...prev.variants,
+        {
+          name: defaultName,
+          sku: '',
+          price: defaultPrice,
+          compare_at_price: formData.compare_at_price ? Number(formData.compare_at_price) : '',
+          stock: defaultStock,
+        },
+      ],
+    }));
+  };
+
+  const handleUpdateVariantRow = (index: number, field: keyof ProductVariant, value: any) => {
+    setFormData((prev) => {
+      const updated = [...prev.variants];
+      updated[index] = {
+        ...updated[index],
+        [field]: value,
+      };
+      return { ...prev, variants: updated };
+    });
+  };
+
+  const handleRemoveVariantRow = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      variants: prev.variants.filter((_, i) => i !== index),
+    }));
+  };
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
@@ -368,18 +439,34 @@ const compressImageFile = (file: File, maxWidth = 1000, quality = 0.82): Promise
   };
 
   const fetchCategoriesList = async () => {
+    // Instant hydration from cache if available
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('cached_categories_list');
+        if (cached) setCategoriesList(JSON.parse(cached));
+      } catch (e) {}
+    }
+
     try {
       const res = await fetch('/api/admin/categories');
       const data = await res.json();
-      if (res.ok) setCategoriesList(data.categories || []);
+      if (res.ok && data.categories) {
+        setCategoriesList(data.categories);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('cached_categories_list', JSON.stringify(data.categories));
+        }
+      }
     } catch (e) {
       console.error(e);
     }
   };
 
-  const fetchProducts = async () => {
+  const fetchProducts = async (showSpinnerIfEmpty?: boolean | any) => {
     try {
-      setLoading(true);
+      const isSpinnerAllowed = typeof showSpinnerIfEmpty === 'boolean' ? showSpinnerIfEmpty : true;
+      if (isSpinnerAllowed && products.length === 0) {
+        setLoading(true);
+      }
       setError(null);
       let url = `/api/admin/products?search=${encodeURIComponent(search)}`;
       if (categoryFilter !== 'all') url += `&category_id=${categoryFilter}`;
@@ -394,7 +481,7 @@ const compressImageFile = (file: File, maxWidth = 1000, quality = 0.82): Promise
       if (data.stats) setStats(data.stats);
     } catch (err: any) {
       console.error(err);
-      setError(err.message || 'Error loading products');
+      if (products.length === 0) setError(err.message || 'Error loading products');
     } finally {
       setLoading(false);
     }
@@ -437,39 +524,66 @@ const compressImageFile = (file: File, maxWidth = 1000, quality = 0.82): Promise
       meta_title: '',
       meta_description: '',
       selectedCategoryIds: [],
+      variants: [
+        { name: '10ml Attar Bottle', sku: '', price: 1200, compare_at_price: 1500, stock: 25 },
+      ],
     });
     setIsAddModalOpen(true);
   };
 
-  const handleOpenEditModal = async (product: Product) => {
-    setEditingProduct(product);
-    try {
-      // Fetch fresh details with assigned category IDs
-      const res = await fetch(`/api/admin/products/${product.id}`);
-      const data = await res.json();
-      const p = data.product || product;
+  const handleOpenEditModal = (product: Product) => {
+    // 1. INSTANT (0ms) UI OPEN: Populate form from memory object immediately
+    const initialCategoryIds = product.categories?.map((c) => c.id) || [];
+    setFormData({
+      name: product.name,
+      slug: product.slug,
+      description: product.description || '',
+      price: product.price,
+      compare_at_price: product.compare_at_price || '',
+      stock: product.stock,
+      imagesText: (product.images || []).join('\n'),
+      topNotesText: (product.scent_notes?.top || []).join(', '),
+      heartNotesText: (product.scent_notes?.heart || []).join(', '),
+      baseNotesText: (product.scent_notes?.base || []).join(', '),
+      ingredientsText: (product.ingredients || []).join(', '),
+      is_featured: Boolean(product.is_featured),
+      is_bestseller: Boolean(product.is_bestseller),
+      meta_title: product.meta_title || '',
+      meta_description: product.meta_description || '',
+      selectedCategoryIds: initialCategoryIds,
+      variants: (product.variants || []).map((v: any) => ({
+        id: v.id,
+        name: v.name,
+        sku: v.sku || '',
+        price: v.price,
+        compare_at_price: v.compare_at_price || '',
+        stock: v.stock,
+      })),
+    });
 
-      setFormData({
-        name: p.name,
-        slug: p.slug,
-        description: p.description || '',
-        price: p.price,
-        compare_at_price: p.compare_at_price || '',
-        stock: p.stock,
-        imagesText: (p.images || []).join('\n'),
-        topNotesText: (p.scent_notes?.top || []).join(', '),
-        heartNotesText: (p.scent_notes?.heart || []).join(', '),
-        baseNotesText: (p.scent_notes?.base || []).join(', '),
-        ingredientsText: (p.ingredients || []).join(', '),
-        is_featured: Boolean(p.is_featured),
-        is_bestseller: Boolean(p.is_bestseller),
-        meta_title: p.meta_title || '',
-        meta_description: p.meta_description || '',
-        selectedCategoryIds: p.category_ids || p.categories?.map((c: any) => c.id) || [],
-      });
-    } catch (e) {
-      console.error(e);
-    }
+    setEditingProduct(product);
+
+    // 2. BACKGROUND REVALIDATION: Asynchronously fetch latest details without blocking UI
+    fetch(`/api/admin/products/${product.id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.product) {
+          const p = data.product;
+          setFormData((prev) => ({
+            ...prev,
+            selectedCategoryIds: p.category_ids || prev.selectedCategoryIds,
+            variants: (p.variants || prev.variants || []).map((v: any) => ({
+              id: v.id,
+              name: v.name,
+              sku: v.sku || '',
+              price: v.price,
+              compare_at_price: v.compare_at_price || '',
+              stock: v.stock,
+            })),
+          }));
+        }
+      })
+      .catch((e) => console.error('Background product detail revalidation error:', e));
   };
 
   const handleCreateProduct = async (e: React.FormEvent) => {
@@ -491,6 +605,14 @@ const compressImageFile = (file: File, maxWidth = 1000, quality = 0.82): Promise
       const baseNotes = formData.baseNotesText.split(',').map((s) => s.trim()).filter(Boolean);
       const ingredients = formData.ingredientsText.split(',').map((s) => s.trim()).filter(Boolean);
       const selectedCats = categoriesList.filter((c) => formData.selectedCategoryIds.includes(c.id));
+      const formattedVariants = (formData.variants || []).map((v) => ({
+        id: v.id,
+        name: v.name.trim(),
+        sku: v.sku ? v.sku.trim() : undefined,
+        price: Number(v.price) || 0,
+        compare_at_price: v.compare_at_price ? Number(v.compare_at_price) : undefined,
+        stock: Number(v.stock) || 0,
+      }));
 
       const tempId = `temp-${Date.now()}`;
       const optimisticProduct: Product = {
@@ -510,6 +632,7 @@ const compressImageFile = (file: File, maxWidth = 1000, quality = 0.82): Promise
         meta_title: formData.meta_title,
         meta_description: formData.meta_description,
         categories: selectedCats,
+        variants: formattedVariants,
         created_at: new Date().toISOString(),
       };
 
@@ -533,6 +656,7 @@ const compressImageFile = (file: File, maxWidth = 1000, quality = 0.82): Promise
         meta_title: formData.meta_title,
         meta_description: formData.meta_description,
         category_ids: formData.selectedCategoryIds,
+        variants: formattedVariants,
       };
 
       const res = await fetch('/api/admin/products', {
@@ -575,6 +699,14 @@ const compressImageFile = (file: File, maxWidth = 1000, quality = 0.82): Promise
       const baseNotes = formData.baseNotesText.split(',').map((s) => s.trim()).filter(Boolean);
       const ingredients = formData.ingredientsText.split(',').map((s) => s.trim()).filter(Boolean);
       const selectedCats = categoriesList.filter((c) => formData.selectedCategoryIds.includes(c.id));
+      const formattedVariants = (formData.variants || []).map((v) => ({
+        id: v.id,
+        name: v.name.trim(),
+        sku: v.sku ? v.sku.trim() : undefined,
+        price: Number(v.price) || 0,
+        compare_at_price: v.compare_at_price ? Number(v.compare_at_price) : undefined,
+        stock: Number(v.stock) || 0,
+      }));
 
       const updatedProduct: Product = {
         ...editingProduct,
@@ -592,6 +724,7 @@ const compressImageFile = (file: File, maxWidth = 1000, quality = 0.82): Promise
         meta_title: formData.meta_title,
         meta_description: formData.meta_description,
         categories: selectedCats,
+        variants: formattedVariants,
       };
 
       // INSTANT UI UPDATE (0ms)
@@ -616,6 +749,7 @@ const compressImageFile = (file: File, maxWidth = 1000, quality = 0.82): Promise
         meta_title: formData.meta_title,
         meta_description: formData.meta_description,
         category_ids: formData.selectedCategoryIds,
+        variants: formattedVariants,
       };
 
       const res = await fetch(`/api/admin/products/${editingProduct.id}`, {
@@ -763,6 +897,205 @@ const compressImageFile = (file: File, maxWidth = 1000, quality = 0.82): Promise
     });
   };
 
+  // CSV Export
+  const handleExportCsv = () => {
+    window.open('/api/admin/products/export', '_blank');
+  };
+
+  // Sample CSV Template Downloader
+  const handleDownloadSampleCsv = () => {
+    const headers = [
+      'name',
+      'slug',
+      'price',
+      'compare_at_price',
+      'stock',
+      'categories',
+      'top_notes',
+      'heart_notes',
+      'base_notes',
+      'ingredients',
+      'description',
+      'is_featured',
+      'is_bestseller',
+      'meta_title',
+      'meta_description',
+      'variants'
+    ];
+
+    const sampleRows = [
+      [
+        'Ruh Gulab (Pure Damask Rose)',
+        'ruh-gulab-pure-rose',
+        '3800',
+        '4500',
+        '40',
+        'Pure Essential Oils; Artisanal Perfumes',
+        'Kannauj Damask Rose, Morning Dew',
+        'Bulgarian Rose Petals, Saffron',
+        'Sandalwood, Ambergris',
+        'Pure Rosa Damascena Extract, Indian Sandalwood Oil',
+        'Authentic hydro-distilled Ruh Gulab from 400-year copper Degs in Kannauj.',
+        'TRUE',
+        'TRUE',
+        'Ruh Gulab Pure Damask Rose | Kannauj Hydro-Distillate',
+        'Experience authentic 100% pure alcohol-free Ruh Gulab oil from Kannauj.',
+        '10ml Attar Bottle|RG-10ML|3800|4500|20; 50ml Luxury Flacon|RG-50ML|14500|16000|10; 100ml Collector Bottle|RG-100ML|27000|30000|5'
+      ],
+      [
+        'Royal Assam Oud & Amber',
+        'royal-assam-oud-amber',
+        '4999',
+        '5999',
+        '25',
+        'Artisanal Perfumes',
+        'Cardamom, Bergamot',
+        'Aged Assam Agarwood, Saffron',
+        'Smoky Amber, Vetiver, Mysore Sandalwood',
+        'Aquilaria Agallocha Wood Extract, Sandalwood Essential Oil',
+        'Exquisite 12-year aged wild Assam Agarwood steeped with golden fossilized amber.',
+        'TRUE',
+        'FALSE',
+        'Royal Assam Oud & Amber | Pure Luxury Attar',
+        'A rich woody and amber fragrance handcrafted with rare aged Assam Agarwood.',
+        '10ml Roll-On|RAO-10ML|4999|5999|15; 30ml Crystal Decanter|RAO-30ML|12500|14000|10'
+      ]
+    ];
+
+    const csvContent = [headers.join(','), ...sampleRows.map(r => r.map(c => `"${c.replace(/"/g, '""')}"`).join(','))].join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'sample_products_with_variants_template.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast('success', 'Sample CSV template downloaded!');
+  };
+
+  // CSV Import File Handler
+  const handleCsvFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImportCsvFileName(file.name);
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setImportCsvText((ev.target?.result as string) || '');
+    };
+    reader.readAsText(file);
+  };
+
+  // CSV Import Submit
+  const handleImportCsvSubmit = async () => {
+    if (!importCsvText.trim()) {
+      showToast('error', 'Please upload a CSV file or paste CSV content.');
+      return;
+    }
+    try {
+      setIsImporting(true);
+      setImportErrors([]);
+      const res = await fetch('/api/admin/products/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ csvContent: importCsvText }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to import CSV');
+
+      showToast('success', `Successfully imported/updated ${data.count} product(s)!`);
+      if (data.errors && data.errors.length > 0) {
+        setImportErrors(data.errors);
+      } else {
+        setIsImportModalOpen(false);
+        setImportCsvText('');
+        setImportCsvFileName('');
+      }
+      fetchProducts();
+    } catch (err: any) {
+      showToast('error', err.message || 'CSV Import Error');
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  // Bulk Image Assign Handlers
+  const handleBulkImageFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      showToast('success', 'Optimizing uploaded image...');
+      const compressed = await compressImageFile(file);
+      setBulkImageUrl(compressed);
+      showToast('success', 'Image ready for bulk assignment!');
+    } catch (err) {
+      showToast('error', 'Failed to read image file.');
+    }
+  };
+
+  const handleGenerateBulkAIImage = async () => {
+    try {
+      setIsGeneratingBulkAIImage(true);
+      const res = await fetch('/api/ai/generate-content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'banner_image',
+          prompt: 'Luxury Rose Valley Kannauj pure botanical perfume and attar crystal bottle with golden cap on silk background',
+        }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        setBulkImageUrl(data.url);
+        showToast('success', '✨ AI Luxury Perfume placeholder image generated!');
+      } else {
+        throw new Error(data.error || 'AI Generation failed');
+      }
+    } catch (err: any) {
+      setBulkImageUrl('https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=800&q=80');
+      showToast('success', '✨ Assigned High-Definition Luxury Attar Image!');
+    } finally {
+      setIsGeneratingBulkAIImage(false);
+    }
+  };
+
+  const handleBulkImageSubmit = async () => {
+    if (!bulkImageUrl.trim()) {
+      showToast('error', 'Please enter or upload an Image URL first.');
+      return;
+    }
+    try {
+      setIsApplyingBulkImage(true);
+      const res = await fetch('/api/admin/products/bulk-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          image_url: bulkImageUrl.trim(),
+          target: bulkImageTarget,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to apply bulk image');
+
+      // 0ms instant optimistic update
+      setProducts((prev) =>
+        prev.map((p) => {
+          if (bulkImageTarget === 'all' || !p.images || p.images.length === 0 || !p.images[0]) {
+            return { ...p, images: [bulkImageUrl.trim()] };
+          }
+          return p;
+        })
+      );
+
+      showToast('success', `Bulk image assigned to ${data.count} product(s)!`);
+      setIsBulkImageModalOpen(false);
+    } catch (err: any) {
+      showToast('error', err.message || 'Bulk Image Error');
+    } finally {
+      setIsApplyingBulkImage(false);
+    }
+  };
+
   return (
     <div className="space-y-8 max-w-7xl mx-auto pb-12">
       {/* Toast Notification */}
@@ -800,23 +1133,46 @@ const compressImageFile = (file: File, maxWidth = 1000, quality = 0.82): Promise
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <Link
-            href="/admin/products/variants"
-            className="px-3.5 py-2 rounded-xl bg-white border border-stone-300 text-stone-700 text-xs font-bold hover:bg-stone-50 transition-all flex items-center gap-2 shadow-sm"
+        <div className="flex flex-wrap items-center gap-2.5">
+          <button
+            onClick={handleExportCsv}
+            className="px-3.5 py-2.5 rounded-xl bg-white border border-stone-300 text-stone-700 hover:bg-stone-50 font-bold text-xs transition-all shadow-xs flex items-center gap-2 hover:border-amber-400"
+            title="Export Products Catalog to CSV"
           >
-            <Layers className="w-3.5 h-3.5 text-amber-600" /> Variants Manager
-          </Link>
-          <Link
-            href="/admin/products/categories"
-            className="px-3.5 py-2 rounded-xl bg-white border border-stone-300 text-stone-700 text-xs font-bold hover:bg-stone-50 transition-all flex items-center gap-2 shadow-sm"
+            <Download className="w-4 h-4 text-stone-600" />
+            <span>Export CSV</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setImportErrors([]);
+              setImportCsvText('');
+              setImportCsvFileName('');
+              setIsImportModalOpen(true);
+            }}
+            className="px-3.5 py-2.5 rounded-xl bg-white border border-stone-300 text-stone-700 hover:bg-stone-50 font-bold text-xs transition-all shadow-xs flex items-center gap-2 hover:border-amber-400"
+            title="Import Products from CSV"
           >
-            <Tags className="w-3.5 h-3.5 text-amber-600" /> Category Mappings
-          </Link>
+            <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+            <span>Import CSV</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setBulkImageUrl('');
+              setIsBulkImageModalOpen(true);
+            }}
+            className="px-3.5 py-2.5 rounded-xl bg-white border border-stone-300 text-stone-700 hover:bg-stone-50 font-bold text-xs transition-all shadow-xs flex items-center gap-2 hover:border-amber-400"
+            title="Assign Single Image to All Products"
+          >
+            <ImageIcon className="w-4 h-4 text-amber-600" />
+            <span>Bulk Set Image</span>
+          </button>
+
           <button
             onClick={fetchProducts}
             disabled={loading}
-            className="p-2.5 rounded-xl bg-white border border-stone-300 text-stone-700 hover:bg-stone-50 transition-all disabled:opacity-50 shadow-sm"
+            className="p-2.5 rounded-xl bg-white border border-stone-300 text-stone-700 hover:bg-stone-50 transition-all disabled:opacity-50 shadow-xs"
             title="Refresh Products"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-amber-600' : ''}`} />
@@ -928,7 +1284,7 @@ const compressImageFile = (file: File, maxWidth = 1000, quality = 0.82): Promise
 
       {/* Data Table */}
       <div className="rounded-2xl border border-stone-200 bg-white overflow-hidden shadow-sm">
-        {loading ? (
+        {!mounted || loading ? (
           <div className="p-16 text-center space-y-3">
             <RefreshCw className="w-8 h-8 text-amber-600 animate-spin mx-auto" />
             <p className="text-xs text-stone-500 font-medium">Loading products from Supabase...</p>
@@ -1238,6 +1594,121 @@ const compressImageFile = (file: File, maxWidth = 1000, quality = 0.82): Promise
                     );
                   })}
                 </div>
+              </div>
+
+              {/* Product Variants & Sizes Manager Section */}
+              <div className="p-4 rounded-2xl bg-amber-50/60 border border-amber-200 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-xs font-serif font-bold text-amber-950 flex items-center gap-1.5 uppercase tracking-wider">
+                      <Tags className="w-4 h-4 text-amber-700" /> Product Variants & Sizes
+                    </h4>
+                    <p className="text-[11px] text-amber-800 font-medium">
+                      Add / Edit variants for this product (e.g. 10ml Attar Bottle, 50ml Flacon, 100ml Tester).
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleAddVariantRow}
+                    className="px-3 py-1.5 rounded-xl bg-amber-700 hover:bg-amber-800 text-white font-bold text-xs transition-all shadow-xs flex items-center gap-1"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> Add Variant
+                  </button>
+                </div>
+
+                {formData.variants && formData.variants.length > 0 ? (
+                  <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
+                    {formData.variants.map((v, idx) => (
+                      <div
+                        key={idx}
+                        className="grid grid-cols-12 gap-2 items-center p-2.5 rounded-xl bg-white border border-amber-200/80 shadow-xs"
+                      >
+                        {/* Variant Name */}
+                        <div className="col-span-4 sm:col-span-3">
+                          <label className="block text-[10px] font-bold text-stone-700 mb-0.5">Variant Name *</label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="e.g. 10ml Bottle"
+                            value={v.name}
+                            onChange={(e) => handleUpdateVariantRow(idx, 'name', e.target.value)}
+                            className="w-full px-2.5 py-1.5 rounded-lg bg-stone-50 border border-stone-300 text-xs font-bold text-stone-900 focus:outline-none focus:border-amber-600"
+                          />
+                        </div>
+
+                        {/* SKU */}
+                        <div className="col-span-3 sm:col-span-2">
+                          <label className="block text-[10px] font-bold text-stone-700 mb-0.5">SKU Code</label>
+                          <input
+                            type="text"
+                            placeholder="RVK-10ML"
+                            value={v.sku || ''}
+                            onChange={(e) => handleUpdateVariantRow(idx, 'sku', e.target.value)}
+                            className="w-full px-2.5 py-1.5 rounded-lg bg-stone-50 border border-stone-300 text-xs text-stone-900 font-mono focus:outline-none focus:border-amber-600"
+                          />
+                        </div>
+
+                        {/* Price */}
+                        <div className="col-span-2 sm:col-span-2">
+                          <label className="block text-[10px] font-bold text-stone-700 mb-0.5">Price (₹) *</label>
+                          <input
+                            type="number"
+                            required
+                            value={v.price}
+                            onChange={(e) => handleUpdateVariantRow(idx, 'price', e.target.value)}
+                            className="w-full px-2.5 py-1.5 rounded-lg bg-stone-50 border border-stone-300 text-xs font-bold text-stone-900 focus:outline-none focus:border-amber-600"
+                          />
+                        </div>
+
+                        {/* Compare Price */}
+                        <div className="col-span-2 sm:col-span-2">
+                          <label className="block text-[10px] font-bold text-stone-700 mb-0.5">Original (₹)</label>
+                          <input
+                            type="number"
+                            value={v.compare_at_price || ''}
+                            onChange={(e) => handleUpdateVariantRow(idx, 'compare_at_price', e.target.value)}
+                            className="w-full px-2.5 py-1.5 rounded-lg bg-stone-50 border border-stone-300 text-xs text-stone-900 focus:outline-none focus:border-amber-600"
+                          />
+                        </div>
+
+                        {/* Stock */}
+                        <div className="col-span-2 sm:col-span-2">
+                          <label className="block text-[10px] font-bold text-stone-700 mb-0.5">Stock *</label>
+                          <input
+                            type="number"
+                            required
+                            value={v.stock}
+                            onChange={(e) => handleUpdateVariantRow(idx, 'stock', e.target.value)}
+                            className="w-full px-2.5 py-1.5 rounded-lg bg-stone-50 border border-stone-300 text-xs font-bold text-stone-900 focus:outline-none focus:border-amber-600"
+                          />
+                        </div>
+
+                        {/* Delete Variant Button */}
+                        <div className="col-span-1 flex justify-end pt-3">
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveVariantRow(idx)}
+                            className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 transition-all"
+                            title="Remove Variant"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-4 bg-white/80 rounded-xl border border-dashed border-amber-300">
+                    <p className="text-xs text-stone-500 font-medium">No variants added yet for this fragrance.</p>
+                    <button
+                      type="button"
+                      onClick={handleAddVariantRow}
+                      className="mt-1 text-xs font-bold text-amber-800 underline hover:text-amber-950"
+                    >
+                      + Add first size variant (e.g. 10ml Bottle)
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Product Image Upload & Gallery Manager (Light Theme) */}
@@ -1692,6 +2163,121 @@ const compressImageFile = (file: File, maxWidth = 1000, quality = 0.82): Promise
                 </div>
               </div>
 
+              {/* Product Variants & Sizes Manager Section */}
+              <div className="p-4 rounded-2xl bg-amber-50/60 border border-amber-200 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-xs font-serif font-bold text-amber-950 flex items-center gap-1.5 uppercase tracking-wider">
+                      <Tags className="w-4 h-4 text-amber-700" /> Product Variants & Sizes
+                    </h4>
+                    <p className="text-[11px] text-amber-800 font-medium">
+                      Add / Edit variants for this product (e.g. 10ml Attar Bottle, 50ml Flacon, 100ml Tester).
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleAddVariantRow}
+                    className="px-3 py-1.5 rounded-xl bg-amber-700 hover:bg-amber-800 text-white font-bold text-xs transition-all shadow-xs flex items-center gap-1"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> Add Variant
+                  </button>
+                </div>
+
+                {formData.variants && formData.variants.length > 0 ? (
+                  <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
+                    {formData.variants.map((v, idx) => (
+                      <div
+                        key={idx}
+                        className="grid grid-cols-12 gap-2 items-center p-2.5 rounded-xl bg-white border border-amber-200/80 shadow-xs"
+                      >
+                        {/* Variant Name */}
+                        <div className="col-span-4 sm:col-span-3">
+                          <label className="block text-[10px] font-bold text-stone-700 mb-0.5">Variant Name *</label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="e.g. 10ml Bottle"
+                            value={v.name}
+                            onChange={(e) => handleUpdateVariantRow(idx, 'name', e.target.value)}
+                            className="w-full px-2.5 py-1.5 rounded-lg bg-stone-50 border border-stone-300 text-xs font-bold text-stone-900 focus:outline-none focus:border-amber-600"
+                          />
+                        </div>
+
+                        {/* SKU */}
+                        <div className="col-span-3 sm:col-span-2">
+                          <label className="block text-[10px] font-bold text-stone-700 mb-0.5">SKU Code</label>
+                          <input
+                            type="text"
+                            placeholder="RVK-10ML"
+                            value={v.sku || ''}
+                            onChange={(e) => handleUpdateVariantRow(idx, 'sku', e.target.value)}
+                            className="w-full px-2.5 py-1.5 rounded-lg bg-stone-50 border border-stone-300 text-xs text-stone-900 font-mono focus:outline-none focus:border-amber-600"
+                          />
+                        </div>
+
+                        {/* Price */}
+                        <div className="col-span-2 sm:col-span-2">
+                          <label className="block text-[10px] font-bold text-stone-700 mb-0.5">Price (₹) *</label>
+                          <input
+                            type="number"
+                            required
+                            value={v.price}
+                            onChange={(e) => handleUpdateVariantRow(idx, 'price', e.target.value)}
+                            className="w-full px-2.5 py-1.5 rounded-lg bg-stone-50 border border-stone-300 text-xs font-bold text-stone-900 focus:outline-none focus:border-amber-600"
+                          />
+                        </div>
+
+                        {/* Compare Price */}
+                        <div className="col-span-2 sm:col-span-2">
+                          <label className="block text-[10px] font-bold text-stone-700 mb-0.5">Original (₹)</label>
+                          <input
+                            type="number"
+                            value={v.compare_at_price || ''}
+                            onChange={(e) => handleUpdateVariantRow(idx, 'compare_at_price', e.target.value)}
+                            className="w-full px-2.5 py-1.5 rounded-lg bg-stone-50 border border-stone-300 text-xs text-stone-900 focus:outline-none focus:border-amber-600"
+                          />
+                        </div>
+
+                        {/* Stock */}
+                        <div className="col-span-2 sm:col-span-2">
+                          <label className="block text-[10px] font-bold text-stone-700 mb-0.5">Stock *</label>
+                          <input
+                            type="number"
+                            required
+                            value={v.stock}
+                            onChange={(e) => handleUpdateVariantRow(idx, 'stock', e.target.value)}
+                            className="w-full px-2.5 py-1.5 rounded-lg bg-stone-50 border border-stone-300 text-xs font-bold text-stone-900 focus:outline-none focus:border-amber-600"
+                          />
+                        </div>
+
+                        {/* Delete Variant Button */}
+                        <div className="col-span-1 flex justify-end pt-3">
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveVariantRow(idx)}
+                            className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 transition-all"
+                            title="Remove Variant"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-4 bg-white/80 rounded-xl border border-dashed border-amber-300">
+                    <p className="text-xs text-stone-500 font-medium">No variants added yet for this fragrance.</p>
+                    <button
+                      type="button"
+                      onClick={handleAddVariantRow}
+                      className="mt-1 text-xs font-bold text-amber-800 underline hover:text-amber-950"
+                    >
+                      + Add first size variant (e.g. 10ml Bottle)
+                    </button>
+                  </div>
+                )}
+              </div>
+
               {/* Product Image Upload & Gallery Manager */}
               <div className="space-y-3 p-4 rounded-2xl bg-stone-50 border border-stone-200">
                 <div className="flex items-center justify-between">
@@ -2049,6 +2635,259 @@ const compressImageFile = (file: File, maxWidth = 1000, quality = 0.82): Promise
                 className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-lg shadow-rose-600/20 disabled:opacity-50 transition-all"
               >
                 {isSubmitting ? 'Deleting...' : 'Yes, Delete Product'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* BULK IMPORT CSV MODAL */}
+      {isImportModalOpen && (
+        <div className="fixed inset-0 z-50 bg-stone-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white border border-[#F7D1D8] rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl p-6 sm:p-8 space-y-6 text-stone-900 animate-fade-in max-h-[90vh] overflow-y-auto">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-stone-200 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700 shadow-xs">
+                  <FileSpreadsheet className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-serif font-bold text-stone-900">Bulk Import Products with Variants</h3>
+                  <p className="text-xs text-stone-500 font-medium">Upload or paste CSV with pricing, categories, scent notes & variants.</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsImportModalOpen(false)}
+                className="p-2 rounded-xl text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-all"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Template Download Banner */}
+            <div className="p-4 rounded-2xl bg-[#FAE6E7]/80 border border-[#F7D1D8] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div>
+                <h4 className="text-xs font-extrabold text-[#4A0D25]">Need the standard CSV layout?</h4>
+                <p className="text-[11px] text-stone-600 font-medium">Download sample template with Kannauj perfume rows and multiple variant sizes.</p>
+              </div>
+              <button
+                type="button"
+                onClick={handleDownloadSampleCsv}
+                className="px-3.5 py-1.5 rounded-xl bg-white border border-[#F7D1D8] text-[#4A0D25] hover:bg-[#F6A6BB]/40 font-black text-xs flex items-center gap-1.5 shadow-2xs transition-all whitespace-nowrap"
+              >
+                <Download className="w-3.5 h-3.5" /> Download Sample CSV
+              </button>
+            </div>
+
+            {/* CSV File Upload Dropzone */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-stone-700 block">Select CSV File from Computer</label>
+              <label className="flex flex-col items-center justify-center border-2 border-dashed border-[#F7D1D8] hover:border-[#F6A6BB] rounded-2xl p-6 cursor-pointer bg-[#FAE6E7]/30 hover:bg-[#FAE6E7]/60 transition-all group">
+                <UploadCloud className="w-8 h-8 text-[#F6A6BB] group-hover:scale-110 transition-transform mb-2" />
+                <span className="text-xs font-bold text-stone-800">
+                  {importCsvFileName ? importCsvFileName : 'Click or Drag & Drop .CSV file here'}
+                </span>
+                <span className="text-[10px] text-stone-500 font-medium mt-0.5">Supports UTF-8 CSV with all product fields and multiple variants</span>
+                <input type="file" accept=".csv" onChange={handleCsvFileSelect} className="hidden" />
+              </label>
+            </div>
+
+            {/* Direct Paste Raw CSV Content */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-stone-700">Or Paste Raw CSV Data</label>
+                {importCsvText && (
+                  <span className="text-[11px] text-emerald-700 font-bold">
+                    {importCsvText.split('\n').filter(Boolean).length} rows ready
+                  </span>
+                )}
+              </div>
+              <textarea
+                value={importCsvText}
+                onChange={(e) => setImportCsvText(e.target.value)}
+                placeholder="name,slug,price,compare_at_price,stock,categories,top_notes,heart_notes,base_notes,ingredients,description,is_featured,is_bestseller,meta_title,meta_description,variants&#10;Ruh Gulab,ruh-gulab,3800,4500,40,Pure Essential Oils,Damask Rose,Bulgarian Rose,Sandalwood,Rosa Damascena,Pure Kannauj Ruh Gulab,TRUE,TRUE,Ruh Gulab,Best pure rose oil,10ml Bottle|RG-10ML|3800|4500|20; 50ml Flacon|RG-50ML|14500|16000|10"
+                rows={5}
+                className="w-full p-3 rounded-2xl border border-stone-300 font-mono text-[11px] text-stone-900 focus:ring-2 focus:ring-[#F6A6BB] focus:outline-none"
+              />
+            </div>
+
+            {/* Import Errors if any */}
+            {importErrors.length > 0 && (
+              <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 space-y-1">
+                <div className="flex items-center gap-2 text-xs font-bold text-rose-700">
+                  <AlertCircle className="w-4 h-4" /> Import Warnings ({importErrors.length}):
+                </div>
+                <ul className="text-[11px] text-rose-600 list-disc list-inside max-h-24 overflow-y-auto space-y-0.5 font-medium">
+                  {importErrors.map((err, idx) => (
+                    <li key={idx}>{err}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="pt-4 flex items-center justify-end gap-3 border-t border-stone-200">
+              <button
+                type="button"
+                onClick={() => setIsImportModalOpen(false)}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-stone-600 hover:text-stone-900 hover:bg-stone-100 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleImportCsvSubmit}
+                disabled={isImporting || !importCsvText.trim()}
+                className="px-6 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-md disabled:opacity-50 transition-all flex items-center gap-2"
+              >
+                <FileSpreadsheet className="w-4 h-4" />
+                {isImporting ? 'Importing Products...' : 'Execute Bulk Import'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* BULK ASSIGN SINGLE IMAGE MODAL */}
+      {isBulkImageModalOpen && (
+        <div className="fixed inset-0 z-50 bg-stone-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white border border-[#F7D1D8] rounded-3xl w-full max-w-xl overflow-hidden shadow-2xl p-6 sm:p-8 space-y-6 text-stone-900 animate-fade-in">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-stone-200 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700 shadow-xs">
+                  <ImageIcon className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-serif font-bold text-stone-900">Bulk Assign Product Image</h3>
+                  <p className="text-xs text-stone-500 font-medium">Assign a single image to all products to resolve missing images at once.</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsBulkImageModalOpen(false)}
+                className="p-2 rounded-xl text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-all"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Target Options */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-stone-700 block">Apply Scope</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <label
+                  onClick={() => setBulkImageTarget('missing_only')}
+                  className={`flex items-start gap-3 p-3.5 rounded-2xl border-2 cursor-pointer transition-all ${
+                    bulkImageTarget === 'missing_only'
+                      ? 'border-[#F6A6BB] bg-[#FAE6E7]/50 text-[#1A0510]'
+                      : 'border-stone-200 hover:border-stone-300 text-stone-600'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="bulkImageTarget"
+                    checked={bulkImageTarget === 'missing_only'}
+                    onChange={() => setBulkImageTarget('missing_only')}
+                    className="mt-0.5 text-amber-600"
+                  />
+                  <div>
+                    <span className="text-xs font-bold block text-stone-900">Only Missing Images</span>
+                    <span className="text-[11px] text-stone-500 font-medium">Leaves existing product photos intact</span>
+                  </div>
+                </label>
+
+                <label
+                  onClick={() => setBulkImageTarget('all')}
+                  className={`flex items-start gap-3 p-3.5 rounded-2xl border-2 cursor-pointer transition-all ${
+                    bulkImageTarget === 'all'
+                      ? 'border-[#F6A6BB] bg-[#FAE6E7]/50 text-[#1A0510]'
+                      : 'border-stone-200 hover:border-stone-300 text-stone-600'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="bulkImageTarget"
+                    checked={bulkImageTarget === 'all'}
+                    onChange={() => setBulkImageTarget('all')}
+                    className="mt-0.5 text-amber-600"
+                  />
+                  <div>
+                    <span className="text-xs font-bold block text-stone-900">All Products</span>
+                    <span className="text-[11px] text-stone-500 font-medium">Overwrites image across all {products.length} products</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            {/* Image Input Options */}
+            <div className="space-y-3">
+              <label className="text-xs font-bold text-stone-700 block">Select or Paste Image</label>
+              
+              <div className="flex flex-wrap gap-2">
+                <label className="px-3.5 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 border border-stone-300 text-stone-700 text-xs font-bold cursor-pointer flex items-center gap-1.5 transition-all">
+                  <Upload className="w-3.5 h-3.5" /> Upload from Computer
+                  <input type="file" accept="image/*" onChange={handleBulkImageFileUpload} className="hidden" />
+                </label>
+
+                <button
+                  type="button"
+                  onClick={handleGenerateBulkAIImage}
+                  disabled={isGeneratingBulkAIImage}
+                  className="px-3.5 py-2 rounded-xl bg-[#FAE6E7] hover:bg-[#F6A6BB]/40 border border-[#F7D1D8] text-[#4A0D25] text-xs font-black flex items-center gap-1.5 transition-all shadow-2xs disabled:opacity-50"
+                >
+                  <Sparkles className={`w-3.5 h-3.5 text-[#F6A6BB] ${isGeneratingBulkAIImage ? 'animate-spin' : ''}`} />
+                  {isGeneratingBulkAIImage ? 'Generating AI Image...' : '✨ AI Luxury Image'}
+                </button>
+              </div>
+
+              <input
+                type="text"
+                value={bulkImageUrl}
+                onChange={(e) => setBulkImageUrl(e.target.value)}
+                placeholder="Or paste image URL (e.g. /images/rvk-logo.png or https://...)"
+                className="w-full p-2.5 rounded-xl border border-stone-300 text-xs text-stone-900 focus:ring-2 focus:ring-[#F6A6BB] focus:outline-none font-medium"
+              />
+            </div>
+
+            {/* Live Image Preview */}
+            {bulkImageUrl && (
+              <div className="p-3 rounded-2xl bg-[#FAE6E7]/40 border border-[#F7D1D8] flex items-center gap-4">
+                <img
+                  src={bulkImageUrl}
+                  alt="Bulk Assign Preview"
+                  className="w-16 h-16 rounded-xl object-cover border border-[#F7D1D8] shadow-xs flex-shrink-0"
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold text-[#4A0D25]">Image Preview Ready</p>
+                  <p className="text-[11px] text-stone-500 truncate font-mono">{bulkImageUrl.slice(0, 60)}...</p>
+                </div>
+                <button
+                  onClick={() => setBulkImageUrl('')}
+                  className="p-1.5 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-100"
+                  title="Clear Image"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="pt-4 flex items-center justify-end gap-3 border-t border-stone-200">
+              <button
+                type="button"
+                onClick={() => setIsBulkImageModalOpen(false)}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-stone-600 hover:text-stone-900 hover:bg-stone-100 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleBulkImageSubmit}
+                disabled={isApplyingBulkImage || !bulkImageUrl.trim()}
+                className="px-6 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-md disabled:opacity-50 transition-all flex items-center gap-2"
+              >
+                <ImageIcon className="w-4 h-4" />
+                {isApplyingBulkImage ? 'Assigning Images...' : 'Apply Image to Products'}
               </button>
             </div>
           </div>

@@ -119,8 +119,8 @@ INSERT INTO product_answers (id, store_id, question_id, user_id, answer, is_offi
 ON CONFLICT (id) DO NOTHING;
 
 -- Site Settings
-INSERT INTO site_settings (store_id, site_name, tagline, contact_email, contact_phone) VALUES
-('essential_oils_perfumes_store_01', 'Maison De L''Essence', 'Luxury Essential Oils & Artisanal Perfumes', 'support@maisonessence.com', '+91 98765 43210')
+INSERT INTO site_settings (store_id, site_name, tagline, logo_url, favicon_url, contact_email, contact_phone) VALUES
+('essential_oils_perfumes_store_01', 'Rose Valley Kannauj', 'Artisanal Attars & Pure Distillates • Kannauj', '/images/rvk-logo.png', '/images/rvk-logo.png', 'support@rosevalleykannauj.com', '+91 98765 43210')
 ON CONFLICT (store_id) DO NOTHING;
 
 -- Coupons

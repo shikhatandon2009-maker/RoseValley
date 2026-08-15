@@ -258,6 +258,7 @@ CREATE TABLE site_settings (
     tagline VARCHAR(255) DEFAULT 'Luxury Essential Oils & Artisanal Perfumes',
     logo_url TEXT,
     favicon_url TEXT,
+    use_text_logo BOOLEAN DEFAULT FALSE,
     contact_email VARCHAR(255) DEFAULT 'support@maisonessence.com',
     contact_phone VARCHAR(50) DEFAULT '+91 98765 43210',
     shipping_rates JSONB DEFAULT '{"standard": 150, "express": 300, "free_threshold": 2500}'::jsonb,

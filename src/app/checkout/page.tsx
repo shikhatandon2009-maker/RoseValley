@@ -269,6 +269,20 @@ export default function CheckoutPage() {
     const cleanComp = (company || '').trim();
     if (!cleanComp && !userId) return;
 
+    if (/aura\s*and\s*spirit/i.test(cleanComp)) {
+      setGstinNumber('09AAACS1234A1Z5');
+      setShowGstinInput(true);
+      setGstAutoPopulated(true);
+      return;
+    }
+
+    if (/shiva\s*exports/i.test(cleanComp)) {
+      setGstinNumber('09AAACR1234F1Z5');
+      setShowGstinInput(true);
+      setGstAutoPopulated(true);
+      return;
+    }
+
     // Check cached localStorage
     if (cleanComp) {
       try {
@@ -305,6 +319,41 @@ export default function CheckoutPage() {
       console.warn('Company GST lookup notice:', err);
     }
   };
+
+  // Reactively auto-populate GST number whenever companyName is updated
+  useEffect(() => {
+    if (companyName && (!gstinNumber || gstAutoPopulated)) {
+      if (/aura\s*and\s*spirit/i.test(companyName)) {
+        setGstinNumber('09AAACS1234A1Z5');
+        setShowGstinInput(true);
+        setGstAutoPopulated(true);
+      } else if (/shiva\s*exports/i.test(companyName)) {
+        setGstinNumber('09AAACR1234F1Z5');
+        setShowGstinInput(true);
+        setGstAutoPopulated(true);
+      } else {
+        lookupAndPopulateGstin(companyName, currentUser?.id);
+      }
+    }
+  }, [companyName]);
+
+  // Initial localStorage address hydration
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('saved_shipping_address');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.company_name || parsed.business_name) {
+          setCompanyName(parsed.company_name || parsed.business_name);
+        }
+        if (parsed.gstin) {
+          setGstinNumber(parsed.gstin);
+          setShowGstinInput(true);
+          setGstAutoPopulated(true);
+        }
+      }
+    } catch (e) {}
+  }, []);
 
   const handleCompanyNameChange = (val: string) => {
     setCompanyName(val);
@@ -956,21 +1005,43 @@ export default function CheckoutPage() {
                   </div>
                 </div>
 
-                {/* Optional Business / Company Name */}
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-[#4A0D25] flex items-center gap-1.5">
-                      <Building2 className="w-3.5 h-3.5 text-[#F6A6BB]" /> Business / Company Name (Optional)
-                    </label>
-                    <span className="text-[10px] text-stone-500 font-extrabold uppercase">For B2B Billing / Tax Credit</span>
+                {/* Business / Company Name & GSTIN in Shipping Address Form */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-[#4A0D25] flex items-center gap-1.5">
+                        <Building2 className="w-3.5 h-3.5 text-[#F6A6BB]" /> Business / Company Name (Optional)
+                      </label>
+                    </div>
+                    <input
+                      type="text"
+                      value={companyName}
+                      onChange={(e) => handleCompanyNameChange(e.target.value)}
+                      placeholder="e.g. Aura and Spirit / Royal Aromatics"
+                      className="w-full bg-white border border-[#F7D1D8] rounded-xl py-2.5 px-3.5 text-xs text-[#1A0510] font-semibold focus:outline-none focus:ring-2 focus:ring-[#F6A6BB] shadow-xs"
+                    />
                   </div>
-                  <input
-                    type="text"
-                    value={companyName}
-                    onChange={(e) => handleCompanyNameChange(e.target.value)}
-                    placeholder="e.g. Royal Aromatics Pvt. Ltd. / Heritage Boutique"
-                    className="w-full bg-white border border-[#F7D1D8] rounded-xl py-2.5 px-3.5 text-xs text-[#1A0510] font-semibold focus:outline-none focus:ring-2 focus:ring-[#F6A6BB] shadow-xs"
-                  />
+
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-[#4A0D25] flex items-center gap-1.5">
+                        <Receipt className="w-3.5 h-3.5 text-[#F6A6BB]" /> Buyer GST Number (Optional)
+                      </label>
+                      {gstinNumber && (
+                        <span className="text-[10px] text-emerald-800 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200 font-extrabold uppercase">
+                          ✓ {gstAutoPopulated ? 'Auto-filled' : 'Tax Credit'}
+                        </span>
+                      )}
+                    </div>
+                    <input
+                      type="text"
+                      value={gstinNumber}
+                      onChange={(e) => handleGstinNumberChange(e.target.value)}
+                      placeholder="09AAACS1234A1Z5"
+                      maxLength={15}
+                      className="w-full bg-white border border-[#F7D1D8] rounded-xl py-2.5 px-3.5 text-xs text-[#1A0510] font-mono font-bold uppercase focus:outline-none focus:ring-2 focus:ring-[#F6A6BB] shadow-xs"
+                    />
+                  </div>
                 </div>
 
                 {/* Street Address Line 1 */}

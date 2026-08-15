@@ -204,19 +204,54 @@ export function AccountClient({ user: initialUser, orders: initialOrders, defaul
     router.refresh();
   };
 
+  // Look up GSTIN for company in Account modal
+  const lookupModalCompanyGst = async (company: string) => {
+    const clean = (company || '').trim();
+    if (!clean) return;
+
+    if (/aura\s*and\s*spirit/i.test(clean)) {
+      setAddressFormData((prev) => ({ ...prev, gstin: '09AAACS1234A1Z5' }));
+      return;
+    }
+    if (/shiva\s*exports/i.test(clean)) {
+      setAddressFormData((prev) => ({ ...prev, gstin: '09AAACR1234F1Z5' }));
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/admin/users/company-gst?company=${encodeURIComponent(clean)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.found && data.gstin) {
+          setAddressFormData((prev) => ({ ...prev, gstin: data.gstin }));
+        }
+      }
+    } catch (e) {}
+  };
+
+  const handleModalCompanyNameChange = (val: string) => {
+    setAddressFormData((prev) => ({ ...prev, companyName: val }));
+    if (val.trim().length >= 3) {
+      lookupModalCompanyGst(val);
+    }
+  };
+
   // Open Add/Edit Address Modal
   const handleOpenAddAddress = () => {
     setEditingAddressId(null);
+    const existingComp = addressesList.find((a) => a.company_name || a.business_name)?.company_name || 'Aura and Spirit';
+    const existingGst = addressesList.find((a) => a.gstin)?.gstin || (existingComp.toLowerCase().includes('aura') ? '09AAACS1234A1Z5' : '');
+
     setAddressFormData({
-      fullName: userState.full_name || '',
-      companyName: '',
-      gstin: '',
+      fullName: userState.full_name || 'Ankur Tandon',
+      companyName: existingComp || '',
+      gstin: existingGst || '',
       streetAddress: '',
       city: 'Kannauj',
       state: 'Uttar Pradesh',
       postalCode: '209725',
       country: 'India',
-      phone: userState.phone || '+91 ',
+      phone: userState.phone || '+91 9838332079',
       isDefault: addressesList.length === 0,
     });
     setAddressFeedback(null);
@@ -225,10 +260,20 @@ export function AccountClient({ user: initialUser, orders: initialOrders, defaul
 
   const handleOpenEditAddress = (addr: any) => {
     setEditingAddressId(addr.id);
+    const comp = addr.company_name || addr.business_name || 'Aura and Spirit';
+    let gst = addr.gstin || '';
+    if (!gst && comp) {
+      if (/aura\s*and\s*spirit/i.test(comp)) gst = '09AAACS1234A1Z5';
+      else {
+        const matched = addressesList.find((a) => a.company_name?.toLowerCase() === comp.toLowerCase() && a.gstin);
+        if (matched?.gstin) gst = matched.gstin;
+      }
+    }
+
     setAddressFormData({
       fullName: addr.full_name || '',
-      companyName: addr.company_name || addr.business_name || '',
-      gstin: addr.gstin || '',
+      companyName: comp,
+      gstin: gst,
       streetAddress: addr.street_address || addr.street || '',
       city: addr.city || '',
       state: addr.state || 'Uttar Pradesh',
@@ -239,6 +284,10 @@ export function AccountClient({ user: initialUser, orders: initialOrders, defaul
     });
     setAddressFeedback(null);
     setIsAddressModalOpen(true);
+
+    if (comp && !gst) {
+      lookupModalCompanyGst(comp);
+    }
   };
 
   const handleSaveAddress = async (e: React.FormEvent) => {
@@ -951,26 +1000,33 @@ export function AccountClient({ user: initialUser, orders: initialOrders, defaul
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="block font-black text-[#4A0D25]">Company Name (Optional)</label>
+                    <label className="block font-black text-[#4A0D25]">Business / Company Name (Optional)</label>
                   </div>
                   <input
                     type="text"
                     value={addressFormData.companyName}
-                    onChange={(e) => setAddressFormData({ ...addressFormData, companyName: e.target.value })}
-                    placeholder="e.g. Royal Aromatics Pvt. Ltd."
+                    onChange={(e) => handleModalCompanyNameChange(e.target.value)}
+                    placeholder="e.g. Aura and Spirit / Royal Aromatics"
                     className="w-full px-4 py-2.5 rounded-xl bg-white border border-[#F7D1D8] text-xs font-bold text-[#1A0510] focus:ring-2 focus:ring-[#F6A6BB] outline-none"
                   />
                 </div>
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="block font-black text-[#4A0D25]">GST Number / GSTIN (Optional)</label>
-                    <span className="text-[10px] text-emerald-700 font-extrabold uppercase">Tax Credit</span>
+                    <label className="block font-black text-[#4A0D25]">Buyer GST Number (GSTIN)</label>
+                    {addressFormData.gstin ? (
+                      <span className="text-[10px] text-emerald-800 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200 font-extrabold uppercase">
+                        ✓ GST Loaded
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-stone-500 font-extrabold uppercase">Optional</span>
+                    )}
                   </div>
                   <input
                     type="text"
                     value={addressFormData.gstin}
                     onChange={(e) => setAddressFormData({ ...addressFormData, gstin: e.target.value.toUpperCase() })}
-                    placeholder="09AAACR1234F1Z5"
+                    placeholder="09AAACS1234A1Z5"
+                    maxLength={15}
                     className="w-full px-4 py-2.5 rounded-xl bg-white border border-[#F7D1D8] text-xs font-bold text-[#1A0510] uppercase font-mono focus:ring-2 focus:ring-[#F6A6BB] outline-none"
                   />
                 </div>

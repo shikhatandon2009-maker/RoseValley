@@ -149,3 +149,13 @@
 .animate-fadeInUp {
   animation: fadeInUp 0.5s ease-out forwards;
 }
+
+/* Strict Clean Print Styles for Invoices */
+@media print {
+  body {
+    background: #ffffff !important;
+  }
+  header, footer, nav, aside, .print\:hidden {
+    display: none !important;
+  }
+}

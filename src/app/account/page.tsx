@@ -31,7 +31,7 @@ export default async function AccountPage({ searchParams }: { searchParams: { ta
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <AccountClient
-          user={user || { full_name: 'Victoria Sterling', email: 'victoria@example.com', role: 'customer' }}
+          user={user || null}
           orders={userOrders || []}
           defaultTab={searchParams.tab || 'orders'}
         />

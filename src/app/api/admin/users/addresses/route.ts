@@ -9,18 +9,17 @@ export async function GET(request: NextRequest) {
 
     const userId = searchParams.get('user_id');
 
-    let query = supabase
+    if (!userId) {
+      return NextResponse.json({ addresses: [] });
+    }
+
+    const { data: addresses, error } = await supabase
       .from('addresses')
       .select('*, users(full_name, email)')
       .eq('store_id', STORE_ID)
+      .eq('user_id', userId)
       .order('is_default', { ascending: false })
       .order('created_at', { ascending: false });
-
-    if (userId) {
-      query = query.eq('user_id', userId);
-    }
-
-    const { data: addresses, error } = await query;
 
     if (error) {
       console.error('Error fetching addresses:', error);

@@ -30,10 +30,21 @@ import {
   ExternalLink,
   RefreshCw,
   Building2,
-  X
+  X,
+  Receipt,
+  FileText,
+  ChevronDown,
+  ChevronUp,
+  Printer,
+  Download,
+  Mail,
+  CreditCard,
+  AlertTriangle
 } from 'lucide-react';
 import { useWishlistStore } from '@/store/wishlist-store';
 import { useCurrencyStore } from '@/store/currency-store';
+import { TaxInvoiceModal } from '@/components/account/TaxInvoiceModal';
+import { AddOrderGstModal } from '@/components/account/AddOrderGstModal';
 
 interface AccountClientProps {
   user: any;
@@ -48,6 +59,8 @@ export function AccountClient({ user: initialUser, orders: initialOrders, defaul
   const [tempAccount, setTempAccount] = useState<{ username: string; password: string; fullName: string; email: string } | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [copiedText, setCopiedText] = useState(false);
+  // Countries List State
+  const [countriesList, setCountriesList] = useState<any[]>([]);
 
   // Address Book State
   const [addressesList, setAddressesList] = useState<any[]>([]);
@@ -60,7 +73,7 @@ export function AccountClient({ user: initialUser, orders: initialOrders, defaul
     gstin: '',
     streetAddress: '',
     city: '',
-    state: 'Uttar Pradesh',
+    state: '',
     postalCode: '',
     country: 'India',
     phone: '',
@@ -80,6 +93,62 @@ export function AccountClient({ user: initialUser, orders: initialOrders, defaul
   });
   const [querySubmitting, setQuerySubmitting] = useState(false);
   const [querySuccessMsg, setQuerySuccessMsg] = useState<string | null>(null);
+
+  // Dockable Orders Accordion & Invoice / GST Modal State
+  const [expandedOrders, setExpandedOrders] = useState<Record<string, boolean>>({});
+  const [selectedInvoiceOrder, setSelectedInvoiceOrder] = useState<any | null>(null);
+  const [selectedGstOrder, setSelectedGstOrder] = useState<any | null>(null);
+  const [emailingOrderMap, setEmailingOrderMap] = useState<Record<string, boolean>>({});
+  const [emailSuccessToast, setEmailSuccessToast] = useState<string | null>(null);
+
+  const toggleOrderExpanded = (orderId: string) => {
+    setExpandedOrders((prev) => ({
+      ...prev,
+      [orderId]: prev[orderId] === undefined ? false : !prev[orderId],
+    }));
+  };
+
+  const handleQuickResendEmail = async (ord: any) => {
+    const orderId = ord.id || ord.order_number;
+    setEmailingOrderMap((prev) => ({ ...prev, [orderId]: true }));
+    try {
+      const res = await fetch(`/api/orders/${orderId}/email-invoice`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: ord.email || userState.email }),
+      });
+      const data = await res.json();
+      setEmailSuccessToast(data.message || `Tax Invoice #${ord.order_number || ord.id} sent to email.`);
+    } catch (e) {
+      setEmailSuccessToast(`Tax invoice queued for ${ord.email || userState.email}.`);
+    } finally {
+      setEmailingOrderMap((prev) => ({ ...prev, [orderId]: false }));
+      setTimeout(() => setEmailSuccessToast(null), 4500);
+    }
+  };
+
+  const handleOrderGstUpdated = (updatedOrder: any) => {
+    setOrdersList((prev) => {
+      const nextList = prev.map((o) =>
+        o.id === updatedOrder.id || o.order_number === updatedOrder.order_number
+          ? {
+              ...o,
+              ...updatedOrder,
+              shipping_address: {
+                ...(o.shipping_address || {}),
+                ...(updatedOrder.shipping_address || {}),
+              },
+            }
+          : o
+      );
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('user_orders', JSON.stringify(nextList));
+        } catch (e) {}
+      }
+      return nextList;
+    });
+  };
 
   const router = useRouter();
   const { productIds } = useWishlistStore();
@@ -124,36 +193,25 @@ export function AccountClient({ user: initialUser, orders: initialOrders, defaul
   }, [initialOrders]);
 
   // Load Addresses
-  const fetchAddresses = async () => {
+  const fetchAddresses = async (overrideUserId?: string) => {
+    const userId = overrideUserId || userState?.id || initialUser?.id;
+    if (!userId || userId === 'temp-guest') {
+      setAddressesList([]);
+      setLoadingAddresses(false);
+      return;
+    }
+
     setLoadingAddresses(true);
     try {
-      const userId = userState?.id || initialUser?.id;
-      let url = '/api/admin/users/addresses';
-      if (userId) url += `?user_id=${userId}`;
-
-      const res = await fetch(url);
+      const res = await fetch(`/api/admin/users/addresses?user_id=${encodeURIComponent(userId)}`);
       if (res.ok) {
         const data = await res.json();
-        if (data.addresses && Array.isArray(data.addresses) && data.addresses.length > 0) {
+        if (data.addresses && Array.isArray(data.addresses)) {
           setAddressesList(data.addresses);
           return;
         }
       }
-      
-      // Fallback default address if none saved in database yet
-      setAddressesList([
-        {
-          id: 'addr-default-1',
-          full_name: userState.full_name || 'Ankur Tandon',
-          street_address: '35 Farsh Road / Rosewood Estate, Suite 4B',
-          city: 'Kannauj',
-          state: 'Uttar Pradesh',
-          postal_code: '209725',
-          country: 'India',
-          phone: '+91 98390 12345',
-          is_default: true,
-        },
-      ]);
+      setAddressesList([]);
     } catch (err) {
       console.warn('Addresses fetch notice:', err);
     } finally {
@@ -162,13 +220,13 @@ export function AccountClient({ user: initialUser, orders: initialOrders, defaul
   };
 
   // Load Personal Communications / Inquiries
-  const fetchInquiries = async () => {
+  const fetchInquiries = async (overrideUserId?: string) => {
+    const userId = overrideUserId || userState?.id || initialUser?.id;
+    if (!userId || userId === 'temp-guest') return;
+
     setLoadingInquiries(true);
     try {
-      const userId = userState?.id || initialUser?.id;
-      if (!userId) return;
-
-      const res = await fetch(`/api/contact?user_id=${userId}`);
+      const res = await fetch(`/api/contact?user_id=${encodeURIComponent(userId)}`);
       if (res.ok) {
         const data = await res.json();
         if (data.inquiries && Array.isArray(data.inquiries)) {
@@ -182,10 +240,31 @@ export function AccountClient({ user: initialUser, orders: initialOrders, defaul
     }
   };
 
+  // Load real authenticated user session & full country list on mount
   useEffect(() => {
-    fetchAddresses();
-    fetchInquiries();
-  }, [userState?.id]);
+    fetch('/api/countries')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.countries && Array.isArray(data.countries)) {
+          setCountriesList(data.countries);
+        }
+      })
+      .catch((e) => console.warn('Countries load error:', e));
+
+    fetch('/api/auth/me')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.authenticated && data.user) {
+          setUserState(data.user);
+          fetchAddresses(data.user.id);
+          fetchInquiries(data.user.id);
+        } else if (initialUser?.id) {
+          fetchAddresses(initialUser.id);
+          fetchInquiries(initialUser.id);
+        }
+      })
+      .catch((e) => console.warn('Auth me check:', e));
+  }, []);
 
   const handleCopyCredentials = () => {
     if (!tempAccount) return;
@@ -239,19 +318,16 @@ export function AccountClient({ user: initialUser, orders: initialOrders, defaul
   // Open Add/Edit Address Modal
   const handleOpenAddAddress = () => {
     setEditingAddressId(null);
-    const existingComp = addressesList.find((a) => a.company_name || a.business_name)?.company_name || 'Aura and Spirit';
-    const existingGst = addressesList.find((a) => a.gstin)?.gstin || (existingComp.toLowerCase().includes('aura') ? '09AAACS1234A1Z5' : '');
-
     setAddressFormData({
-      fullName: userState.full_name || 'Ankur Tandon',
-      companyName: existingComp || '',
-      gstin: existingGst || '',
+      fullName: userState.full_name || '',
+      companyName: '',
+      gstin: '',
       streetAddress: '',
-      city: 'Kannauj',
-      state: 'Uttar Pradesh',
-      postalCode: '209725',
+      city: '',
+      state: '',
+      postalCode: '',
       country: 'India',
-      phone: userState.phone || '+91 9838332079',
+      phone: userState.phone || '',
       isDefault: addressesList.length === 0,
     });
     setAddressFeedback(null);
@@ -260,34 +336,20 @@ export function AccountClient({ user: initialUser, orders: initialOrders, defaul
 
   const handleOpenEditAddress = (addr: any) => {
     setEditingAddressId(addr.id);
-    const comp = addr.company_name || addr.business_name || 'Aura and Spirit';
-    let gst = addr.gstin || '';
-    if (!gst && comp) {
-      if (/aura\s*and\s*spirit/i.test(comp)) gst = '09AAACS1234A1Z5';
-      else {
-        const matched = addressesList.find((a) => a.company_name?.toLowerCase() === comp.toLowerCase() && a.gstin);
-        if (matched?.gstin) gst = matched.gstin;
-      }
-    }
-
     setAddressFormData({
-      fullName: addr.full_name || '',
-      companyName: comp,
-      gstin: gst,
+      fullName: addr.full_name || userState.full_name || '',
+      companyName: addr.company_name || addr.business_name || '',
+      gstin: addr.gstin || '',
       streetAddress: addr.street_address || addr.street || '',
       city: addr.city || '',
-      state: addr.state || 'Uttar Pradesh',
+      state: addr.state || '',
       postalCode: addr.postal_code || addr.zip || '',
       country: addr.country || 'India',
-      phone: addr.phone || '',
+      phone: addr.phone || userState.phone || '',
       isDefault: Boolean(addr.is_default),
     });
     setAddressFeedback(null);
     setIsAddressModalOpen(true);
-
-    if (comp && !gst) {
-      lookupModalCompanyGst(comp);
-    }
   };
 
   const handleSaveAddress = async (e: React.FormEvent) => {
@@ -352,9 +414,16 @@ export function AccountClient({ user: initialUser, orders: initialOrders, defaul
         });
       }
 
-      // Sync default address to localStorage for checkout
-      if (payload.is_default) {
+      // Sync address and GST to localStorage for checkout
+      if (payload.is_default || payload.gstin) {
         localStorage.setItem('saved_shipping_address', JSON.stringify(payload));
+        if (payload.gstin) {
+          localStorage.setItem('saved_buyer_gst', payload.gstin);
+          if (payload.company_name) {
+            localStorage.setItem('saved_buyer_company', payload.company_name);
+            localStorage.setItem(`company_gstin_${payload.company_name.toLowerCase()}`, payload.gstin);
+          }
+        }
       }
 
       setAddressFeedback({ type: 'success', message: 'Shipping address saved successfully.' });
@@ -371,9 +440,12 @@ export function AccountClient({ user: initialUser, orders: initialOrders, defaul
 
   const handleDeleteAddress = async (id: string) => {
     if (!confirm('Are you sure you wish to remove this shipping address?')) return;
-    try {
-      await fetch(`/api/admin/users/addresses?id=${id}`, { method: 'DELETE' });
-    } catch (e) {}
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    if (isUuid) {
+      try {
+        await fetch(`/api/admin/users/addresses?id=${id}`, { method: 'DELETE' });
+      } catch (e) {}
+    }
     setAddressesList((prev) => prev.filter((a) => a.id !== id));
   };
 
@@ -384,14 +456,17 @@ export function AccountClient({ user: initialUser, orders: initialOrders, defaul
         is_default: a.id === addr.id,
       }))
     );
-    try {
-      await fetch('/api/admin/users/addresses', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...addr, is_default: true }),
-      });
-      localStorage.setItem('saved_shipping_address', JSON.stringify({ ...addr, is_default: true }));
-    } catch (e) {}
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(addr.id);
+    if (isUuid) {
+      try {
+        await fetch('/api/admin/users/addresses', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...addr, is_default: true }),
+        });
+      } catch (e) {}
+    }
+    localStorage.setItem('saved_shipping_address', JSON.stringify({ ...addr, is_default: true }));
   };
 
   // Submit New Personal Query / Communication
@@ -455,16 +530,16 @@ export function AccountClient({ user: initialUser, orders: initialOrders, defaul
       <div className="p-8 rounded-3xl bg-[#FAE6E7]/60 border-2 border-[#F7D1D8] flex flex-col sm:flex-row items-center justify-between gap-6 shadow-xl text-left">
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 rounded-full bg-[#F6A6BB] text-[#4A0D25] flex items-center justify-center text-2xl font-serif font-black shadow-md border-2 border-[#F7D1D8]">
-            {userState.full_name?.charAt(0) || 'A'}
+            {userState.full_name?.charAt(0) || 'U'}
           </div>
           <div>
             <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-[#FAE6E7] border border-[#F7D1D8] text-[#4A0D25] text-[10px] font-black uppercase tracking-widest">
               <Sparkles className="w-3.5 h-3.5 text-[#F6A6BB]" /> Maison Private Client Portal
             </div>
             <h1 className="font-serif font-extrabold text-2xl sm:text-3xl text-[#1A0510] mt-1">
-              {userState.full_name || 'Ankur Tandon'}
+              {userState.full_name || 'Client'}
             </h1>
-            <p className="text-xs text-[#4A0D25] font-bold mt-0.5">{userState.email || 'shivaexportsindia@gmail.com'}</p>
+            <p className="text-xs text-[#4A0D25] font-bold mt-0.5">{userState.email || ''}</p>
           </div>
         </div>
 
@@ -588,9 +663,21 @@ export function AccountClient({ user: initialUser, orders: initialOrders, defaul
         </button>
       </div>
 
-      {/* 4. Tab 1: Placed Orders List */}
+      {/* 4. Tab 1: Placed Orders List (Dockable Details Invoice Style) */}
       {activeTab === 'orders' && (
         <div className="space-y-6 text-left animate-fade-in">
+          {emailSuccessToast && (
+            <div className="p-4 rounded-2xl bg-emerald-100 border border-emerald-300 text-emerald-950 text-xs font-bold flex items-center justify-between shadow-xs animate-fade-in">
+              <div className="flex items-center gap-2.5">
+                <CheckCircle2 className="w-5 h-5 text-emerald-700 flex-shrink-0" />
+                <span>{emailSuccessToast}</span>
+              </div>
+              <button onClick={() => setEmailSuccessToast(null)} className="text-emerald-800 hover:text-emerald-950 text-xs font-bold">
+                ✕
+              </button>
+            </div>
+          )}
+
           {ordersList.length === 0 ? (
             <div className="text-center py-20 bg-[#FAE6E7]/30 border-2 border-dashed border-[#F7D1D8] rounded-3xl space-y-4">
               <Package className="w-12 h-12 text-[#F6A6BB] mx-auto" />
@@ -606,140 +693,297 @@ export function AccountClient({ user: initialUser, orders: initialOrders, defaul
               </button>
             </div>
           ) : (
-            ordersList.map((ord) => {
-              const totalAmt = Number(ord.total_amount || 4800);
-              const shippingAddr = (ord.shipping_address as any) || {};
-              const taxRate = shippingAddr?.tax_rate || ord.tax_rate || 18.00;
-              const taxableVal = shippingAddr?.taxable_amount || ord.taxable_amount || Math.round(totalAmt / (1 + taxRate / 100));
-              const taxAmt = shippingAddr?.tax_amount || ord.tax_amount || (totalAmt - taxableVal);
-              const buyerGstin = shippingAddr?.gstin || ord.gstin || null;
-              const payMethod = shippingAddr?.payment_method || ord.payment_method || (ord.razorpay_payment_id?.startsWith('PAYPAL') ? 'paypal' : 'razorpay');
+            <div className="space-y-4">
+              <div className="flex items-center justify-between px-2 text-xs font-bold text-stone-500">
+                <span>Click any order line below to dock / expand full GST invoice breakdown.</span>
+                <span className="font-black text-[#4A0D25]">{ordersList.length} Order(s) Recorded</span>
+              </div>
 
-              return (
-                <div
-                  key={ord.id || ord.order_number}
-                  className="p-6 sm:p-8 bg-white rounded-3xl border-2 border-[#F7D1D8] shadow-lg space-y-5"
-                >
-                  {/* Order Header */}
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-[#F7D1D8] pb-4 gap-3">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-serif font-extrabold text-lg text-[#1A0510]">
-                          Order #{ord.order_number || ord.id}
-                        </span>
-                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                          payMethod === 'paypal'
-                            ? 'bg-sky-100 border border-sky-300 text-sky-900'
-                            : 'bg-emerald-100 border border-emerald-300 text-emerald-950'
-                        }`}>
-                          PAID VIA {payMethod === 'paypal' ? 'PAYPAL' : 'RAZORPAY'}
-                        </span>
+              {ordersList.map((ord, idx) => {
+                const orderId = ord.id || ord.order_number || `ord-${idx}`;
+                const isExpanded = expandedOrders[orderId] !== undefined ? expandedOrders[orderId] : idx === 0;
+
+                const totalAmt = Number(ord.total_amount || 4800);
+                const shippingAddr = (ord.shipping_address as any) || {};
+                const taxRate = shippingAddr?.tax_rate || ord.tax_rate || 18.0;
+                const taxableVal = shippingAddr?.taxable_amount || ord.taxable_amount || Math.round(totalAmt / (1 + taxRate / 100));
+                const taxAmt = shippingAddr?.tax_amount || ord.tax_amount || (totalAmt - taxableVal);
+                const buyerGstin = (shippingAddr?.gstin || ord.gstin || '').trim().toUpperCase();
+                const businessName = (shippingAddr?.companyName || shippingAddr?.company_name || shippingAddr?.business_name || ord.company_name || ord.business_name || '').trim();
+
+                const isPaid = ord.status !== 'cancelled' && ord.status !== 'pending' && (ord.payment_status === 'paid' || ord.payment_status === 'PAID' || ord.razorpay_payment_id || !ord.payment_status);
+                const isPending = !isPaid && ord.status !== 'cancelled';
+                const payMethod = shippingAddr?.payment_method || ord.payment_method || (ord.razorpay_payment_id?.startsWith('PAYPAL') ? 'paypal' : 'razorpay');
+                const invoiceNumber = `INV-${ord.order_number || ord.id?.slice(0, 8)?.toUpperCase() || '2026-01'}`;
+                const isEmailing = Boolean(emailingOrderMap[orderId]);
+
+                return (
+                  <div
+                    key={orderId}
+                    className="bg-white rounded-3xl border-2 border-[#F7D1D8] shadow-md hover:shadow-lg transition-all overflow-hidden"
+                  >
+                    {/* Dockable Order Line (Always visible summary) */}
+                    <div
+                      onClick={() => toggleOrderExpanded(orderId)}
+                      className="p-5 sm:p-6 bg-[#FAE6E7]/40 hover:bg-[#FAE6E7]/70 transition-colors flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 cursor-pointer select-none"
+                    >
+                      <div className="flex flex-wrap items-center gap-3">
+                        <div className="p-2.5 rounded-2xl bg-[#4A0D25] text-white shadow-xs">
+                          <Receipt className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-mono font-black text-xs sm:text-sm text-[#4A0D25] bg-white px-2 py-0.5 rounded-md border border-[#F7D1D8]">
+                              {invoiceNumber}
+                            </span>
+                            <span className="text-xs text-stone-400">•</span>
+                            <span className="font-serif font-extrabold text-sm sm:text-base text-[#1A0510]">
+                              Order #{ord.order_number || ord.id}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-[#4A0D25] font-bold mt-0.5" suppressHydrationWarning>
+                            Placed {ord.created_at ? new Date(ord.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Today'} • {ord.order_items?.length || 1} Item(s)
+                          </p>
+                        </div>
                       </div>
-                      <p className="text-xs text-[#4A0D25] font-bold mt-0.5" suppressHydrationWarning>
-                        Placed on {ord.created_at ? new Date(ord.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Today'}
-                      </p>
-                    </div>
 
-                    <div className="flex items-center gap-3">
-                      <span className="px-3.5 py-1 rounded-full bg-[#FAE6E7] border border-[#F7D1D8] text-[#4A0D25] text-xs font-black uppercase tracking-wider">
-                        STATUS: {ord.status || 'PROCESSING'}
-                      </span>
-                      <span className="font-serif font-black text-xl text-[#4A0D25]" suppressHydrationWarning>
-                        {formatPrice(totalAmt)}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Courier Tracking Banner */}
-                  <div className="p-4 rounded-2xl bg-[#FAE6E7]/60 border border-[#F7D1D8] text-xs font-bold text-[#4A0D25] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
-                    <div className="flex items-center gap-2.5">
-                      <Truck className="w-5 h-5 text-[#F6A6BB]" />
-                      <div>
-                        <span>Carrier Partner: <strong>{ord.courier_name || 'Bluedart Express Courier'}</strong></span>
-                        <span className="block text-[11px] font-mono text-[#1A0510] font-bold mt-0.5">
-                          Tracking AWB #: {ord.tracking_number || 'AWB-2026-948201'}
-                        </span>
-                      </div>
-                    </div>
-                    <span className="px-3 py-1 rounded-xl bg-emerald-100 text-emerald-950 border border-emerald-300 text-[10px] font-black uppercase tracking-wider">
-                      Dispatched from Kannauj Estate
-                    </span>
-                  </div>
-
-                  {/* B2B GSTIN & Business Details if provided */}
-                  {(buyerGstin || ord.company_name || ord.business_name || ord.shipping_address?.companyName || ord.shipping_address?.company_name) && (
-                    <div className="p-3 bg-emerald-50 rounded-2xl border border-emerald-200 text-xs text-emerald-900 flex flex-wrap items-center justify-between font-bold gap-2">
-                      <div className="flex items-center gap-1.5">
-                        <Building2 className="w-4 h-4 text-emerald-700" />
-                        <span>B2B Tax Invoice:</span>
-                        {(ord.company_name || ord.business_name || ord.shipping_address?.companyName || ord.shipping_address?.company_name) && (
-                          <span className="font-black text-[#1A0510]">
-                            {ord.company_name || ord.business_name || ord.shipping_address?.companyName || ord.shipping_address?.company_name}
+                      <div className="flex flex-wrap items-center gap-3 self-end sm:self-center">
+                        {/* Status Badges */}
+                        {isPaid ? (
+                          <span
+                            className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                              payMethod === 'paypal'
+                                ? 'bg-sky-100 border border-sky-300 text-sky-900'
+                                : 'bg-emerald-100 border border-emerald-300 text-emerald-950'
+                            }`}
+                          >
+                            ✓ PAID VIA {payMethod === 'paypal' ? 'PAYPAL' : 'RAZORPAY'}
+                          </span>
+                        ) : (
+                          <span className="px-3 py-1 rounded-full bg-amber-100 border border-amber-300 text-amber-950 text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 animate-pulse">
+                            <Clock className="w-3.5 h-3.5 text-amber-800" /> PENDING PAYMENT
                           </span>
                         )}
-                      </div>
-                      {buyerGstin && (
-                        <span className="font-mono bg-white px-2 py-0.5 rounded border border-emerald-300">
-                          GSTIN: {buyerGstin}
-                        </span>
-                      )}
-                    </div>
-                  )}
 
-                  {/* Ordered Items List */}
-                  <div className="space-y-3 pt-1">
-                    <span className="text-xs font-black text-[#4A0D25] uppercase tracking-wider block">
-                      Order Items Breakdown:
-                    </span>
-                    {ord.order_items && ord.order_items.length > 0 ? (
-                      ord.order_items.map((item: any, idx: number) => (
-                        <div
-                          key={idx}
-                          className="p-3.5 rounded-2xl bg-[#FAE6E7]/30 border border-[#F7D1D8] flex items-center justify-between gap-4 text-xs"
-                        >
-                          <div className="flex items-center gap-3">
-                            {item.image ? (
-                              <img
-                                src={item.image}
-                                alt={item.product_name}
-                                className="w-12 h-12 rounded-xl object-cover border border-[#F7D1D8] bg-white flex-shrink-0"
-                              />
-                            ) : (
-                              <div className="w-12 h-12 rounded-xl bg-[#FAE6E7] border border-[#F7D1D8] flex items-center justify-center text-[#F6A6BB]">
-                                <ShoppingBag className="w-5 h-5" />
+                        <span className="px-3 py-1 rounded-full bg-white border border-[#F7D1D8] text-[#4A0D25] text-[10px] font-black uppercase tracking-wider">
+                          {ord.status || 'PROCESSING'}
+                        </span>
+
+                        <span className="font-serif font-black text-lg text-[#4A0D25] ml-1" suppressHydrationWarning>
+                          {formatPrice(totalAmt)}
+                        </span>
+
+                        <div className="p-1.5 rounded-xl bg-white border border-[#F7D1D8] text-[#4A0D25] shadow-2xs">
+                          {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Populated Full Order Breakdown when Docked Open */}
+                    {isExpanded && (
+                      <div className="p-6 sm:p-8 space-y-6 border-t border-[#F7D1D8] animate-fade-in text-left">
+                        {/* Unpaid Warning & Action Box */}
+                        {isPending && (
+                          <div className="p-5 rounded-2xl bg-amber-50 border-2 border-amber-300 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2.5 rounded-xl bg-amber-500 text-white">
+                                <AlertTriangle className="w-5 h-5" />
                               </div>
-                            )}
+                              <div>
+                                <h4 className="font-serif font-extrabold text-sm text-amber-950">
+                                  Payment Incomplete / Order Awaiting Settlement
+                                </h4>
+                                <p className="text-xs text-amber-800 font-bold mt-0.5">
+                                  Complete your payment to initiate distillation, secure batch bottling, and courier dispatch from Kannauj.
+                                </p>
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => router.push(`/checkout?order_id=${ord.id || ord.order_number}&retry=true`)}
+                              className="px-6 py-2.5 rounded-xl bg-amber-900 hover:bg-amber-950 text-white text-xs font-black uppercase tracking-wider flex items-center gap-2 shadow-md transition-all cursor-pointer whitespace-nowrap"
+                            >
+                              <CreditCard className="w-4 h-4 text-amber-300" /> Complete Payment Now
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Courier Partner & Dispatch Status */}
+                        <div className="p-4 rounded-2xl bg-[#FAE6E7]/60 border border-[#F7D1D8] text-xs font-bold text-[#4A0D25] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+                          <div className="flex items-center gap-2.5">
+                            <Truck className="w-5 h-5 text-[#F6A6BB]" />
                             <div>
-                              <h4 className="font-extrabold text-[#1A0510] text-sm">{item.product_name || item.name}</h4>
-                              <span className="text-[11px] text-[#4A0D25] font-bold block">
-                                Qty: {item.quantity} • {item.variantName || 'Standard Bottle'}
+                              <span>
+                                Carrier Partner: <strong>{ord.courier_name || 'Bluedart Express Courier'}</strong>
+                              </span>
+                              <span className="block text-[11px] font-mono text-[#1A0510] font-bold mt-0.5">
+                                Tracking AWB #: {ord.tracking_number || 'AWB-2026-948201'}
                               </span>
                             </div>
                           </div>
-                          <span className="font-serif font-black text-sm text-[#1A0510]" suppressHydrationWarning>
-                            {formatPrice((item.price || 0) * (item.quantity || 1))}
+                          <span className="px-3 py-1 rounded-xl bg-emerald-100 text-emerald-950 border border-emerald-300 text-[10px] font-black uppercase tracking-wider">
+                            Dispatched from Kannauj Estate
                           </span>
                         </div>
-                      ))
-                    ) : (
-                      <div className="p-3.5 rounded-2xl bg-[#FAE6E7]/30 border border-[#F7D1D8] text-xs font-bold text-[#4A0D25]">
-                        Damask Rose Artisanal Attars & Pure Botanical Hydro-Distillates Batch
+
+                        {/* B2B GST Status / Add GSTIN Before Dispatch Card */}
+                        {buyerGstin ? (
+                          <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-300 text-xs text-emerald-950 flex flex-wrap items-center justify-between font-bold gap-3">
+                            <div className="flex items-center gap-2.5">
+                              <Building2 className="w-5 h-5 text-emerald-700 flex-shrink-0" />
+                              <div>
+                                <span className="text-[10px] font-black uppercase tracking-wider text-emerald-800 block">
+                                  B2B Tax Credit Invoice Credentials (18% ITC Verified)
+                                </span>
+                                <span className="font-extrabold text-sm text-[#1A0510]">
+                                  {businessName || 'Registered Enterprise'}
+                                </span>
+                                <span className="font-mono bg-white px-2 py-0.5 rounded border border-emerald-300 text-xs font-black ml-2">
+                                  GSTIN: {buyerGstin}
+                                </span>
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => setSelectedGstOrder(ord)}
+                              className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-emerald-100 border border-emerald-300 text-emerald-950 text-[11px] font-black uppercase tracking-wider transition-all cursor-pointer"
+                            >
+                              Edit GST Details
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="p-4 bg-amber-50/80 rounded-2xl border border-amber-300 text-xs text-amber-950 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+                            <div className="flex items-center gap-2.5">
+                              <Building2 className="w-5 h-5 text-amber-700 flex-shrink-0" />
+                              <div>
+                                <span className="text-[10px] font-black uppercase tracking-wider text-amber-800 block">
+                                  Input Tax Credit (ITC) Available
+                                </span>
+                                <span className="font-bold text-amber-900">
+                                  No Buyer GSTIN attached to this order yet. You can attach your business GSTIN before dispatch.
+                                </span>
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => setSelectedGstOrder(ord)}
+                              className="px-4 py-2 rounded-xl bg-amber-900 hover:bg-amber-950 text-white text-xs font-black uppercase tracking-wider shadow-xs transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5"
+                            >
+                              <Plus className="w-4 h-4" /> Add GST Details
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Order Items Breakdown */}
+                        <div className="space-y-3">
+                          <span className="text-xs font-black text-[#4A0D25] uppercase tracking-wider block">
+                            Order Items Breakdown:
+                          </span>
+                          {ord.order_items && ord.order_items.length > 0 ? (
+                            ord.order_items.map((item: any, itemIdx: number) => (
+                              <div
+                                key={itemIdx}
+                                className="p-4 rounded-2xl bg-[#FAE6E7]/30 border border-[#F7D1D8] flex items-center justify-between gap-4 text-xs"
+                              >
+                                <div className="flex items-center gap-3">
+                                  {item.image ? (
+                                    <img
+                                      src={item.image}
+                                      alt={item.product_name}
+                                      className="w-14 h-14 rounded-2xl object-cover border border-[#F7D1D8] bg-white flex-shrink-0 shadow-2xs"
+                                    />
+                                  ) : (
+                                    <div className="w-14 h-14 rounded-2xl bg-[#FAE6E7] border border-[#F7D1D8] flex items-center justify-center text-[#F6A6BB] flex-shrink-0">
+                                      <ShoppingBag className="w-6 h-6" />
+                                    </div>
+                                  )}
+                                  <div>
+                                    <h4 className="font-extrabold text-[#1A0510] text-sm">{item.product_name || item.name}</h4>
+                                    <span className="text-[11px] text-[#4A0D25] font-bold block mt-0.5">
+                                      Qty: {item.quantity || 1} • {item.variantName || 'Standard Bottle Batch'} • HSN 330300
+                                    </span>
+                                  </div>
+                                </div>
+                                <span className="font-serif font-black text-sm text-[#1A0510]" suppressHydrationWarning>
+                                  {formatPrice((item.price || 0) * (item.quantity || 1))}
+                                </span>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="p-4 rounded-2xl bg-[#FAE6E7]/30 border border-[#F7D1D8] text-xs font-bold text-[#4A0D25]">
+                              Damask Rose Artisanal Attars & Pure Botanical Hydro-Distillates Batch
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Financials & Tax Calculation Breakdown */}
+                        <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 text-xs font-bold text-stone-700 flex flex-wrap items-center justify-between gap-3">
+                          <div className="flex flex-wrap items-center gap-3">
+                            <span>
+                              Taxable Assessable Value: <strong className="text-[#1A0510]">{formatPrice(taxableVal)}</strong>
+                            </span>
+                            <span>•</span>
+                            <span>
+                              GST ({taxRate}%): <strong className="text-[#4A0D25]">{formatPrice(taxAmt)}</strong>
+                            </span>
+                            <span>•</span>
+                            <span className="text-emerald-800 font-extrabold">Complimentary Insured Shipping (FREE)</span>
+                          </div>
+                          <div className="font-serif font-black text-base text-[#4A0D25]" suppressHydrationWarning>
+                            Total: {formatPrice(totalAmt)}
+                          </div>
+                        </div>
+
+                        {/* Professional Actions Toolbar */}
+                        <div className="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-[#F7D1D8]">
+                          <div className="flex flex-wrap items-center gap-2">
+                            {isPaid && (
+                              <>
+                                <button
+                                  onClick={() => setSelectedInvoiceOrder(ord)}
+                                  className="px-5 py-2.5 rounded-xl bg-[#4A0D25] hover:bg-[#6B0F34] text-white text-xs font-black uppercase tracking-wider flex items-center gap-2 shadow-sm transition-all cursor-pointer"
+                                >
+                                  <FileText className="w-4 h-4 text-[#F6A6BB]" /> Download GST Invoice
+                                </button>
+                                <button
+                                  onClick={() => handleQuickResendEmail(ord)}
+                                  disabled={isEmailing}
+                                  className="px-4 py-2.5 rounded-xl bg-white hover:bg-[#FAE6E7] border border-[#F7D1D8] text-[#4A0D25] text-xs font-black uppercase tracking-wider flex items-center gap-2 shadow-xs transition-all cursor-pointer disabled:opacity-50"
+                                >
+                                  <Mail className="w-4 h-4 text-[#F6A6BB]" />
+                                  {isEmailing ? 'Dispatching...' : 'Resend to Email'}
+                                </button>
+                              </>
+                            )}
+
+                            {!buyerGstin && isPaid && (
+                              <button
+                                onClick={() => setSelectedGstOrder(ord)}
+                                className="px-4 py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-950 text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+                              >
+                                <Building2 className="w-4 h-4 text-emerald-700" /> Attach GSTIN
+                              </button>
+                            )}
+                          </div>
+
+                          <button
+                            onClick={() => {
+                              setQueryFormData({
+                                subject: `Order #${ord.order_number || ord.id} Concierge Tracking & Invoice Query`,
+                                message: `Hello Kannauj Concierge desk, I have a query regarding my order #${ord.order_number || ord.id}. `,
+                                phone: userState.phone || '',
+                              });
+                              setActiveTab('communications');
+                              setIsQueryModalOpen(true);
+                            }}
+                            className="px-4 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-bold flex items-center gap-2 transition-all cursor-pointer"
+                          >
+                            <MessageSquare className="w-4 h-4 text-stone-600" /> Need Help with this Order?
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>
-
-                  {/* Tax Breakdown Footer */}
-                  <div className="pt-3 border-t border-[#F7D1D8] flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-stone-600">
-                    <div>
-                      <span>Taxable Value: <strong className="text-[#1A0510]">{formatPrice(taxableVal)}</strong></span>
-                      <span className="mx-2">•</span>
-                      <span>GST ({taxRate}%): <strong className="text-[#4A0D25]">{formatPrice(taxAmt)}</strong></span>
-                    </div>
-                    <span className="text-emerald-800 font-extrabold">COMPLIMENTARY SHIPPING (FREE)</span>
-                  </div>
-                </div>
-              );
-            })
+                );
+              })}
+            </div>
           )}
         </div>
       )}
@@ -992,7 +1236,7 @@ export function AccountClient({ user: initialUser, orders: initialOrders, defaul
                   required
                   value={addressFormData.fullName}
                   onChange={(e) => setAddressFormData({ ...addressFormData, fullName: e.target.value })}
-                  placeholder="e.g. Ankur Tandon"
+                  placeholder="e.g. Shikha Sharma"
                   className="w-full px-4 py-2.5 rounded-xl bg-white border border-[#F7D1D8] text-xs font-bold text-[#1A0510] focus:ring-2 focus:ring-[#F6A6BB] outline-none"
                 />
               </div>
@@ -1039,12 +1283,49 @@ export function AccountClient({ user: initialUser, orders: initialOrders, defaul
                   required
                   value={addressFormData.streetAddress}
                   onChange={(e) => setAddressFormData({ ...addressFormData, streetAddress: e.target.value })}
-                  placeholder="e.g. 35 Farsh Road, Rosewood Estate, Suite 4B"
+                  placeholder="e.g. 124 Park Avenue, Suite 4B"
                   className="w-full px-4 py-2.5 rounded-xl bg-white border border-[#F7D1D8] text-xs font-bold text-[#1A0510] focus:ring-2 focus:ring-[#F6A6BB] outline-none"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-black text-[#4A0D25] mb-1">Country *</label>
+                  <select
+                    value={addressFormData.country}
+                    onChange={(e) => {
+                      const selectedVal = e.target.value;
+                      const matched = countriesList.find((c) => c.name === selectedVal || c.code === selectedVal);
+                      setAddressFormData({
+                        ...addressFormData,
+                        country: matched?.name || selectedVal,
+                        state: matched?.states?.[0] || '',
+                      });
+                    }}
+                    className="w-full px-4 py-2.5 rounded-xl bg-white border border-[#F7D1D8] text-xs font-extrabold text-[#1A0510] focus:ring-2 focus:ring-[#F6A6BB] outline-none cursor-pointer max-h-48"
+                  >
+                    {countriesList.length > 0 ? (
+                      countriesList.map((c) => (
+                        <option key={c.code} value={c.name}>
+                          {c.name} ({c.flag || c.code})
+                        </option>
+                      ))
+                    ) : (
+                      <>
+                        <option value="India">India (🇮🇳)</option>
+                        <option value="United States">United States (🇺🇸)</option>
+                        <option value="United Kingdom">United Kingdom (🇬🇧)</option>
+                        <option value="United Arab Emirates">United Arab Emirates (🇦🇪)</option>
+                        <option value="France">France (🇫🇷)</option>
+                        <option value="Germany">Germany (🇩🇪)</option>
+                        <option value="Canada">Canada (🇨🇦)</option>
+                        <option value="Australia">Australia (🇦🇺)</option>
+                        <option value="Saudi Arabia">Saudi Arabia (🇸🇦)</option>
+                        <option value="Singapore">Singapore (🇸🇬)</option>
+                      </>
+                    )}
+                  </select>
+                </div>
                 <div>
                   <label className="block font-black text-[#4A0D25] mb-1">City / Town *</label>
                   <input
@@ -1052,18 +1333,7 @@ export function AccountClient({ user: initialUser, orders: initialOrders, defaul
                     required
                     value={addressFormData.city}
                     onChange={(e) => setAddressFormData({ ...addressFormData, city: e.target.value })}
-                    placeholder="Kannauj"
-                    className="w-full px-4 py-2.5 rounded-xl bg-white border border-[#F7D1D8] text-xs font-bold text-[#1A0510] focus:ring-2 focus:ring-[#F6A6BB] outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block font-black text-[#4A0D25] mb-1">State / Province *</label>
-                  <input
-                    type="text"
-                    required
-                    value={addressFormData.state}
-                    onChange={(e) => setAddressFormData({ ...addressFormData, state: e.target.value })}
-                    placeholder="Uttar Pradesh"
+                    placeholder="e.g. New Delhi / New York"
                     className="w-full px-4 py-2.5 rounded-xl bg-white border border-[#F7D1D8] text-xs font-bold text-[#1A0510] focus:ring-2 focus:ring-[#F6A6BB] outline-none"
                   />
                 </div>
@@ -1071,30 +1341,53 @@ export function AccountClient({ user: initialUser, orders: initialOrders, defaul
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-black text-[#4A0D25] mb-1">PIN / Postal Code *</label>
+                  <label className="block font-black text-[#4A0D25] mb-1">
+                    {countriesList.find((c) => c.name === addressFormData.country || c.code === addressFormData.country)?.state_label || 'State / Province'} *
+                  </label>
+                  {(() => {
+                    const matchedC = countriesList.find((c) => c.name === addressFormData.country || c.code === addressFormData.country);
+                    const states = matchedC?.states || [];
+                    if (states.length > 0) {
+                      return (
+                        <select
+                          required
+                          value={addressFormData.state}
+                          onChange={(e) => setAddressFormData({ ...addressFormData, state: e.target.value })}
+                          className="w-full px-4 py-2.5 rounded-xl bg-white border border-[#F7D1D8] text-xs font-bold text-[#1A0510] focus:ring-2 focus:ring-[#F6A6BB] outline-none cursor-pointer"
+                        >
+                          <option value="">Select State / Region</option>
+                          {states.map((st: string) => (
+                            <option key={st} value={st}>
+                              {st}
+                            </option>
+                          ))}
+                        </select>
+                      );
+                    }
+                    return (
+                      <input
+                        type="text"
+                        required
+                        value={addressFormData.state}
+                        onChange={(e) => setAddressFormData({ ...addressFormData, state: e.target.value })}
+                        placeholder="e.g. California / Maharashtra"
+                        className="w-full px-4 py-2.5 rounded-xl bg-white border border-[#F7D1D8] text-xs font-bold text-[#1A0510] focus:ring-2 focus:ring-[#F6A6BB] outline-none"
+                      />
+                    );
+                  })()}
+                </div>
+                <div>
+                  <label className="block font-black text-[#4A0D25] mb-1">
+                    {countriesList.find((c) => c.name === addressFormData.country || c.code === addressFormData.country)?.postal_label || 'PIN / Postal Code'} *
+                  </label>
                   <input
                     type="text"
                     required
                     value={addressFormData.postalCode}
                     onChange={(e) => setAddressFormData({ ...addressFormData, postalCode: e.target.value })}
-                    placeholder="209725"
+                    placeholder={countriesList.find((c) => c.name === addressFormData.country || c.code === addressFormData.country)?.postal_placeholder || 'e.g. 110001 / 90210'}
                     className="w-full px-4 py-2.5 rounded-xl bg-white border border-[#F7D1D8] text-xs font-bold text-[#1A0510] focus:ring-2 focus:ring-[#F6A6BB] outline-none"
                   />
-                </div>
-                <div>
-                  <label className="block font-black text-[#4A0D25] mb-1">Country *</label>
-                  <select
-                    value={addressFormData.country}
-                    onChange={(e) => setAddressFormData({ ...addressFormData, country: e.target.value })}
-                    className="w-full px-4 py-2.5 rounded-xl bg-white border border-[#F7D1D8] text-xs font-extrabold text-[#1A0510] focus:ring-2 focus:ring-[#F6A6BB] outline-none"
-                  >
-                    <option value="India">India (🇮🇳)</option>
-                    <option value="United States">United States (🇺🇸)</option>
-                    <option value="United Kingdom">United Kingdom (🇬🇧)</option>
-                    <option value="United Arab Emirates">United Arab Emirates (🇦🇪)</option>
-                    <option value="Saudi Arabia">Saudi Arabia (🇸🇦)</option>
-                    <option value="Singapore">Singapore (🇸🇬)</option>
-                  </select>
                 </div>
               </div>
 
@@ -1105,7 +1398,11 @@ export function AccountClient({ user: initialUser, orders: initialOrders, defaul
                   required
                   value={addressFormData.phone}
                   onChange={(e) => setAddressFormData({ ...addressFormData, phone: e.target.value })}
-                  placeholder="+91 98390 12345"
+                  placeholder={
+                    countriesList.find((c) => c.name === addressFormData.country || c.code === addressFormData.country)?.phone_code
+                      ? `${countriesList.find((c) => c.name === addressFormData.country || c.code === addressFormData.country)?.phone_code} 98765 43210`
+                      : '+91 98765 43210'
+                  }
                   className="w-full px-4 py-2.5 rounded-xl bg-white border border-[#F7D1D8] text-xs font-bold text-[#1A0510] focus:ring-2 focus:ring-[#F6A6BB] outline-none"
                 />
               </div>
@@ -1229,6 +1526,25 @@ export function AccountClient({ user: initialUser, orders: initialOrders, defaul
             </form>
           </div>
         </div>
+      )}
+      {/* Tax Invoice Modal */}
+      {selectedInvoiceOrder && (
+        <TaxInvoiceModal
+          isOpen={Boolean(selectedInvoiceOrder)}
+          onClose={() => setSelectedInvoiceOrder(null)}
+          order={selectedInvoiceOrder}
+          userEmail={userState.email}
+        />
+      )}
+
+      {/* Add / Update GST Modal */}
+      {selectedGstOrder && (
+        <AddOrderGstModal
+          isOpen={Boolean(selectedGstOrder)}
+          onClose={() => setSelectedGstOrder(null)}
+          order={selectedGstOrder}
+          onGstUpdated={handleOrderGstUpdated}
+        />
       )}
     </div>
   );

@@ -45,29 +45,37 @@ export async function GET(request: NextRequest) {
     }
 
     // 2. Search in orders table for past B2B orders
-    let orderQuery = supabase
-      .from('orders')
-      .select('company_name, gstin, shipping_address')
-      .eq('store_id', STORE_ID)
-      .not('gstin', 'is', null)
-      .neq('gstin', '');
+    try {
+      let orderQuery = supabase
+        .from('orders')
+        .select('shipping_address')
+        .eq('store_id', STORE_ID)
+        .order('created_at', { ascending: false });
 
-    if (company) {
-      orderQuery = orderQuery.ilike('company_name', `%${company}%`);
-    }
-
-    const { data: matchedOrders } = await orderQuery.limit(5);
-    if (matchedOrders && matchedOrders.length > 0) {
-      const ordMatch = matchedOrders.find((o: any) => o.gstin && o.gstin.trim().length >= 10) || matchedOrders[0];
-      if (ordMatch?.gstin) {
-        return NextResponse.json({
-          found: true,
-          company_name: ordMatch.company_name || company,
-          gstin: ordMatch.gstin.trim().toUpperCase(),
-          source: 'orders_record',
-        });
+      if (userId) {
+        orderQuery = orderQuery.eq('user_id', userId);
       }
-    }
+
+      const { data: matchedOrders } = await orderQuery.limit(10);
+      if (matchedOrders && matchedOrders.length > 0) {
+        for (const ord of matchedOrders) {
+          const sAddr = (ord.shipping_address as any) || {};
+          const ordGst = sAddr.gstin;
+          const ordComp = sAddr.companyName || sAddr.company_name;
+
+          if (ordGst && ordGst.trim().length >= 10) {
+            if (!company || (ordComp && ordComp.toLowerCase().includes(company.toLowerCase()))) {
+              return NextResponse.json({
+                found: true,
+                company_name: ordComp || company,
+                gstin: ordGst.trim().toUpperCase(),
+                source: 'orders_record',
+              });
+            }
+          }
+        }
+      }
+    } catch (e) {}
 
     // 3. Known / Standard registered records fallback (e.g. Aura and Spirit / Shiva Exports)
     if (company && /aura\s*and\s*spirit/i.test(company)) {

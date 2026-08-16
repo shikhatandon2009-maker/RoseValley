@@ -60,11 +60,7 @@ interface NavGroup {
 
 export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
   const pathname = usePathname();
-  const { settings, fetchSettings } = useSiteSettingsStore();
-
-  useEffect(() => {
-    fetchSettings();
-  }, [fetchSettings]);
+  const settings = useSiteSettingsStore((s) => s.settings);
 
   const handleLockPortal = () => {
     localStorage.removeItem('rv_admin_pin_unlocked_198411');
@@ -81,7 +77,7 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
     setOpenSubmenus((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const navGroups = [
+  const navGroups: NavGroup[] = [
     {
       title: 'CORE MANAGEMENT',
       items: [
@@ -123,12 +119,6 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
             { label: 'All Orders', href: '/admin/orders', icon: ShoppingBag },
             { label: 'Order Items', href: '/admin/orders/items', icon: ListOrdered },
           ],
-        },
-        {
-          label: 'Live Cart Items',
-          href: '/admin/cart-items',
-          icon: ShoppingCart,
-          badge: 'Live',
         },
         {
           label: 'Wishlists',

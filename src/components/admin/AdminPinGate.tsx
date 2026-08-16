@@ -14,16 +14,15 @@ export function AdminPinGate({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState(false);
   const [mounted, setMounted] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const { settings, fetchSettings } = useSiteSettingsStore();
+  const settings = useSiteSettingsStore((s) => s.settings);
 
   useEffect(() => {
     setMounted(true);
-    fetchSettings();
     const savedPin = localStorage.getItem(STORAGE_KEY) || sessionStorage.getItem(STORAGE_KEY);
     if (savedPin === CORRECT_PIN) {
       setUnlocked(true);
     }
-  }, [fetchSettings]);
+  }, []);
 
   const handleDigitChange = (index: number, value: string) => {
     if (!/^\d*$/.test(value)) return;

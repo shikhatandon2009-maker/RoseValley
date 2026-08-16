@@ -7,11 +7,7 @@ import { useSiteSettingsStore } from '@/store/site-settings-store';
 import { formatImageUrl } from '@/lib/format-image';
 
 export function LuxuryFooter() {
-  const { settings, fetchSettings } = useSiteSettingsStore();
-
-  useEffect(() => {
-    fetchSettings();
-  }, [fetchSettings]);
+  const settings = useSiteSettingsStore((s) => s.settings);
 
   return (
     <footer className="bg-[#F7EEED] text-[#1A0510] border-t border-[#F7D1D8] pt-16 pb-12 font-sans relative overflow-hidden select-none">

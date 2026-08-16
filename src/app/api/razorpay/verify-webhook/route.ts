@@ -65,6 +65,7 @@ export async function POST(request: Request) {
         total_amount: totalAmount,
         currency,
         shipping_address: enhancedShippingAddress,
+        gstin: (gstin || shippingAddress?.gstin || '').trim().toUpperCase() || null,
         company_name: businessName,
         business_name: businessName,
         razorpay_order_id: razorpayOrderId,

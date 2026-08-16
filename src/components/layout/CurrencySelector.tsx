@@ -20,6 +20,8 @@ export function CurrencySelector() {
     { code: 'EUR', symbol: '€', name: 'Euro', flag: '🇪🇺' },
     { code: 'GBP', symbol: '£', name: 'British Pound', flag: '🇬🇧' },
     { code: 'AED', symbol: 'د.إ', name: 'UAE Dirham', flag: '🇦🇪' },
+    { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar', flag: '🇨🇦' },
+    { code: 'AUD', symbol: 'A$', name: 'Australian Dollar', flag: '🇦🇺' },
   ];
 
   const activeCode = mounted ? currency : 'INR';
@@ -37,14 +39,17 @@ export function CurrencySelector() {
   }, []);
 
   return (
-    <div ref={dropdownRef} className="relative inline-block">
+    <div ref={dropdownRef} className="relative inline-block" suppressHydrationWarning>
       {/* Luxury Cart-Style Pill Capsule Button */}
       <button
         onClick={() => setOpen((prev) => !prev)}
-        className="luxury-currency-btn"
+        className="luxury-currency-btn flex items-center gap-1.5"
         aria-label="Select Currency"
+        suppressHydrationWarning
       >
-        <Globe className="w-4 h-4 text-[#4A0D25]" />
+        <span className="text-base leading-none select-none drop-shadow-xs" aria-hidden="true" suppressHydrationWarning>
+          {currentOption.flag}
+        </span>
         <span className="font-medium" suppressHydrationWarning>
           {currentOption.code} ({currentOption.symbol})
         </span>

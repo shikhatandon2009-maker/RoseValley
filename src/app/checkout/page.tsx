@@ -201,13 +201,8 @@ const DEFAULT_COUPONS = [
 export default function CheckoutPage() {
   const { items, getTotalINR, clearCart } = useCartStore();
   const { formatPrice, setCurrency } = useCurrencyStore();
-  const { settings, fetchSettings } = useSiteSettingsStore();
+  const settings = useSiteSettingsStore((s) => s.settings);
   const router = useRouter();
-
-  // Load site settings for dynamic tax rate
-  useEffect(() => {
-    fetchSettings();
-  }, [fetchSettings]);
 
   // Country Selection
   const [countriesList, setCountriesList] = useState<CountryConfig[]>(DEFAULT_COUNTRIES);
@@ -264,26 +259,12 @@ export default function CheckoutPage() {
   const [companyName, setCompanyName] = useState('');
   const [gstAutoPopulated, setGstAutoPopulated] = useState(false);
 
-  // Auto lookup & populate GSTIN from company record or database
+  // Auto lookup & populate GSTIN from company record, localStorage, or database
   const lookupAndPopulateGstin = async (company: string, userId?: string) => {
     const cleanComp = (company || '').trim();
     if (!cleanComp && !userId) return;
 
-    if (/aura\s*and\s*spirit/i.test(cleanComp)) {
-      setGstinNumber('09AAACS1234A1Z5');
-      setShowGstinInput(true);
-      setGstAutoPopulated(true);
-      return;
-    }
-
-    if (/shiva\s*exports/i.test(cleanComp)) {
-      setGstinNumber('09AAACR1234F1Z5');
-      setShowGstinInput(true);
-      setGstAutoPopulated(true);
-      return;
-    }
-
-    // Check cached localStorage
+    // 1. Check cached localStorage for this specific company
     if (cleanComp) {
       try {
         const cached = localStorage.getItem(`company_gstin_${cleanComp.toLowerCase()}`);
@@ -296,6 +277,7 @@ export default function CheckoutPage() {
       } catch (e) {}
     }
 
+    // 2. Query database for user/company GST credentials
     try {
       const params = new URLSearchParams();
       if (cleanComp) params.append('company', cleanComp);
@@ -311,8 +293,10 @@ export default function CheckoutPage() {
           if (cleanComp) {
             try {
               localStorage.setItem(`company_gstin_${cleanComp.toLowerCase()}`, data.gstin.toUpperCase());
+              localStorage.setItem('saved_buyer_gst', data.gstin.toUpperCase());
             } catch (e) {}
           }
+          return;
         }
       }
     } catch (err) {
@@ -323,41 +307,52 @@ export default function CheckoutPage() {
   // Reactively auto-populate GST number whenever companyName is updated
   useEffect(() => {
     if (companyName && (!gstinNumber || gstAutoPopulated)) {
-      if (/aura\s*and\s*spirit/i.test(companyName)) {
-        setGstinNumber('09AAACS1234A1Z5');
-        setShowGstinInput(true);
-        setGstAutoPopulated(true);
-      } else if (/shiva\s*exports/i.test(companyName)) {
-        setGstinNumber('09AAACR1234F1Z5');
-        setShowGstinInput(true);
-        setGstAutoPopulated(true);
-      } else {
-        lookupAndPopulateGstin(companyName, currentUser?.id);
-      }
+      lookupAndPopulateGstin(companyName, currentUser?.id);
     }
   }, [companyName]);
 
-  // Initial localStorage address hydration
+  // Initial localStorage address & GST hydration on mount
   useEffect(() => {
     try {
+      const savedGst = localStorage.getItem('saved_buyer_gst');
+      const savedComp = localStorage.getItem('saved_buyer_company');
+      if (savedGst && savedGst.length >= 10) {
+        setGstinNumber(savedGst.toUpperCase());
+        setShowGstinInput(true);
+        setGstAutoPopulated(true);
+      }
+      if (savedComp) {
+        setCompanyName(savedComp);
+      }
+
       const saved = localStorage.getItem('saved_shipping_address');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (parsed.company_name || parsed.business_name) {
-          setCompanyName(parsed.company_name || parsed.business_name);
+        if (parsed.company_name || parsed.business_name || parsed.companyName) {
+          setCompanyName(parsed.company_name || parsed.business_name || parsed.companyName);
         }
         if (parsed.gstin) {
-          setGstinNumber(parsed.gstin);
+          setGstinNumber(parsed.gstin.toUpperCase());
           setShowGstinInput(true);
           setGstAutoPopulated(true);
         }
+        if (parsed.full_name || parsed.fullName) {
+          setFullName(parsed.full_name || parsed.fullName);
+        }
+        if (parsed.street_address || parsed.streetAddress || parsed.street_address_1 || parsed.streetAddress1) {
+          setStreetAddress1(parsed.street_address || parsed.streetAddress || parsed.street_address_1 || parsed.streetAddress1);
+        }
+        if (parsed.city) setCity(parsed.city);
+        if (parsed.state) setState(parsed.state);
+        if (parsed.postal_code || parsed.postalCode) setPostalCode(parsed.postal_code || parsed.postalCode);
+        if (parsed.phone) setPhone(parsed.phone);
       }
     } catch (e) {}
   }, []);
 
   const handleCompanyNameChange = (val: string) => {
     setCompanyName(val);
-    if (val.trim().length >= 3 && (!gstinNumber || gstAutoPopulated)) {
+    if (val.trim().length >= 2 && (!gstinNumber || gstAutoPopulated)) {
       lookupAndPopulateGstin(val, currentUser?.id);
     }
   };
@@ -366,9 +361,13 @@ export default function CheckoutPage() {
     const upper = val.toUpperCase();
     setGstinNumber(upper);
     setGstAutoPopulated(false);
-    if (upper.length >= 10 && companyName.trim()) {
+    if (upper.length >= 10) {
       try {
-        localStorage.setItem(`company_gstin_${companyName.trim().toLowerCase()}`, upper);
+        localStorage.setItem('saved_buyer_gst', upper);
+        if (companyName.trim()) {
+          localStorage.setItem(`company_gstin_${companyName.trim().toLowerCase()}`, upper);
+          localStorage.setItem('saved_buyer_company', companyName.trim());
+        }
       } catch (e) {}
     }
   };
@@ -436,8 +435,17 @@ export default function CheckoutPage() {
                   const currentComp = defaultAddr.company_name || defaultAddr.business_name || '';
                   setCompanyName(currentComp);
                   
-                  if (defaultAddr.gstin) {
-                    setGstinNumber(defaultAddr.gstin);
+                  // Check localStorage or order records FIRST for the most recent updated GST number
+                  let latestGst = defaultAddr.gstin;
+                  try {
+                    const localGst = localStorage.getItem('saved_buyer_gst');
+                    if (localGst && localGst.length >= 10) {
+                      latestGst = localGst.toUpperCase();
+                    }
+                  } catch (e) {}
+
+                  if (latestGst) {
+                    setGstinNumber(latestGst);
                     setShowGstinInput(true);
                     setGstAutoPopulated(true);
                   } else if (currentComp) {
@@ -451,7 +459,7 @@ export default function CheckoutPage() {
                   setPostalCode(defaultAddr.postal_code || defaultAddr.zip || '');
                   setPhone(defaultAddr.phone?.replace(/^\+\d+\s*/, '') || '');
                   setHasSavedAddress(true);
-                  setIsEditingAddress(false); // Collapsed address card view by default for logged in customer
+                  setIsEditingAddress(false);
                   return;
                 }
               }
@@ -460,15 +468,11 @@ export default function CheckoutPage() {
             console.warn('Could not fetch saved addresses:', e);
           }
 
-          // If no address in DB but logged in, check if default address is present or leave editing true
+          // If no address in DB but logged in, keep address form open for user to enter their own address
           if (data.user.full_name) {
-            setStreetAddress1('35 Farsh Road, Rosewood Estate');
-            setCity('Kannauj');
-            setState('Uttar Pradesh');
-            setPostalCode('209725');
-            setPhone('9876543210');
-            setHasSavedAddress(true);
-            setIsEditingAddress(false);
+            setFullName(data.user.full_name);
+            setHasSavedAddress(false);
+            setIsEditingAddress(true);
           }
         } else if (!isGuest) {
           setCheckoutChoiceOpen(true);

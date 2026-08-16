@@ -152,12 +152,11 @@ export function LuxuryHeader() {
     router.refresh();
   };
 
-  const { settings, fetchSettings } = useSiteSettingsStore();
+  const settings = useSiteSettingsStore((s) => s.settings);
 
-  // Mount + fetch categories & settings
+  // Mount + fetch categories
   useEffect(() => {
     setMounted(true);
-    fetchSettings();
     if (cachedHeaderCategories && cachedHeaderCategories.length > 0) {
       setCategories(cachedHeaderCategories);
       return;
@@ -171,7 +170,7 @@ export function LuxuryHeader() {
         }
       })
       .catch((err) => console.error('Categories fetch error:', err));
-  }, [fetchSettings]);
+  }, []);
 
   // Scroll-aware header
   useEffect(() => {
@@ -259,6 +258,7 @@ export function LuxuryHeader() {
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="luxury-mobile-menu-btn lg:hidden luxury-icon-btn"
               aria-label="Toggle Navigation Menu"
+              suppressHydrationWarning
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -931,14 +931,6 @@ export function LuxuryHeader() {
           >
             <X className="w-6 h-6" />
           </button>
-        </div>
-
-        {/* Mobile Side Menu Currency Selector Bar */}
-        <div className="px-5 py-3 bg-[#FAE6E7]/80 border-b border-[#F7D1D8] flex items-center justify-between">
-          <span className="text-xs font-black uppercase tracking-wider text-[#4A0D25] flex items-center gap-1.5">
-            <Globe className="w-4 h-4 text-[#F6A6BB]" /> Currency:
-          </span>
-          <CurrencySelector />
         </div>
 
         {/* Drawer Nav */}

@@ -58,15 +58,27 @@ export function updateFaviconInDOM(faviconUrl: string) {
 export interface SiteSettingsState {
   settings: SiteSettings;
   loaded: boolean;
-  fetchSettings: () => Promise<void>;
+  fetchSettings: (force?: boolean) => Promise<void>;
   setSettings: (newSettings: Partial<SiteSettings>) => void;
 }
+
+let inFlightSettingsPromise: Promise<void> | null = null;
 
 export const useSiteSettingsStore = create<SiteSettingsState>((set, get) => ({
   settings: DEFAULT_SETTINGS,
   loaded: false,
-  fetchSettings: async () => {
-    // Read cached settings on client after mount to prevent SSR hydration mismatch
+  fetchSettings: async (force = false) => {
+    // If already loaded and not forcing, return instantly without network request
+    if (get().loaded && !force) {
+      return;
+    }
+
+    // Deduplicate in-flight promises across simultaneous component mounts
+    if (inFlightSettingsPromise) {
+      return inFlightSettingsPromise;
+    }
+
+    // Hydrate cached settings from localStorage if available
     if (typeof window !== 'undefined' && !get().loaded) {
       try {
         const cached = localStorage.getItem('cached_site_settings');
@@ -77,34 +89,40 @@ export const useSiteSettingsStore = create<SiteSettingsState>((set, get) => ({
       } catch (e) {}
     }
 
-    try {
-      const res = await fetch('/api/admin/settings');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.settings) {
-          const formattedLogo = formatImageUrl(data.settings.logo_url, '/images/rvk-logo.png');
-          const formattedFavicon = formatImageUrl(data.settings.favicon_url, '/images/rvk-logo.png');
+    inFlightSettingsPromise = (async () => {
+      try {
+        const res = await fetch('/api/admin/settings');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.settings) {
+            const formattedLogo = formatImageUrl(data.settings.logo_url, '/images/rvk-logo.png');
+            const formattedFavicon = formatImageUrl(data.settings.favicon_url, '/images/rvk-logo.png');
 
-          const updated: SiteSettings = {
-            ...DEFAULT_SETTINGS,
-            ...data.settings,
-            logo_url: formattedLogo,
-            favicon_url: formattedFavicon,
-          };
+            const updated: SiteSettings = {
+              ...DEFAULT_SETTINGS,
+              ...data.settings,
+              logo_url: formattedLogo,
+              favicon_url: formattedFavicon,
+            };
 
-          if (typeof window !== 'undefined') {
-            try {
-              localStorage.setItem('cached_site_settings', JSON.stringify(updated));
-            } catch (e) {}
+            if (typeof window !== 'undefined') {
+              try {
+                localStorage.setItem('cached_site_settings', JSON.stringify(updated));
+              } catch (e) {}
+            }
+
+            set({ settings: updated, loaded: true });
+            updateFaviconInDOM(formattedFavicon);
           }
-
-          set({ settings: updated, loaded: true });
-          updateFaviconInDOM(formattedFavicon);
         }
+      } catch (e) {
+        console.error('Error fetching site settings in store:', e);
+      } finally {
+        inFlightSettingsPromise = null;
       }
-    } catch (e) {
-      console.error('Error fetching site settings in store:', e);
-    }
+    })();
+
+    return inFlightSettingsPromise;
   },
   setSettings: (newSettings) => {
     const current = get().settings;

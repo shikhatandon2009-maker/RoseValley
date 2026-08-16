@@ -162,10 +162,10 @@ export default function UsersAdminPage() {
       setAddressFormData({
         full_name: user.full_name,
         phone: user.phone || '',
-        street_address: '108 Grand Regalia Blvd',
-        city: 'Kannauj',
-        state: 'Uttar Pradesh',
-        postal_code: '209725',
+        street_address: '',
+        city: '',
+        state: '',
+        postal_code: '',
         country: 'India',
         is_default: true,
       });
@@ -770,7 +770,7 @@ export default function UsersAdminPage() {
                   />
                 </div>
 
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <div>
                     <label className="block text-[11px] font-extrabold text-[#4A0D25] mb-1">City *</label>
                     <input
@@ -798,6 +798,16 @@ export default function UsersAdminPage() {
                       required
                       value={addressFormData.postal_code}
                       onChange={(e) => setAddressFormData({ ...addressFormData, postal_code: e.target.value })}
+                      className="w-full px-3.5 py-2 rounded-xl bg-white border border-[#F7D1D8] text-xs font-bold text-[#1A0510] focus:outline-none focus:border-[#F6A6BB]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-extrabold text-[#4A0D25] mb-1">Country *</label>
+                    <input
+                      type="text"
+                      required
+                      value={addressFormData.country}
+                      onChange={(e) => setAddressFormData({ ...addressFormData, country: e.target.value })}
                       className="w-full px-3.5 py-2 rounded-xl bg-white border border-[#F7D1D8] text-xs font-bold text-[#1A0510] focus:outline-none focus:border-[#F6A6BB]"
                     />
                   </div>

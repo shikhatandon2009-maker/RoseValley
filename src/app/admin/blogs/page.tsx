@@ -1,3 +1,7 @@
-import PagesAdminPage from '@/app/admin/pages/page';
+'use client';
 
-export default PagesAdminPage;
+import PagesAdminPage from '../pages/page';
+
+export default function BlogsAdminPage() {
+  return <PagesAdminPage />;
+}

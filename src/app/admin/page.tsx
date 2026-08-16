@@ -19,6 +19,8 @@ import {
 } from 'lucide-react';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 
+import { STORE_ID } from '@/lib/constants';
+
 export const revalidate = 0;
 export const dynamic = 'force-dynamic';
 
@@ -27,7 +29,6 @@ export default async function AdminDashboardPage() {
   let categoriesCount = 0;
   let productsCount = 0;
   let ordersCount = 0;
-  let cartsCount = 0;
   let wishlistsCount = 0;
   let couponsCount = 0;
   let reviewsCount = 0;
@@ -41,28 +42,25 @@ export default async function AdminDashboardPage() {
         categoriesRes,
         productsRes,
         ordersRes,
-        cartsRes,
         wishlistsRes,
         couponsRes,
         reviewsRes,
         qaRes,
       ] = await Promise.all([
-        supabase.from('profiles').select('id', { count: 'exact', head: true }),
-        supabase.from('categories').select('id', { count: 'exact', head: true }),
-        supabase.from('products').select('id', { count: 'exact', head: true }),
-        supabase.from('orders').select('id', { count: 'exact', head: true }),
-        supabase.from('cart_items').select('id', { count: 'exact', head: true }),
-        supabase.from('wishlists').select('id', { count: 'exact', head: true }),
-        supabase.from('coupons').select('id', { count: 'exact', head: true }),
-        supabase.from('reviews').select('id', { count: 'exact', head: true }),
-        supabase.from('product_qa').select('id', { count: 'exact', head: true }),
+        supabase.from('users').select('id', { count: 'exact', head: true }).eq('store_id', STORE_ID),
+        supabase.from('categories').select('id', { count: 'exact', head: true }).eq('store_id', STORE_ID),
+        supabase.from('products').select('id', { count: 'exact', head: true }).eq('store_id', STORE_ID),
+        supabase.from('orders').select('id', { count: 'exact', head: true }).eq('store_id', STORE_ID),
+        supabase.from('wishlists').select('id', { count: 'exact', head: true }).eq('store_id', STORE_ID),
+        supabase.from('coupons').select('id', { count: 'exact', head: true }).eq('store_id', STORE_ID),
+        supabase.from('reviews').select('id', { count: 'exact', head: true }).eq('store_id', STORE_ID),
+        supabase.from('product_qa').select('id', { count: 'exact', head: true }).eq('store_id', STORE_ID),
       ]);
 
       customersCount = customersRes.count ?? 0;
       categoriesCount = categoriesRes.count ?? 0;
       productsCount = productsRes.count ?? 0;
       ordersCount = ordersRes.count ?? 0;
-      cartsCount = cartsRes.count ?? 0;
       wishlistsCount = wishlistsRes.count ?? 0;
       couponsCount = couponsRes.count ?? 0;
       reviewsCount = reviewsRes.count ?? 0;
@@ -75,11 +73,10 @@ export default async function AdminDashboardPage() {
   const totalReviewsAndQa = reviewsCount + qaCount;
 
   const summaryCards = [
-    { title: 'Customers', count: `${customersCount}`, change: 'Live DB', icon: Users, href: '/admin/users' },
-    { title: 'Categories', count: `${categoriesCount}`, change: 'Live DB', icon: FolderTree, href: '/admin/categories' },
-    { title: 'Products', count: `${productsCount}`, change: 'Live DB', icon: Package, href: '/admin/products' },
-    { title: 'Orders', count: `${ordersCount}`, change: 'Live DB', icon: ShoppingBag, href: '/admin/orders' },
-    { title: 'Carts', count: `${cartsCount}`, change: 'Active', icon: ShoppingCart, href: '/admin/cart-items' },
+    { title: 'Customers', count: `${customersCount}`, change: 'Registered', icon: Users, href: '/admin/users' },
+    { title: 'Categories', count: `${categoriesCount}`, change: 'Active', icon: FolderTree, href: '/admin/categories' },
+    { title: 'Products', count: `${productsCount}`, change: 'In Catalog', icon: Package, href: '/admin/products' },
+    { title: 'Orders', count: `${ordersCount}`, change: 'All Orders', icon: ShoppingBag, href: '/admin/orders' },
     { title: 'Wishlists', count: `${wishlistsCount}`, change: 'Tracked', icon: Heart, href: '/admin/wishlists' },
     { title: 'Coupons', count: `${couponsCount}`, change: 'Active', icon: Ticket, href: '/admin/coupons' },
     { title: 'Reviews', count: `${totalReviewsAndQa}`, change: `${reviewsCount}R / ${qaCount}Q`, icon: Star, href: '/admin/reviews' },
@@ -115,18 +112,18 @@ export default async function AdminDashboardPage() {
       badge: 'Orders',
     },
     {
-      title: 'Live Cart Items',
-      desc: 'Monitor abandoned & active carts by session.',
-      icon: ShoppingCart,
-      href: '/admin/cart-items',
-      badge: 'Live',
-    },
-    {
       title: 'Wishlists',
       desc: 'Track wishlisted fragrances and demand.',
       icon: Heart,
       href: '/admin/wishlists',
       badge: 'Wishlists',
+    },
+    {
+      title: 'Coupons & Discounts',
+      desc: 'Create discount codes and expiry criteria.',
+      icon: Ticket,
+      href: '/admin/coupons',
+      badge: 'Promos',
     },
     {
       title: 'Coupons & Discounts',

@@ -21,7 +21,6 @@ interface CartState {
   clearCart: () => void;
   toggleCart: (open?: boolean) => void;
   getTotalINR: () => number;
-  syncLiveCart: () => void;
 }
 
 function sanitizeImageUrl(imgUrl: string | undefined): string {
@@ -82,35 +81,6 @@ const safeLocalStorage = {
   },
 };
 
-function getSessionId(): string {
-  if (typeof window === 'undefined') return 'guest_session_default';
-  let sid = localStorage.getItem('maison_guest_session_id');
-  if (!sid) {
-    sid = 'sess_' + Math.random().toString(36).substring(2, 12) + '_' + Date.now();
-    try {
-      localStorage.setItem('maison_guest_session_id', sid);
-    } catch (e) {}
-  }
-  return sid;
-}
-
-async function syncCartToSupabase(items: CartItem[]) {
-  if (typeof window === 'undefined') return;
-  const sessionId = getSessionId();
-  try {
-    await fetch('/api/cart/sync', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        sessionId,
-        items,
-      }),
-    });
-  } catch (e) {
-    console.error('Cart sync error:', e);
-  }
-}
-
 export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
@@ -118,7 +88,6 @@ export const useCartStore = create<CartState>()(
       isOpen: false,
 
       addItem: (item, qty = 1, autoOpen = true) => {
-        let updatedItems: CartItem[] = [];
         const cleanImage = sanitizeImageUrl(item.image) || item.image || '';
         set((state) => {
           const itemId = item.id || (item.variantId ? `${item.productId}_${item.variantId}` : item.productId) || `item_${Date.now()}`;
@@ -131,7 +100,6 @@ export const useCartStore = create<CartState>()(
             newItems[existingIndex].quantity = Math.min(99, currentQty + qty);
             newItems[existingIndex].id = itemId;
             newItems[existingIndex].image = cleanImage || newItems[existingIndex].image;
-            updatedItems = newItems;
             return { items: newItems, ...(autoOpen ? { isOpen: true } : {}) };
           }
           const newItem: CartItem = {
@@ -140,28 +108,22 @@ export const useCartStore = create<CartState>()(
             image: cleanImage,
             quantity: Math.min(99, Math.max(1, qty)),
           };
-          updatedItems = [...state.items, newItem];
-          return { items: updatedItems, ...(autoOpen ? { isOpen: true } : {}) };
+          return { items: [...state.items, newItem], ...(autoOpen ? { isOpen: true } : {}) };
         });
-        syncCartToSupabase(updatedItems);
       },
 
       removeItem: (id) => {
         if (!id) return;
-        let updatedItems: CartItem[] = [];
-        set((state) => {
-          updatedItems = state.items.filter((i) => {
+        set((state) => ({
+          items: state.items.filter((i) => {
             const itemId = i.id || (i.variantId ? `${i.productId}_${i.variantId}` : i.productId);
             return itemId !== id && i.id !== id && i.productId !== id;
-          });
-          return { items: updatedItems };
-        });
-        syncCartToSupabase(updatedItems);
+          }),
+        }));
       },
 
       updateQuantity: (id, targetQuantityOrDelta) => {
         if (!id) return;
-        let updatedItems: CartItem[] = [];
         set((state) => {
           const newItems = state.items
             .map((item) => {
@@ -182,15 +144,12 @@ export const useCartStore = create<CartState>()(
               return { ...item, id: itemId, image: item.image, quantity: cleanQty };
             })
             .filter(Boolean) as CartItem[];
-          updatedItems = newItems;
           return { items: newItems };
         });
-        syncCartToSupabase(updatedItems);
       },
 
       clearCart: () => {
         set({ items: [] });
-        syncCartToSupabase([]);
       },
 
       toggleCart: (open) => set((state) => ({ isOpen: open !== undefined ? open : !state.isOpen })),
@@ -203,10 +162,6 @@ export const useCartStore = create<CartState>()(
           const qty = q > 99 ? 1 : Math.max(1, q);
           return sum + p * qty;
         }, 0);
-      },
-
-      syncLiveCart: () => {
-        syncCartToSupabase(get().items);
       },
     }),
     {

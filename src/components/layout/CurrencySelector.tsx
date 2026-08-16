@@ -20,8 +20,6 @@ export function CurrencySelector() {
     { code: 'EUR', symbol: '€', name: 'Euro', flag: '🇪🇺' },
     { code: 'GBP', symbol: '£', name: 'British Pound', flag: '🇬🇧' },
     { code: 'AED', symbol: 'د.إ', name: 'UAE Dirham', flag: '🇦🇪' },
-    { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar', flag: '🇨🇦' },
-    { code: 'AUD', symbol: 'A$', name: 'Australian Dollar', flag: '🇦🇺' },
   ];
 
   const activeCode = mounted ? currency : 'INR';

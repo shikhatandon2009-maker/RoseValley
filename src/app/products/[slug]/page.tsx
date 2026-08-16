@@ -26,7 +26,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
 
 
   return (
-    <div className="min-h-screen bg-white text-black">
+    <div className="min-h-screen bg-[#F7EEED] text-[#1A0510] flex flex-col justify-between">
       <LuxuryHeader />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">

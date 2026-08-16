@@ -174,8 +174,8 @@ export default function AboutUsPage() {
                 <div key={idx} className="relative text-center flex flex-col items-center">
                   {/* Dot on timeline */}
                   <div className={`w-16 h-16 rounded-full flex items-center justify-center z-10 shadow-md mb-4 ${isLast
-                      ? 'bg-[#4A0D25] text-white ring-4 ring-[#F6A6BB]/30'
-                      : 'bg-white border-2 border-[#F7D1D8] text-[#4A0D25]'
+                    ? 'bg-[#4A0D25] text-white ring-4 ring-[#F6A6BB]/30'
+                    : 'bg-white border-2 border-[#F7D1D8] text-[#4A0D25]'
                     }`}>
                     <Icon className={`w-6 h-6 ${isLast ? 'text-[#F6A6BB]' : 'text-[#F6A6BB]'}`} />
                   </div>
@@ -266,7 +266,7 @@ export default function AboutUsPage() {
         </div>
       </section>
 
-      {/* PRESS & MEDIA LOGOS */}
+      {/* PRESS & MEDIA LOGOS (COMMENTED OUT)
       <section className="py-10 bg-[#F7EEED] border-b border-[#F7D1D8]">
         <div className="max-w-5xl mx-auto px-4 text-center space-y-6">
           <p className="text-xs font-bold text-[#4A0D25]/50 uppercase tracking-widest">As Featured In</p>
@@ -279,6 +279,7 @@ export default function AboutUsPage() {
           </div>
         </div>
       </section>
+      */}
 
       {/* ENHANCED CTA */}
       <section className="py-16 sm:py-20 bg-gradient-to-br from-[#4A0D25] via-[#3D081E] to-[#1A0510] text-white text-center relative overflow-hidden">

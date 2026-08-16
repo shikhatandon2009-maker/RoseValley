@@ -97,22 +97,22 @@ export function RoseOilBottlesOrbitalSpinner({ products }: RoseOilBottlesOrbital
   const bottleList: BottleItem[] =
     products && products.length > 0
       ? products.slice(0, 5).map((p, idx) => {
-          const defaultBottle = DEFAULT_BOTTLES[idx % DEFAULT_BOTTLES.length];
-          const dbImage = (p.images && p.images.length > 0 && p.images[0]) ? p.images[0] : defaultBottle.image;
-          return {
-            id: p.id || `db-${idx}`,
-            name: p.name,
-            subtitle: p.is_bestseller ? 'Bestseller Heritage Scent' : 'Pure Hydro-Distillate',
-            volume: p.scent_notes?.top ? p.scent_notes.top.join(' • ') : 'Artisanal Perfume',
-            price: `₹${(p.price || 4800).toLocaleString('en-IN')}`,
-            priceNum: p.price || 4800,
-            slug: p.slug,
-            image: dbImage,
-            notes: p.scent_notes
-              ? `${p.scent_notes.top?.join(', ') || ''} • ${p.scent_notes.base?.join(', ') || ''}`
-              : 'Damask Rose • Copper Deg-Bhapka',
-          };
-        })
+        const defaultBottle = DEFAULT_BOTTLES[idx % DEFAULT_BOTTLES.length];
+        const dbImage = (p.images && p.images.length > 0 && p.images[0]) ? p.images[0] : defaultBottle.image;
+        return {
+          id: p.id || `db-${idx}`,
+          name: p.name,
+          subtitle: p.is_bestseller ? 'Bestseller Heritage Scent' : 'Pure Hydro-Distillate',
+          volume: p.scent_notes?.top ? p.scent_notes.top.join(' • ') : 'Artisanal Perfume',
+          price: `₹${(p.price || 4800).toLocaleString('en-IN')}`,
+          priceNum: p.price || 4800,
+          slug: p.slug,
+          image: dbImage,
+          notes: p.scent_notes
+            ? `${p.scent_notes.top?.join(', ') || ''} • ${p.scent_notes.base?.join(', ') || ''}`
+            : 'Damask Rose • Copper Deg-Bhapka',
+        };
+      })
       : DEFAULT_BOTTLES;
 
   const total = bottleList.length;
@@ -162,7 +162,7 @@ export function RoseOilBottlesOrbitalSpinner({ products }: RoseOilBottlesOrbital
 
         {/* THREE BOTTLE ORBITAL CAROUSEL */}
         <div className="w-full flex items-center justify-between gap-2 sm:gap-6 relative z-20 my-2">
-          
+
           {/* Left: Previous Product Preview Card */}
           <div
             onClick={handlePrev}
@@ -219,11 +219,10 @@ export function RoseOilBottlesOrbitalSpinner({ products }: RoseOilBottlesOrbital
                         if (!isActive) goToIndex(idx);
                         else router.push(`/products/${bottle.slug}`);
                       }}
-                      className={`relative cursor-pointer w-72 h-72 sm:w-96 sm:h-96 md:w-[420px] md:h-[420px] flex items-center justify-center transition-all duration-700 ${
-                        isActive
-                          ? 'scale-100 opacity-100'
-                          : 'scale-90 opacity-30'
-                      }`}
+                      className={`relative cursor-pointer w-72 h-72 sm:w-96 sm:h-96 md:w-[420px] md:h-[420px] flex items-center justify-center transition-all duration-700 ${isActive
+                        ? 'scale-100 opacity-100'
+                        : 'scale-90 opacity-30'
+                        }`}
                     >
                       {/* Soft pinkish radial aura glow for active bottle — soft circular backlight */}
                       {isActive && (
@@ -292,11 +291,10 @@ export function RoseOilBottlesOrbitalSpinner({ products }: RoseOilBottlesOrbital
             <button
               key={idx}
               onClick={() => goToIndex(idx)}
-              className={`rounded-full transition-all duration-300 ${
-                idx === activeIndex
-                  ? 'w-8 h-2.5 bg-[#F6A6BB]'
-                  : 'w-2.5 h-2.5 bg-[#F7D1D8] hover:bg-[#F4BBC9]'
-              }`}
+              className={`rounded-full transition-all duration-300 ${idx === activeIndex
+                ? 'w-8 h-2.5 bg-[#F6A6BB]'
+                : 'w-2.5 h-2.5 bg-[#F7D1D8] hover:bg-[#F4BBC9]'
+                }`}
               aria-label={`Go to slide ${idx + 1}`}
             />
           ))}

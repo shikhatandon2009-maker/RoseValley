@@ -1,7 +1,9 @@
 import React from 'react';
 import Link from 'next/link';
 import { SectionWrapper } from '@/components/common/SectionWrapper';
-import { RoseOilBottlesOrbitalSpinner } from '@/components/home/RoseOilBottlesOrbitalSpinner';
+import { LuxuryEditorialHero } from '@/components/home/LuxuryEditorialHero';
+// import { CinematicHero } from '@/components/home/CinematicHero';
+// import { RoseOilBottlesOrbitalSpinner } from '@/components/home/RoseOilBottlesOrbitalSpinner';
 import { AnimatedCounter } from '@/components/common/AnimatedCounter';
 import { ProductCard } from '@/components/product/ProductCard';
 import { fetchProducts } from '@/lib/supabase/store-scoped-queries';
@@ -35,8 +37,16 @@ export default async function Home() {
       </div>
 
       <div className="flex-1">
-        {/* 1. HERO ROTATING ORBITAL SPINNER BOTTLE DISPLAY */}
+        {/* ✨ HERO A — Editorial Split-Screen (LuxuryEditorialHero) */}
+        <LuxuryEditorialHero products={heroProducts} />
+
+        {/* ✨ HERO B — Dark Cinematic Aurora (commented out, file kept at CinematicHero.tsx)
+        <CinematicHero products={heroProducts} />
+        */}
+
+        {/* ✨ HERO C — Orbital Spinner (commented out, file kept at RoseOilBottlesOrbitalSpinner.tsx)
         <RoseOilBottlesOrbitalSpinner products={heroProducts} />
+        */}
 
         {/* 2. WORLD'S LARGEST PRODUCER AUTHORITY METRICS */}
         <SectionWrapper className="bg-[#F7EEED] border-b border-[#F7D1D8]">

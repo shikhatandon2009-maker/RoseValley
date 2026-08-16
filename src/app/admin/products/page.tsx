@@ -27,7 +27,12 @@ import {
   Copy,
   Download,
   FileSpreadsheet,
-  UploadCloud
+  UploadCloud,
+  GripVertical,
+  ArrowUp,
+  ArrowDown,
+  ChevronUp,
+  ChevronDown
 } from 'lucide-react';
 
 interface ProductVariant {
@@ -138,44 +143,6 @@ export default function ProductsAdminPage() {
     selectedCategoryIds: [] as string[],
     variants: [] as ProductVariant[],
   });
-
-  const handleAddVariantRow = () => {
-    const defaultPrice = Number(formData.price) || 1200;
-    const defaultStock = Number(formData.stock) || 20;
-    const defaultName = formData.variants.length === 0 ? '10ml Attar Bottle' : `${(formData.variants.length + 1) * 10}ml Bottle`;
-
-    setFormData((prev) => ({
-      ...prev,
-      variants: [
-        ...prev.variants,
-        {
-          name: defaultName,
-          sku: '',
-          price: defaultPrice,
-          compare_at_price: formData.compare_at_price ? Number(formData.compare_at_price) : '',
-          stock: defaultStock,
-        },
-      ],
-    }));
-  };
-
-  const handleUpdateVariantRow = (index: number, field: keyof ProductVariant, value: any) => {
-    setFormData((prev) => {
-      const updated = [...prev.variants];
-      updated[index] = {
-        ...updated[index],
-        [field]: value,
-      };
-      return { ...prev, variants: updated };
-    });
-  };
-
-  const handleRemoveVariantRow = (index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      variants: prev.variants.filter((_, i) => i !== index),
-    }));
-  };
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
@@ -436,6 +403,130 @@ const compressImageFile = (file: File, maxWidth = 1000, quality = 0.82): Promise
   const showToast = (type: 'success' | 'error', text: string) => {
     setToastMessage({ type, text });
     setTimeout(() => setToastMessage(null), 4000);
+  };
+
+  // Variant Drag-and-Drop & Reordering State
+  const [draggedVariantIndex, setDraggedVariantIndex] = useState<number | null>(null);
+  const [dragOverVariantIndex, setDragOverVariantIndex] = useState<number | null>(null);
+
+  const handleAddVariantRow = () => {
+    setFormData((prev) => ({
+      ...prev,
+      variants: [
+        ...(prev.variants || []),
+        { name: '', sku: '', price: prev.price || 1200, compare_at_price: '', stock: 25 },
+      ],
+    }));
+  };
+
+  const handleUpdateVariantRow = (index: number, field: string, value: any) => {
+    setFormData((prev) => {
+      const updated = [...(prev.variants || [])];
+      updated[index] = { ...updated[index], [field]: value };
+      return { ...prev, variants: updated };
+    });
+  };
+
+  const handleRemoveVariantRow = (index: number) => {
+    setFormData((prev) => {
+      const updated = [...(prev.variants || [])];
+      updated.splice(index, 1);
+      return { ...prev, variants: updated };
+    });
+  };
+
+  const handleMoveVariant = (index: number, direction: 'up' | 'down') => {
+    setFormData((prev) => {
+      const list = [...(prev.variants || [])];
+      const targetIndex = direction === 'up' ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= list.length) return prev;
+      const [item] = list.splice(index, 1);
+      list.splice(targetIndex, 0, item);
+      return { ...prev, variants: list };
+    });
+  };
+
+  const handleVariantDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedVariantIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', index.toString());
+  };
+
+  const handleVariantDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverVariantIndex !== index) {
+      setDragOverVariantIndex(index);
+    }
+  };
+
+  const handleVariantDrop = (e: React.DragEvent, targetIndex: number) => {
+    e.preventDefault();
+    if (draggedVariantIndex === null || draggedVariantIndex === targetIndex) {
+      setDraggedVariantIndex(null);
+      setDragOverVariantIndex(null);
+      return;
+    }
+
+    setFormData((prev) => {
+      const list = [...(prev.variants || [])];
+      const [draggedItem] = list.splice(draggedVariantIndex, 1);
+      list.splice(targetIndex, 0, draggedItem);
+      return { ...prev, variants: list };
+    });
+
+    setDraggedVariantIndex(null);
+    setDragOverVariantIndex(null);
+    showToast('success', 'Variant order changed successfully!');
+  };
+
+  // Product Table Drag-and-Drop & Reordering State
+  const [draggedProductIndex, setDraggedProductIndex] = useState<number | null>(null);
+  const [dragOverProductIndex, setDragOverProductIndex] = useState<number | null>(null);
+
+  const handleProductDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedProductIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', index.toString());
+  };
+
+  const handleProductDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverProductIndex !== index) {
+      setDragOverProductIndex(index);
+    }
+  };
+
+  const handleProductDrop = (e: React.DragEvent, targetIndex: number) => {
+    e.preventDefault();
+    if (draggedProductIndex === null || draggedProductIndex === targetIndex) {
+      setDraggedProductIndex(null);
+      setDragOverProductIndex(null);
+      return;
+    }
+
+    setProducts((prev) => {
+      const list = [...prev];
+      const [draggedItem] = list.splice(draggedProductIndex, 1);
+      list.splice(targetIndex, 0, draggedItem);
+      return list;
+    });
+
+    setDraggedProductIndex(null);
+    setDragOverProductIndex(null);
+    showToast('success', 'Product order updated in catalog view!');
+  };
+
+  const handleMoveProduct = (index: number, direction: 'up' | 'down') => {
+    setProducts((prev) => {
+      const list = [...prev];
+      const targetIndex = direction === 'up' ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= list.length) return prev;
+      const [item] = list.splice(index, 1);
+      list.splice(targetIndex, 0, item);
+      return list;
+    });
   };
 
   const fetchCategoriesList = async () => {
@@ -1315,7 +1406,8 @@ const compressImageFile = (file: File, maxWidth = 1000, quality = 0.82): Promise
             <table className="w-full text-left text-xs text-stone-800">
               <thead className="bg-stone-100/70 text-stone-600 uppercase text-[10px] font-bold tracking-wider border-b border-stone-200">
                 <tr>
-                  <th className="py-4 px-6">Product / Fragrance</th>
+                  <th className="py-4 px-3 w-12 text-center">Order</th>
+                  <th className="py-4 px-4">Product / Fragrance</th>
                   <th className="py-4 px-4">Categories</th>
                   <th className="py-4 px-4">Price</th>
                   <th className="py-4 px-4">Stock</th>
@@ -1324,13 +1416,64 @@ const compressImageFile = (file: File, maxWidth = 1000, quality = 0.82): Promise
                 </tr>
               </thead>
               <tbody className="divide-y divide-stone-200">
-                {filteredProducts.map((p) => {
+                {filteredProducts.map((p, idx) => {
                   const mainImage = p.images && p.images.length > 0 ? p.images[0] : null;
+                  const isBeingDragged = draggedProductIndex === idx;
+                  const isOver = dragOverProductIndex === idx && !isBeingDragged;
 
                   return (
-                    <tr key={p.id} className="hover:bg-stone-50 transition-colors group">
+                    <tr
+                      key={p.id}
+                      draggable
+                      onDragStart={(e) => handleProductDragStart(e, idx)}
+                      onDragOver={(e) => handleProductDragOver(e, idx)}
+                      onDrop={(e) => handleProductDrop(e, idx)}
+                      onDragEnd={() => {
+                        setDraggedProductIndex(null);
+                        setDragOverProductIndex(null);
+                      }}
+                      className={`transition-all duration-200 group ${
+                        isBeingDragged
+                          ? 'opacity-30 bg-amber-50/50 border-y-2 border-dashed border-amber-600'
+                          : isOver
+                          ? 'bg-amber-100/60 border-y-2 border-amber-600'
+                          : 'hover:bg-stone-50'
+                      }`}
+                    >
+                      {/* Drag & Reorder Column */}
+                      <td className="py-4 px-3 text-center">
+                        <div className="flex items-center justify-center gap-1 text-stone-400">
+                          <div
+                            className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-stone-200 hover:text-amber-800 transition-colors"
+                            title="Drag to change catalog order"
+                          >
+                            <GripVertical className="w-4 h-4" />
+                          </div>
+                          <div className="flex flex-col -space-y-1">
+                            <button
+                              type="button"
+                              disabled={idx === 0}
+                              onClick={() => handleMoveProduct(idx, 'up')}
+                              className="p-0.5 rounded hover:bg-stone-200 hover:text-amber-800 disabled:opacity-20 disabled:hover:bg-transparent"
+                              title="Move Up"
+                            >
+                              <ChevronUp className="w-3 h-3" />
+                            </button>
+                            <button
+                              type="button"
+                              disabled={idx === filteredProducts.length - 1}
+                              onClick={() => handleMoveProduct(idx, 'down')}
+                              className="p-0.5 rounded hover:bg-stone-200 hover:text-amber-800 disabled:opacity-20 disabled:hover:bg-transparent"
+                              title="Move Down"
+                            >
+                              <ChevronDown className="w-3 h-3" />
+                            </button>
+                          </div>
+                        </div>
+                      </td>
+
                       {/* Product Image & Name */}
-                      <td className="py-4 px-6">
+                      <td className="py-4 px-4">
                         <div className="flex items-center gap-3">
                           {mainImage ? (
                             <img
@@ -2184,85 +2327,140 @@ const compressImageFile = (file: File, maxWidth = 1000, quality = 0.82): Promise
                 </div>
 
                 {formData.variants && formData.variants.length > 0 ? (
-                  <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
-                    {formData.variants.map((v, idx) => (
-                      <div
-                        key={idx}
-                        className="grid grid-cols-12 gap-2 items-center p-2.5 rounded-xl bg-white border border-amber-200/80 shadow-xs"
-                      >
-                        {/* Variant Name */}
-                        <div className="col-span-4 sm:col-span-3">
-                          <label className="block text-[10px] font-bold text-stone-700 mb-0.5">Variant Name *</label>
-                          <input
-                            type="text"
-                            required
-                            placeholder="e.g. 10ml Bottle"
-                            value={v.name}
-                            onChange={(e) => handleUpdateVariantRow(idx, 'name', e.target.value)}
-                            className="w-full px-2.5 py-1.5 rounded-lg bg-stone-50 border border-stone-300 text-xs font-bold text-stone-900 focus:outline-none focus:border-amber-600"
-                          />
-                        </div>
+                  <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
+                    {formData.variants.map((v, idx) => {
+                      const isBeingDragged = draggedVariantIndex === idx;
+                      const isOver = dragOverVariantIndex === idx && !isBeingDragged;
 
-                        {/* SKU */}
-                        <div className="col-span-3 sm:col-span-2">
-                          <label className="block text-[10px] font-bold text-stone-700 mb-0.5">SKU Code</label>
-                          <input
-                            type="text"
-                            placeholder="RVK-10ML"
-                            value={v.sku || ''}
-                            onChange={(e) => handleUpdateVariantRow(idx, 'sku', e.target.value)}
-                            className="w-full px-2.5 py-1.5 rounded-lg bg-stone-50 border border-stone-300 text-xs text-stone-900 font-mono focus:outline-none focus:border-amber-600"
-                          />
-                        </div>
+                      return (
+                        <div
+                          key={idx}
+                          draggable
+                          onDragStart={(e) => handleVariantDragStart(e, idx)}
+                          onDragOver={(e) => handleVariantDragOver(e, idx)}
+                          onDrop={(e) => handleVariantDrop(e, idx)}
+                          onDragEnd={() => {
+                            setDraggedVariantIndex(null);
+                            setDragOverVariantIndex(null);
+                          }}
+                          className={`flex items-center gap-2 p-2.5 rounded-xl bg-white border transition-all duration-200 ${
+                            isBeingDragged
+                              ? 'opacity-40 border-dashed border-amber-600 scale-[0.98]'
+                              : isOver
+                              ? 'border-2 border-amber-600 shadow-md bg-amber-50/40'
+                              : 'border-amber-200/80 shadow-xs hover:border-amber-300'
+                          }`}
+                        >
+                          {/* Drag Handle & Reorder Arrows */}
+                          <div className="flex items-center gap-1 text-stone-400 select-none">
+                            <div
+                              className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-stone-100 hover:text-amber-700 transition-colors"
+                              title="Drag to change order"
+                            >
+                              <GripVertical className="w-4 h-4" />
+                            </div>
+                            <div className="flex flex-col -space-y-1">
+                              <button
+                                type="button"
+                                disabled={idx === 0}
+                                onClick={() => handleMoveVariant(idx, 'up')}
+                                className="p-0.5 rounded hover:bg-stone-100 hover:text-amber-800 disabled:opacity-20 disabled:hover:bg-transparent"
+                                title="Move Up"
+                              >
+                                <ChevronUp className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                disabled={idx === (formData.variants?.length || 1) - 1}
+                                onClick={() => handleMoveVariant(idx, 'down')}
+                                className="p-0.5 rounded hover:bg-stone-100 hover:text-amber-800 disabled:opacity-20 disabled:hover:bg-transparent"
+                                title="Move Down"
+                              >
+                                <ChevronDown className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                            <span className="text-[10px] font-mono font-bold text-stone-400 w-3 text-center">
+                              {idx + 1}
+                            </span>
+                          </div>
 
-                        {/* Price */}
-                        <div className="col-span-2 sm:col-span-2">
-                          <label className="block text-[10px] font-bold text-stone-700 mb-0.5">Price (₹) *</label>
-                          <input
-                            type="number"
-                            required
-                            value={v.price}
-                            onChange={(e) => handleUpdateVariantRow(idx, 'price', e.target.value)}
-                            className="w-full px-2.5 py-1.5 rounded-lg bg-stone-50 border border-stone-300 text-xs font-bold text-stone-900 focus:outline-none focus:border-amber-600"
-                          />
-                        </div>
+                          {/* Variant Input Grid */}
+                          <div className="grid grid-cols-12 gap-2 flex-1 items-center">
+                            {/* Variant Name */}
+                            <div className="col-span-4 sm:col-span-3">
+                              <label className="block text-[10px] font-bold text-stone-700 mb-0.5">Variant Name *</label>
+                              <input
+                                type="text"
+                                required
+                                placeholder="e.g. 10ml Bottle"
+                                value={v.name}
+                                onChange={(e) => handleUpdateVariantRow(idx, 'name', e.target.value)}
+                                className="w-full px-2.5 py-1.5 rounded-lg bg-stone-50 border border-stone-300 text-xs font-bold text-stone-900 focus:outline-none focus:border-amber-600"
+                              />
+                            </div>
 
-                        {/* Compare Price */}
-                        <div className="col-span-2 sm:col-span-2">
-                          <label className="block text-[10px] font-bold text-stone-700 mb-0.5">Original (₹)</label>
-                          <input
-                            type="number"
-                            value={v.compare_at_price || ''}
-                            onChange={(e) => handleUpdateVariantRow(idx, 'compare_at_price', e.target.value)}
-                            className="w-full px-2.5 py-1.5 rounded-lg bg-stone-50 border border-stone-300 text-xs text-stone-900 focus:outline-none focus:border-amber-600"
-                          />
-                        </div>
+                            {/* SKU */}
+                            <div className="col-span-3 sm:col-span-2">
+                              <label className="block text-[10px] font-bold text-stone-700 mb-0.5">SKU Code</label>
+                              <input
+                                type="text"
+                                placeholder="RVK-10ML"
+                                value={v.sku || ''}
+                                onChange={(e) => handleUpdateVariantRow(idx, 'sku', e.target.value)}
+                                className="w-full px-2.5 py-1.5 rounded-lg bg-stone-50 border border-stone-300 text-xs text-stone-900 font-mono focus:outline-none focus:border-amber-600"
+                              />
+                            </div>
 
-                        {/* Stock */}
-                        <div className="col-span-2 sm:col-span-2">
-                          <label className="block text-[10px] font-bold text-stone-700 mb-0.5">Stock *</label>
-                          <input
-                            type="number"
-                            required
-                            value={v.stock}
-                            onChange={(e) => handleUpdateVariantRow(idx, 'stock', e.target.value)}
-                            className="w-full px-2.5 py-1.5 rounded-lg bg-stone-50 border border-stone-300 text-xs font-bold text-stone-900 focus:outline-none focus:border-amber-600"
-                          />
-                        </div>
+                            {/* Price */}
+                            <div className="col-span-2 sm:col-span-2">
+                              <label className="block text-[10px] font-bold text-stone-700 mb-0.5">Price (₹) *</label>
+                              <input
+                                type="number"
+                                required
+                                value={v.price}
+                                onChange={(e) => handleUpdateVariantRow(idx, 'price', e.target.value)}
+                                className="w-full px-2.5 py-1.5 rounded-lg bg-stone-50 border border-stone-300 text-xs font-bold text-stone-900 focus:outline-none focus:border-amber-600"
+                              />
+                            </div>
 
-                        {/* Delete Variant Button */}
-                        <div className="col-span-1 flex justify-end pt-3">
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveVariantRow(idx)}
-                            className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 transition-all"
-                            title="Remove Variant"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                            {/* Compare Price */}
+                            <div className="col-span-2 sm:col-span-2">
+                              <label className="block text-[10px] font-bold text-stone-700 mb-0.5">Original (₹)</label>
+                              <input
+                                type="number"
+                                value={v.compare_at_price || ''}
+                                onChange={(e) => handleUpdateVariantRow(idx, 'compare_at_price', e.target.value)}
+                                className="w-full px-2.5 py-1.5 rounded-lg bg-stone-50 border border-stone-300 text-xs text-stone-900 focus:outline-none focus:border-amber-600"
+                              />
+                            </div>
+
+                            {/* Stock */}
+                            <div className="col-span-2 sm:col-span-2">
+                              <label className="block text-[10px] font-bold text-stone-700 mb-0.5">Stock *</label>
+                              <input
+                                type="number"
+                                required
+                                value={v.stock}
+                                onChange={(e) => handleUpdateVariantRow(idx, 'stock', e.target.value)}
+                                className="w-full px-2.5 py-1.5 rounded-lg bg-stone-50 border border-stone-300 text-xs font-bold text-stone-900 focus:outline-none focus:border-amber-600"
+                              />
+                            </div>
+
+                            {/* Delete Variant Button */}
+                            <div className="col-span-1 flex justify-end">
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveVariantRow(idx)}
+                                className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 transition-all"
+                                title="Remove Variant"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="text-center py-4 bg-white/80 rounded-xl border border-dashed border-amber-300">

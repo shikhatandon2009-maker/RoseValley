@@ -26,9 +26,9 @@ export function LuxuryFooter() {
                   </span>
                 </div>
               ) : (
-                <img 
-                  src={formatImageUrl(settings.logo_url, '/images/rvk-logo.png')} 
-                  alt={settings.site_name || "Rose Valley Kannauj"} 
+                <img
+                  src={formatImageUrl(settings.logo_url, '/images/rvk-logo.png')}
+                  alt={settings.site_name || "Rose Valley Kannauj"}
                   className="h-14 sm:h-16 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
                   onError={(e) => {
                     (e.target as HTMLImageElement).src = '/images/rvk-logo.png';
@@ -66,45 +66,44 @@ export function LuxuryFooter() {
           </div>
         </div>
 
-        {/* Navigation & Press Column */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 text-xs">
-          {/* Col 1: Collections */}
+        {/* Navigation & Policies Column */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 text-xs">
+          {/* Col 1: Real Collection Categories */}
           <div className="space-y-3">
             <h3 className="font-serif font-extrabold text-sm text-[#1A0510] uppercase tracking-widest">
-              Collections
+              Fragrance Collections
             </h3>
             <ul className="space-y-2 text-[#4A0D25] font-bold">
-              <li><Link href="/products?category=artisanal-perfumes" className="hover:text-[#F6A6BB] transition-colors">Artisanal Attars (Ruh Gulab)</Link></li>
-              <li><Link href="/products?category=pure-essential-oils" className="hover:text-[#F6A6BB] transition-colors">Pure Botanical Essential Oils</Link></li>
-              <li><Link href="/products?category=luxury-elixirs-blends" className="hover:text-[#F6A6BB] transition-colors">Sandalwood Synergy Elixirs</Link></li>
-              <li><Link href="/products" className="hover:text-[#F6A6BB] transition-colors">All Fragrance Collections</Link></li>
+              <li><Link href="/products?category=pure-essential-oils" className="hover:text-[#F6A6BB] transition-colors">Pure Essential Oils</Link></li>
+              <li><Link href="/products?category=artisanal-blends" className="hover:text-[#F6A6BB] transition-colors">Artisanal Blends & Perfumes</Link></li>
+              <li><Link href="/products?category=royal-attars" className="hover:text-[#F6A6BB] transition-colors">Royal Attars (Deg-Bhapka)</Link></li>
+              <li><Link href="/products" className="hover:text-[#F6A6BB] transition-colors">Explore All Fragrances</Link></li>
             </ul>
           </div>
 
-          {/* Col 2: Client Services */}
+          {/* Col 2: Policies & Legal */}
           <div className="space-y-3">
             <h3 className="font-serif font-extrabold text-sm text-[#1A0510] uppercase tracking-widest">
-              Client Services
+              Policies & Legal
             </h3>
             <ul className="space-y-2 text-[#4A0D25] font-bold">
-              <li><Link href="/contact" className="hover:text-[#F6A6BB] transition-colors">Contact Us & Estate Map</Link></li>
+              <li><Link href="/shipping-delivery-policy" className="hover:text-[#F6A6BB] transition-colors">Shipping and Delivery Policy</Link></li>
+              <li><Link href="/privacy-policy" className="hover:text-[#F6A6BB] transition-colors">Privacy Policy</Link></li>
+              <li><Link href="/terms-and-conditions" className="hover:text-[#F6A6BB] transition-colors">Terms and Conditions</Link></li>
+              <li><Link href="/return-refund-policy" className="hover:text-[#F6A6BB] transition-colors">Return and Refund Policy</Link></li>
+            </ul>
+          </div>
+
+          {/* Col 3: Estate & Heritage */}
+          <div className="space-y-3">
+            <h3 className="font-serif font-extrabold text-sm text-[#1A0510] uppercase tracking-widest">
+              Estate & Heritage
+            </h3>
+            <ul className="space-y-2 text-[#4A0D25] font-bold">
               <li><Link href="/about" className="hover:text-[#F6A6BB] transition-colors">About 400-Yr Kannauj Heritage</Link></li>
-              <li><Link href="/provenance-passport" className="hover:text-[#F6A6BB] transition-colors">Digital Provenance Passport</Link></li>
+              <li><Link href="/contact" className="hover:text-[#F6A6BB] transition-colors">Contact Us & Estate Map</Link></li>
               <li><Link href="/account" className="hover:text-[#F6A6BB] transition-colors">Private Client Account</Link></li>
             </ul>
-          </div>
-
-          {/* Col 3: Press Recognition */}
-          <div className="space-y-3 md:col-span-2">
-            <h3 className="font-serif font-extrabold text-sm text-[#1A0510] uppercase tracking-widest">
-              As Featured In International Press
-            </h3>
-            <div className="flex flex-wrap gap-3 text-xs font-serif font-extrabold text-[#1A0510] italic">
-              <span className="p-2.5 rounded-xl bg-[#FAE6E7] border border-[#F7D1D8] shadow-xs">VOGUE INTERNATIONAL</span>
-              <span className="p-2.5 rounded-xl bg-[#FAE6E7] border border-[#F7D1D8] shadow-xs">ROBB REPORT LUXURY</span>
-              <span className="p-2.5 rounded-xl bg-[#FAE6E7] border border-[#F7D1D8] shadow-xs">HARPER&apos;S BAZAAR</span>
-              <span className="p-2.5 rounded-xl bg-[#FAE6E7] border border-[#F7D1D8] shadow-xs">ARCHITECTURAL DIGEST</span>
-            </div>
           </div>
         </div>
 

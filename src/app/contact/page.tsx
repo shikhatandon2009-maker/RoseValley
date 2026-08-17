@@ -25,13 +25,41 @@ import { LuxuryHeader } from '@/components/layout/LuxuryHeader';
 import { LuxuryFooter } from '@/components/layout/LuxuryFooter';
 import { SectionWrapper } from '@/components/common/SectionWrapper';
 
+interface StoreInfo {
+  store_address_line1?: string;
+  store_address_line2?: string;
+  store_city?: string;
+  store_state?: string;
+  store_pincode?: string;
+  store_country?: string;
+  contact_email?: string;
+  contact_phone?: string;
+  whatsapp_number?: string;
+  support_hours?: string;
+  google_map_embed?: string;
+}
+
 export default function ContactUsPage() {
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [storeInfo, setStoreInfo] = useState<StoreInfo>({
+    store_address_line1: 'Rose Valley Estate, Deg-Bhapka Heritage Stills',
+    store_address_line2: 'Kannauj Industrial Area',
+    store_city: 'Kannauj',
+    store_state: 'Uttar Pradesh',
+    store_pincode: '209725',
+    store_country: 'India',
+    contact_email: 'shikhatandon2009@gmail.com',
+    contact_phone: '+91 96486 78599',
+    whatsapp_number: '+91 96486 78599',
+    support_hours: 'Mon - Sat: 9:00 AM - 8:00 PM IST',
+    google_map_embed: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d57053.86427339191!2d79.88939768652973!3d27.051939886745195!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x399e2e604f56fdd1%3A0x8979b9bc88a55639!2sKannauj%2C%20Uttar%20Pradesh%20209725!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin',
+  });
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
-    subject: 'order',
+    subject: 'Order Tracking & Invoice Query',
     message: '',
   });
 
@@ -42,7 +70,22 @@ export default function ContactUsPage() {
   const [inquiryResult, setInquiryResult] = useState<{ inquiryRef?: string; isRecorded?: boolean } | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Check if customer is already logged in & auto-fill details
+  // 1. Fetch Dynamic Store Address & Contact Channels from Admin Settings
+  useEffect(() => {
+    fetch('/api/admin/settings')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.settings) {
+          setStoreInfo((prev) => ({
+            ...prev,
+            ...data.settings,
+          }));
+        }
+      })
+      .catch((err) => console.warn('Admin settings fetch notice:', err));
+  }, []);
+
+  // 2. Check if customer is already logged in & auto-fill details
   useEffect(() => {
     fetch('/api/auth/me')
       .then((res) => res.json())
@@ -111,7 +154,7 @@ export default function ContactUsPage() {
         name: currentUser?.full_name || '',
         email: currentUser?.email || '',
         phone: currentUser?.phone || '',
-        subject: 'order',
+        subject: 'Order Tracking & Invoice Query',
         message: '',
       });
     } catch (err: any) {
@@ -120,6 +163,9 @@ export default function ContactUsPage() {
       setIsSubmitting(false);
     }
   };
+
+  const cleanPhone = (storeInfo.contact_phone || '+91 96486 78599').replace(/[^\d+]/g, '');
+  const cleanWhatsApp = (storeInfo.whatsapp_number || '+91 96486 78599').replace(/[^\d]/g, '');
 
   return (
     <div className="min-h-screen bg-white text-[#1A0510] font-sans selection:bg-[#F6A6BB] selection:text-neutral-950">
@@ -155,7 +201,7 @@ export default function ContactUsPage() {
             </div>
 
             <div className="space-y-4">
-              {/* Address Card */}
+              {/* Address Card (Dynamically populated from Admin) */}
               <div className="p-5 rounded-2xl bg-[#FAE6E7]/60 border border-[#F7D1D8] flex items-start gap-4 shadow-xs">
                 <div className="p-3 rounded-xl bg-[#F6A6BB] text-[#4A0D25] flex-shrink-0">
                   <MapPin className="w-5 h-5" />
@@ -163,41 +209,54 @@ export default function ContactUsPage() {
                 <div>
                   <h3 className="font-serif font-extrabold text-[#1A0510] text-base">Distillery & Estate Address</h3>
                   <p className="text-xs text-[#4A0D25] font-bold mt-1 leading-relaxed">
-                    Rose Valley Estate, Deg-Bhapka Heritage Stills<br />
-                    Kannauj Industrial Area, Uttar Pradesh 209725, India
+                    {storeInfo.store_address_line1 || 'Rose Valley Estate, Deg-Bhapka Heritage Stills'}<br />
+                    {storeInfo.store_address_line2 ? `${storeInfo.store_address_line2}, ` : ''}
+                    {storeInfo.store_city || 'Kannauj'}, {storeInfo.store_state || 'Uttar Pradesh'} {storeInfo.store_pincode || '209725'}, {storeInfo.store_country || 'India'}
                   </p>
                 </div>
               </div>
 
-              {/* Email Card */}
+              {/* Email Card (Dynamically populated from Admin) */}
               <div className="p-5 rounded-2xl bg-[#FAE6E7]/60 border border-[#F7D1D8] flex items-start gap-4 shadow-xs">
                 <div className="p-3 rounded-xl bg-[#F6A6BB] text-[#4A0D25] flex-shrink-0">
                   <Mail className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-serif font-extrabold text-[#1A0510] text-base">Email Concierge Desk</h3>
+                  <h3 className="font-serif font-extrabold text-[#1A0510] text-base">Direct Store Email</h3>
                   <p className="text-xs text-[#4A0D25] font-bold mt-1">
-                    concierge@rosevalleykannauj.com<br />
-                    export@rosevalleykannauj.com
+                    <a
+                      href={`mailto:${storeInfo.contact_email || 'shikhatandon2009@gmail.com'}`}
+                      className="hover:underline font-mono text-sm text-[#4A0D25] font-black"
+                    >
+                      {storeInfo.contact_email || 'shikhatandon2009@gmail.com'}
+                    </a><br />
+                    <span className="text-[11px] text-stone-600 font-medium">Inquiries & Export Desk (24/7 Monitored)</span>
                   </p>
                 </div>
               </div>
 
-              {/* Phone Card */}
+              {/* Phone Card (Dynamically populated from Admin) */}
               <div className="p-5 rounded-2xl bg-[#FAE6E7]/60 border border-[#F7D1D8] flex items-start gap-4 shadow-xs">
                 <div className="p-3 rounded-xl bg-[#F6A6BB] text-[#4A0D25] flex-shrink-0">
                   <Phone className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-serif font-extrabold text-[#1A0510] text-base">Phone & Toll-Free</h3>
+                  <h3 className="font-serif font-extrabold text-[#1A0510] text-base">Customer Care & Support</h3>
                   <p className="text-xs text-[#4A0D25] font-bold mt-1">
-                    +91 (5694) 280-1620 / +91 98390 12345<br />
-                    Mon - Sat: 9:00 AM - 7:00 PM IST
+                    <a
+                      href={`tel:${cleanPhone}`}
+                      className="hover:underline font-mono text-sm text-[#4A0D25] font-black"
+                    >
+                      {storeInfo.contact_phone || '+91 96486 78599'}
+                    </a><br />
+                    <span className="text-[11px] text-stone-600 font-medium">
+                      {storeInfo.support_hours || 'Mon - Sat: 9:00 AM - 8:00 PM IST'}
+                    </span>
                   </p>
                 </div>
               </div>
 
-              {/* 1-Click WhatsApp Support Card */}
+              {/* 1-Click WhatsApp Support Card (Dynamically populated from Admin) */}
               <div className="p-5 rounded-2xl bg-emerald-50 border border-emerald-300 flex items-center justify-between gap-4 shadow-xs">
                 <div className="flex items-center gap-3">
                   <div className="p-3 rounded-xl bg-emerald-600 text-white">
@@ -205,11 +264,13 @@ export default function ContactUsPage() {
                   </div>
                   <div>
                     <h3 className="font-serif font-extrabold text-emerald-950 text-sm">Instant WhatsApp Support</h3>
-                    <p className="text-[11px] text-emerald-800 font-bold">Chat live with our client advisor</p>
+                    <p className="text-[11px] text-emerald-800 font-bold font-mono">
+                      {storeInfo.whatsapp_number || '+91 96486 78599'}
+                    </p>
                   </div>
                 </div>
                 <a
-                  href="https://wa.me/919839012345?text=Hello%20Rose%20Valley%20Kannauj%20Concierge"
+                  href={`https://wa.me/${cleanWhatsApp}?text=Hello%20Rose%20Valley%20Kannauj%20Concierge`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs uppercase tracking-wider shadow-sm transition-all flex-shrink-0"
@@ -251,11 +312,9 @@ export default function ContactUsPage() {
                     <CheckCircle2 className="w-6 h-6" />
                   </div>
                   <h4 className="font-serif font-extrabold text-xl text-emerald-950">Inquiry Dispatched Successfully!</h4>
-                  <p className="text-xs text-emerald-800 font-bold max-w-md mx-auto">
-                    Reference ID: <strong className="font-mono text-emerald-950">{inquiryResult?.inquiryRef || 'INQ-94821'}</strong>.<br />
-                    {inquiryResult?.isRecorded
-                      ? 'This inquiry has been permanently recorded in your Maison Account Portal. Our concierge will reply within 24 business hours.'
-                      : 'Our concierge desk has received your guest inquiry and will reply to your email address within 24 business hours.'}
+                  <p className="text-xs text-emerald-800 font-bold max-w-md mx-auto leading-relaxed">
+                    Reference ID: <strong className="font-mono text-emerald-950 font-black">{inquiryResult?.inquiryRef || 'INQ-94821'}</strong>.<br />
+                    A confirmation receipt has been dispatched to your email. Our concierge desk at <span className="font-mono text-emerald-950 font-bold">{storeInfo.contact_email || 'shikhatandon2009@gmail.com'}</span> will review and respond within 24 hours.
                   </p>
                   <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
                     {currentUser && (
@@ -268,7 +327,7 @@ export default function ContactUsPage() {
                     )}
                     <button
                       onClick={() => setSubmittedSuccess(false)}
-                      className="px-6 py-2.5 rounded-xl bg-emerald-600 text-white font-black text-xs uppercase tracking-wider hover:bg-emerald-700 transition-all shadow-xs"
+                      className="px-6 py-2.5 rounded-xl bg-emerald-600 text-white font-black text-xs uppercase tracking-wider hover:bg-emerald-700 transition-all shadow-xs cursor-pointer"
                     >
                       Send Another Inquiry
                     </button>
@@ -316,7 +375,7 @@ export default function ContactUsPage() {
                         type="tel"
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        placeholder="+91 98390 00000"
+                        placeholder="+91 96486 00000"
                         className="w-full px-4 py-3 rounded-xl bg-white border border-[#F7D1D8] text-xs text-[#1A0510] font-bold focus:outline-none focus:ring-2 focus:ring-[#F6A6BB]"
                       />
                     </div>
@@ -354,7 +413,7 @@ export default function ContactUsPage() {
                     <button
                       type="button"
                       onClick={handleRecaptchaCheck}
-                      className="flex items-center gap-3 text-left focus:outline-none group"
+                      className="flex items-center gap-3 text-left focus:outline-none group cursor-pointer"
                     >
                       <div
                         className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${
@@ -404,7 +463,7 @@ export default function ContactUsPage() {
         </div>
       </SectionWrapper>
 
-      {/* Google Map Section */}
+      {/* Google Map Section (Dynamically populated from Admin) */}
       <section className="py-12 bg-[#FAE6E7]/30 border-t border-[#F7D1D8]">
         <div className="max-w-7xl mx-auto px-4 space-y-6">
           <div className="text-center space-y-2">
@@ -412,17 +471,17 @@ export default function ContactUsPage() {
               Estate Location
             </span>
             <h2 className="font-serif font-extrabold text-3xl text-[#1A0510]">
-              Kannauj Distillation Estate Map
+              {storeInfo.store_city || 'Kannauj'} Distillation Estate Map
             </h2>
             <p className="text-xs text-[#4A0D25] font-bold max-w-lg mx-auto">
-              Visit our heritage copper Deg-Bhapka distillery in Kannauj, Uttar Pradesh, India.
+              Visit our heritage copper Deg-Bhapka distillery in {storeInfo.store_city || 'Kannauj'}, {storeInfo.store_state || 'Uttar Pradesh'}, {storeInfo.store_country || 'India'}.
             </p>
           </div>
 
           <div className="rounded-3xl overflow-hidden border-2 border-[#F7D1D8] shadow-xl aspect-[21/9] w-full relative">
             <iframe
               title="Rose Valley Kannauj Estate Google Map"
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d57053.86427339191!2d79.88939768652973!3d27.051939886745195!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x399e2e604f56fdd1%3A0x8979b9bc88a55639!2sKannauj%2C%20Uttar%20Pradesh%20209725!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin"
+              src={storeInfo.google_map_embed || 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d57053.86427339191!2d79.88939768652973!3d27.051939886745195!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x399e2e604f56fdd1%3A0x8979b9bc88a55639!2sKannauj%2C%20Uttar%20Pradesh%20209725!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin'}
               width="100%"
               height="100%"
               style={{ border: 0 }}

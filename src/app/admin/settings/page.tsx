@@ -22,7 +22,12 @@ import {
   Upload,
   UploadCloud,
   ImageIcon,
-  Type
+  Type,
+  MapPin,
+  Phone,
+  Mail,
+  MessageCircle,
+  Building
 } from 'lucide-react';
 import { formatImageUrl } from '@/lib/format-image';
 import { useSiteSettingsStore } from '@/store/site-settings-store';
@@ -35,7 +40,15 @@ interface SiteSettings {
   favicon_url: string;
   use_text_logo: boolean;
   contact_email: string;
-  contact_phone: string;
+  store_address_line1?: string;
+  store_address_line2?: string;
+  store_city?: string;
+  store_state?: string;
+  store_pincode?: string;
+  store_country?: string;
+  whatsapp_number?: string;
+  support_hours?: string;
+  google_map_embed?: string;
   shipping_rates: {
     standard: number;
     express: number;
@@ -75,8 +88,17 @@ export default function SiteSettingsAdminPage() {
     logo_url: '/images/rvk-logo.png',
     favicon_url: '/images/rvk-logo.png',
     use_text_logo: false,
-    contact_email: 'support@rosevalleykannauj.com',
-    contact_phone: '+91 98765 43210',
+    contact_email: 'shikhatandon2009@gmail.com',
+    contact_phone: '+91 96486 78599',
+    whatsapp_number: '+91 96486 78599',
+    store_address_line1: 'Rose Valley Estate, Deg-Bhapka Heritage Stills',
+    store_address_line2: 'Kannauj Industrial Area',
+    store_city: 'Kannauj',
+    store_state: 'Uttar Pradesh',
+    store_pincode: '209725',
+    store_country: 'India',
+    support_hours: 'Mon - Sat: 9:00 AM - 8:00 PM IST',
+    google_map_embed: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d57053.86427339191!2d79.88939768652973!3d27.051939886745195!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x399e2e604f56fdd1%3A0x8979b9bc88a55639!2sKannauj%2C%20Uttar%20Pradesh%20209725!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin',
     shipping_rates: { standard: 150, express: 300, free_threshold: 2500 },
     tax_rate: 18.00,
     store_gstin: '09AAACR1234F1Z5',
@@ -579,6 +601,200 @@ export default function SiteSettingsAdminPage() {
                       )}
                     </div>
                   </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* SECTION 2: Store Physical Address, Contact Channels & Map (Direct Source for Contact Us Page) */}
+          <div className="p-6 rounded-2xl bg-white border-2 border-amber-200/80 space-y-6 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between border-b border-stone-200 pb-3 gap-2">
+              <div className="flex items-center gap-2 text-stone-900 font-serif font-bold text-lg">
+                <MapPin className="w-5 h-5 text-amber-700" /> Store Physical Address & Contact Channels
+              </div>
+              <span className="px-3 py-1 rounded-full bg-amber-100 border border-amber-300 text-amber-950 text-[10px] font-black uppercase tracking-wider">
+                Live Source for &ldquo;/contact&rdquo; Page
+              </span>
+            </div>
+
+            <p className="text-xs text-stone-600 font-medium">
+              Update your physical distillery location, customer support desk email, phone number, WhatsApp, and Google Map. Changes here will immediately populate on the public <strong>Contact Us</strong> page.
+            </p>
+
+            {/* Address Lines */}
+            <div className="space-y-4">
+              <div className="font-bold text-xs text-stone-900 flex items-center gap-1.5 uppercase tracking-wider">
+                <Building className="w-4 h-4 text-amber-600" /> Physical Address Details
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-stone-800 mb-1">
+                    Distillery / Estate Address Line 1 *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Rose Valley Estate, Deg-Bhapka Heritage Stills"
+                    value={settings.store_address_line1 || ''}
+                    onChange={(e) => setSettings({ ...settings, store_address_line1: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-stone-50 border border-stone-300 text-xs text-stone-900 font-semibold focus:outline-none focus:border-amber-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-stone-800 mb-1">
+                    Address Line 2 (Area / Industrial Zone / Landmark)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Kannauj Industrial Area, GT Road"
+                    value={settings.store_address_line2 || ''}
+                    onChange={(e) => setSettings({ ...settings, store_address_line2: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-stone-50 border border-stone-300 text-xs text-stone-900 font-semibold focus:outline-none focus:border-amber-600"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-stone-800 mb-1">City *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Kannauj"
+                    value={settings.store_city || ''}
+                    onChange={(e) => setSettings({ ...settings, store_city: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-stone-50 border border-stone-300 text-xs text-stone-900 font-semibold focus:outline-none focus:border-amber-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-stone-800 mb-1">State *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Uttar Pradesh"
+                    value={settings.store_state || ''}
+                    onChange={(e) => setSettings({ ...settings, store_state: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-stone-50 border border-stone-300 text-xs text-stone-900 font-semibold focus:outline-none focus:border-amber-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-stone-800 mb-1">Postal Code / PIN *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="209725"
+                    value={settings.store_pincode || ''}
+                    onChange={(e) => setSettings({ ...settings, store_pincode: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-stone-50 border border-stone-300 text-xs text-stone-900 font-semibold focus:outline-none focus:border-amber-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-stone-800 mb-1">Country *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="India"
+                    value={settings.store_country || ''}
+                    onChange={(e) => setSettings({ ...settings, store_country: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-stone-50 border border-stone-300 text-xs text-stone-900 font-semibold focus:outline-none focus:border-amber-600"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Direct Communication Channels */}
+            <div className="pt-3 border-t border-stone-200 space-y-4">
+              <div className="font-bold text-xs text-stone-900 flex items-center gap-1.5 uppercase tracking-wider">
+                <Phone className="w-4 h-4 text-amber-600" /> Direct Communication Channels
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-stone-800 mb-1">
+                    Store Support Email (Admin Inbox) *
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="email"
+                      required
+                      placeholder="shikhatandon2009@gmail.com"
+                      value={settings.contact_email}
+                      onChange={(e) => setSettings({ ...settings, contact_email: e.target.value })}
+                      className="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-stone-50 border border-stone-300 text-xs text-stone-900 font-mono font-bold focus:outline-none focus:border-amber-600"
+                    />
+                    <Mail className="w-4 h-4 text-stone-400 absolute left-3 top-3" />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-stone-800 mb-1">
+                    Customer Care Phone Number *
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      required
+                      placeholder="+91 96486 78599"
+                      value={settings.contact_phone}
+                      onChange={(e) => setSettings({ ...settings, contact_phone: e.target.value })}
+                      className="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-stone-50 border border-stone-300 text-xs text-stone-900 font-mono font-bold focus:outline-none focus:border-amber-600"
+                    />
+                    <Phone className="w-4 h-4 text-stone-400 absolute left-3 top-3" />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-stone-800 mb-1">
+                    1-Click WhatsApp Support Number *
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      required
+                      placeholder="+91 96486 78599"
+                      value={settings.whatsapp_number || ''}
+                      onChange={(e) => setSettings({ ...settings, whatsapp_number: e.target.value })}
+                      className="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-stone-50 border border-stone-300 text-xs text-stone-900 font-mono font-bold focus:outline-none focus:border-amber-600"
+                    />
+                    <MessageCircle className="w-4 h-4 text-emerald-600 absolute left-3 top-3" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-stone-800 mb-1">
+                    Operating & Support Hours *
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      required
+                      placeholder="Mon - Sat: 9:00 AM - 8:00 PM IST"
+                      value={settings.support_hours || ''}
+                      onChange={(e) => setSettings({ ...settings, support_hours: e.target.value })}
+                      className="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-stone-50 border border-stone-300 text-xs text-stone-900 font-semibold focus:outline-none focus:border-amber-600"
+                    />
+                    <Clock className="w-4 h-4 text-stone-400 absolute left-3 top-3" />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-stone-800 mb-1">
+                    Google Maps Embed URL (Iframe URL)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="https://www.google.com/maps/embed?..."
+                    value={settings.google_map_embed || ''}
+                    onChange={(e) => setSettings({ ...settings, google_map_embed: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-stone-50 border border-stone-300 text-xs text-stone-900 font-mono focus:outline-none focus:border-amber-600"
+                  />
                 </div>
               </div>
             </div>

@@ -26,8 +26,17 @@ export async function GET(request: NextRequest) {
       logo_url: '/images/rvk-logo.png',
       favicon_url: '/images/rvk-logo.png',
       use_text_logo: false,
-      contact_email: 'support@rosevalleykannauj.com',
-      contact_phone: '+91 98765 43210',
+      contact_email: 'shikhatandon2009@gmail.com',
+      contact_phone: '+91 96486 78599',
+      whatsapp_number: '+91 96486 78599',
+      store_address_line1: 'Rose Valley Estate, Deg-Bhapka Heritage Stills',
+      store_address_line2: 'Kannauj Industrial Area',
+      store_city: 'Kannauj',
+      store_state: 'Uttar Pradesh',
+      store_pincode: '209725',
+      store_country: 'India',
+      support_hours: 'Mon - Sat: 9:00 AM - 8:00 PM IST',
+      google_map_embed: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d57053.86427339191!2d79.88939768652973!3d27.051939886745195!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x399e2e604f56fdd1%3A0x8979b9bc88a55639!2sKannauj%2C%20Uttar%20Pradesh%20209725!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin',
       shipping_rates: { standard: 150, express: 300, free_threshold: 2500 },
       tax_rate: 18.00,
       store_gstin: '09AAACR1234F1Z5',
@@ -39,15 +48,43 @@ export async function GET(request: NextRequest) {
 
     const resultSettings = settings ? { ...defaultSettings, ...settings } : defaultSettings;
 
-    // Resolve store_gstin if stored in social_links
-    if ((resultSettings.social_links as any)?._store_gstin && !resultSettings.store_gstin) {
-      resultSettings.store_gstin = (resultSettings.social_links as any)._store_gstin;
+    // Resolve store address fields from social_links JSONB fallback if columns not present in DB table
+    const sLinks = (resultSettings.social_links as any) || {};
+    if (sLinks._store_address_line1 && !settings?.store_address_line1) {
+      resultSettings.store_address_line1 = sLinks._store_address_line1;
+    }
+    if (sLinks._store_address_line2 && !settings?.store_address_line2) {
+      resultSettings.store_address_line2 = sLinks._store_address_line2;
+    }
+    if (sLinks._store_city && !settings?.store_city) {
+      resultSettings.store_city = sLinks._store_city;
+    }
+    if (sLinks._store_state && !settings?.store_state) {
+      resultSettings.store_state = sLinks._store_state;
+    }
+    if (sLinks._store_pincode && !settings?.store_pincode) {
+      resultSettings.store_pincode = sLinks._store_pincode;
+    }
+    if (sLinks._store_country && !settings?.store_country) {
+      resultSettings.store_country = sLinks._store_country;
+    }
+    if (sLinks._whatsapp_number && !settings?.whatsapp_number) {
+      resultSettings.whatsapp_number = sLinks._whatsapp_number;
+    }
+    if (sLinks._support_hours && !settings?.support_hours) {
+      resultSettings.support_hours = sLinks._support_hours;
+    }
+    if (sLinks._google_map_embed && !settings?.google_map_embed) {
+      resultSettings.google_map_embed = sLinks._google_map_embed;
+    }
+    if (sLinks._store_gstin && !resultSettings.store_gstin) {
+      resultSettings.store_gstin = sLinks._store_gstin;
     }
 
-    // Resolve use_text_logo: check social_links._use_text_logo fallback first if set, or column value
+    // Resolve use_text_logo
     let useTextLogo = false;
-    if (typeof (resultSettings.social_links as any)?._use_text_logo === 'boolean') {
-      useTextLogo = Boolean((resultSettings.social_links as any)._use_text_logo);
+    if (typeof sLinks._use_text_logo === 'boolean') {
+      useTextLogo = Boolean(sLinks._use_text_logo);
     } else if (resultSettings.use_text_logo !== undefined && resultSettings.use_text_logo !== null) {
       useTextLogo = Boolean(resultSettings.use_text_logo);
     }
@@ -78,6 +115,15 @@ export async function PUT(request: NextRequest) {
       use_text_logo = false,
       contact_email,
       contact_phone,
+      whatsapp_number = '+91 96486 78599',
+      store_address_line1 = 'Rose Valley Estate, Deg-Bhapka Heritage Stills',
+      store_address_line2 = 'Kannauj Industrial Area',
+      store_city = 'Kannauj',
+      store_state = 'Uttar Pradesh',
+      store_pincode = '209725',
+      store_country = 'India',
+      support_hours = 'Mon - Sat: 9:00 AM - 8:00 PM IST',
+      google_map_embed = '',
       shipping_rates = { standard: 150, express: 300, free_threshold: 2500 },
       tax_rate = 18.00,
       store_gstin = '09AAACR1234F1Z5',
@@ -89,13 +135,23 @@ export async function PUT(request: NextRequest) {
 
     const supabase = getSupabaseServerClient();
 
+    // Store address and extra parameters inside social_links JSONB as guaranteed storage
     const mergedSocialLinks = {
       ...(typeof social_links === 'object' && social_links ? social_links : {}),
       _use_text_logo: Boolean(use_text_logo),
       _store_gstin: String(store_gstin || '09AAACR1234F1Z5').trim(),
+      _store_address_line1: String(store_address_line1 || '').trim(),
+      _store_address_line2: String(store_address_line2 || '').trim(),
+      _store_city: String(store_city || '').trim(),
+      _store_state: String(store_state || '').trim(),
+      _store_pincode: String(store_pincode || '').trim(),
+      _store_country: String(store_country || '').trim(),
+      _whatsapp_number: String(whatsapp_number || '').trim(),
+      _support_hours: String(support_hours || '').trim(),
+      _google_map_embed: String(google_map_embed || '').trim(),
     };
 
-    const payload = {
+    const payload: Record<string, any> = {
       store_id: STORE_ID,
       site_name: String(site_name || STORE_NAME).trim(),
       tagline: String(tagline || '').trim(),
@@ -110,6 +166,17 @@ export async function PUT(request: NextRequest) {
       updated_at: new Date().toISOString(),
     };
 
+    // Include explicit columns if they exist in schema
+    payload.store_address_line1 = String(store_address_line1 || '').trim();
+    payload.store_address_line2 = String(store_address_line2 || '').trim();
+    payload.store_city = String(store_city || '').trim();
+    payload.store_state = String(store_state || '').trim();
+    payload.store_pincode = String(store_pincode || '').trim();
+    payload.store_country = String(store_country || '').trim();
+    payload.whatsapp_number = String(whatsapp_number || '').trim();
+    payload.support_hours = String(support_hours || '').trim();
+    if (google_map_embed) payload.google_map_embed = String(google_map_embed || '').trim();
+
     let { data: updatedSettings, error } = await supabase
       .from('site_settings')
       .upsert(payload, { onConflict: 'store_id' })
@@ -117,8 +184,23 @@ export async function PUT(request: NextRequest) {
       .single();
 
     if (error) {
-      console.warn('Supabase site_settings upsert with use_text_logo column failed. Retrying without column:', error.message);
-      const { use_text_logo: _, ...fallbackPayload } = payload;
+      console.warn('Supabase site_settings upsert with address columns failed. Retrying with JSONB storage:', error.message);
+      
+      // Fallback payload without optional new columns
+      const fallbackPayload = {
+        store_id: STORE_ID,
+        site_name: String(site_name || STORE_NAME).trim(),
+        tagline: String(tagline || '').trim(),
+        logo_url: formattedLogoUrl,
+        favicon_url: formattedFaviconUrl,
+        contact_email: String(contact_email || '').trim(),
+        contact_phone: String(contact_phone || '').trim(),
+        shipping_rates,
+        tax_rate: Number(tax_rate) || 0,
+        social_links: mergedSocialLinks,
+        updated_at: new Date().toISOString(),
+      };
+
       const { data: fallbackSettings, error: fallbackError } = await supabase
         .from('site_settings')
         .upsert(fallbackPayload, { onConflict: 'store_id' })
@@ -126,7 +208,20 @@ export async function PUT(request: NextRequest) {
         .single();
 
       if (!fallbackError && fallbackSettings) {
-        updatedSettings = { ...fallbackSettings, use_text_logo: Boolean(use_text_logo), store_gstin: String(store_gstin) };
+        updatedSettings = {
+          ...fallbackSettings,
+          use_text_logo: Boolean(use_text_logo),
+          store_gstin: String(store_gstin),
+          store_address_line1,
+          store_address_line2,
+          store_city,
+          store_state,
+          store_pincode,
+          store_country,
+          whatsapp_number,
+          support_hours,
+          google_map_embed,
+        };
         error = null;
       } else {
         error = fallbackError;
@@ -134,6 +229,15 @@ export async function PUT(request: NextRequest) {
     } else if (updatedSettings) {
       updatedSettings.use_text_logo = Boolean(use_text_logo);
       updatedSettings.store_gstin = String(store_gstin);
+      updatedSettings.store_address_line1 = store_address_line1;
+      updatedSettings.store_address_line2 = store_address_line2;
+      updatedSettings.store_city = store_city;
+      updatedSettings.store_state = store_state;
+      updatedSettings.store_pincode = store_pincode;
+      updatedSettings.store_country = store_country;
+      updatedSettings.whatsapp_number = whatsapp_number;
+      updatedSettings.support_hours = support_hours;
+      updatedSettings.google_map_embed = google_map_embed;
     }
 
     if (error) {
@@ -142,7 +246,7 @@ export async function PUT(request: NextRequest) {
     }
 
     return NextResponse.json({
-      message: 'Site settings updated successfully',
+      message: 'Site and Store Address settings updated successfully',
       settings: updatedSettings,
     });
   } catch (err: any) {
@@ -154,5 +258,3 @@ export async function PUT(request: NextRequest) {
 export async function POST(request: NextRequest) {
   return PUT(request);
 }
-
-

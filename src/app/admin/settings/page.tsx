@@ -40,6 +40,7 @@ interface SiteSettings {
   favicon_url: string;
   use_text_logo: boolean;
   contact_email: string;
+  contact_phone: string;
   store_address_line1?: string;
   store_address_line2?: string;
   store_city?: string;

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { STORE_ID } from '@/lib/constants';
+import { sendEmail } from '@/lib/email/mailer';
+import { getInquiryAdminNotificationTemplate, getInquiryAcknowledgmentTemplate } from '@/lib/email/templates';
 
 export async function GET(request: NextRequest) {
   try {
@@ -157,6 +159,28 @@ export async function POST(request: NextRequest) {
 
         savedRecord = data;
       }
+    }
+
+    // 3. Dispatch Live Email Notifications (Admin alert + Customer acknowledgment)
+    try {
+      const adminEmail = process.env.SMTP_USER || 'shikhatandon2009@gmail.com';
+      const adminTpl = getInquiryAdminNotificationTemplate(name.trim(), email.trim(), phone.trim(), subject || 'General Inquiry', message.trim(), inquiryRef);
+      await sendEmail({
+        to: adminEmail,
+        subject: adminTpl.subject,
+        html: adminTpl.html,
+        type: 'admin_inquiry_alert',
+      });
+
+      const customerTpl = getInquiryAcknowledgmentTemplate(name.trim(), subject || 'General Inquiry', inquiryRef);
+      await sendEmail({
+        to: email.trim(),
+        subject: customerTpl.subject,
+        html: customerTpl.html,
+        type: 'inquiry_acknowledgment',
+      });
+    } catch (emailErr) {
+      console.error('[Contact] Email dispatch warning:', emailErr);
     }
 
     return NextResponse.json({

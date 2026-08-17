@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { STORE_ID } from '@/lib/constants';
+import { sendEmail } from '@/lib/email/mailer';
+import { getDispatchEmailTemplate } from '@/lib/email/templates';
 
 export async function GET(
   request: NextRequest,
@@ -85,6 +87,31 @@ export async function PUT(
     if (error) {
       console.error('Error updating order:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    // Auto-dispatch tracking email to customer if order status is shipped
+    if (status === 'shipped' || (tracking_number && status !== 'cancelled')) {
+      try {
+        const customerEmail = updatedOrder.guest_email || updatedOrder.shipping_address?.email;
+        const customerName = updatedOrder.shipping_address?.fullName || 'Valued Client';
+        if (customerEmail && updatedOrder.tracking_number) {
+          const dispatchTpl = getDispatchEmailTemplate(
+            updatedOrder.order_number,
+            updatedOrder.courier_name || 'Express Courier',
+            updatedOrder.tracking_number,
+            customerName
+          );
+
+          await sendEmail({
+            to: customerEmail,
+            subject: dispatchTpl.subject,
+            html: dispatchTpl.html,
+            type: 'order_dispatched',
+          });
+        }
+      } catch (emailErr) {
+        console.error('[Order Dispatch] Email notice:', emailErr);
+      }
     }
 
     return NextResponse.json({ message: 'Order updated successfully', order: updatedOrder });

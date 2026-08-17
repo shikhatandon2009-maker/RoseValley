@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { STORE_ID } from '@/lib/constants';
+import { sendEmail } from '@/lib/email/mailer';
+import { getInquiryReplyTemplate } from '@/lib/email/templates';
 
 export async function GET(request: NextRequest) {
   try {
@@ -155,19 +157,25 @@ export async function POST(request: NextRequest) {
       }
     } catch (e) {}
 
-    // 3. Log out dispatch notification
+    // 3. Dispatch real live email notification to customer
     if (customer_email) {
-      await supabase.from('notification_logs').insert([
-        {
-          store_id: STORE_ID,
-          recipient: customer_email,
-          subject: `Re: [${inquiry_ref || 'INQ'}] ${subject || 'Concierge Response'} - Rose Valley Kannauj`,
-          notification_type: 'concierge_reply',
-          status: 'sent',
-          provider_response: 'Concierge reply delivered to customer mailbox',
-          created_at: repliedAt,
-        },
-      ]);
+      try {
+        const replyTpl = getInquiryReplyTemplate(
+          customer_name || 'Valued Client',
+          subject || 'Concierge Response',
+          reply.trim(),
+          inquiry_ref || 'INQ'
+        );
+
+        await sendEmail({
+          to: customer_email.trim(),
+          subject: replyTpl.subject,
+          html: replyTpl.html,
+          type: 'concierge_reply',
+        });
+      } catch (emailErr) {
+        console.error('[Admin Inquiries] Email send notice:', emailErr);
+      }
     }
 
     return NextResponse.json({

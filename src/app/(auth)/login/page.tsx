@@ -46,12 +46,6 @@ function LoginContent() {
     }
   };
 
-  const handleDemoLogin = (demoEmail: string, demoPass: string) => {
-    setEmail(demoEmail);
-    setPassword(demoPass);
-    setError('');
-  };
-
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-12 bg-[#F7EEED]">
       <div className="w-full max-w-md bg-white p-8 rounded-3xl border-2 border-[#F7D1D8] shadow-xl space-y-6">
@@ -69,27 +63,6 @@ function LoginContent() {
             {error}
           </div>
         )}
-
-        {/* Demo Quick Fill Buttons */}
-        <div className="space-y-1.5 p-3 rounded-2xl bg-[#FAE6E7]/50 border border-[#F7D1D8]">
-          <span className="text-[10px] font-black uppercase tracking-wider text-[#4A0D25] block">Quick Demo Login:</span>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => handleDemoLogin('admin@maisonessence.com', 'admin123')}
-              className="flex-1 py-1.5 px-2.5 rounded-xl bg-white border border-[#F7D1D8] text-[11px] font-bold text-[#4A0D25] hover:bg-[#F6A6BB] transition-colors shadow-2xs cursor-pointer"
-            >
-              Admin Demo
-            </button>
-            <button
-              type="button"
-              onClick={() => handleDemoLogin('victoria@example.com', 'customer123')}
-              className="flex-1 py-1.5 px-2.5 rounded-xl bg-white border border-[#F7D1D8] text-[11px] font-bold text-[#4A0D25] hover:bg-[#F6A6BB] transition-colors shadow-2xs cursor-pointer"
-            >
-              Customer Demo
-            </button>
-          </div>
-        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1">
@@ -138,7 +111,7 @@ function LoginContent() {
         </form>
 
         <div className="text-center pt-2 border-t border-[#F7D1D8] text-xs text-[#4A0D25] font-medium">
-          Don't have an account?{' '}
+          Don&apos;t have an account?{' '}
           <Link href="/register" className="font-bold text-[#4A0D25] underline hover:text-[#F6A6BB]">
             Create an Account
           </Link>

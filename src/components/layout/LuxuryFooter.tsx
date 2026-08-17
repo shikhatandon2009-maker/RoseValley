@@ -2,7 +2,7 @@
 
 import React, { useEffect } from 'react';
 import Link from 'next/link';
-import { Sparkles, Award, Droplet, Shield } from 'lucide-react';
+import { Sparkles, Award, Droplet } from 'lucide-react';
 import { useSiteSettingsStore } from '@/store/site-settings-store';
 import { formatImageUrl } from '@/lib/format-image';
 
@@ -110,11 +110,6 @@ export function LuxuryFooter() {
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-[#F7D1D8] flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-[#4A0D25] font-semibold">
           <p>© 2026 Rose Valley Kannauj • Maison De L&apos;Essence. All rights reserved.</p>
-          <div className="flex items-center gap-4">
-            <Link href="/admin" className="text-[#4A0D25] font-extrabold hover:text-[#F6A6BB] hover:underline flex items-center gap-1">
-              <Shield className="w-3.5 h-3.5 text-[#F6A6BB]" /> Admin Executive Suite
-            </Link>
-          </div>
         </div>
       </div>
     </footer>

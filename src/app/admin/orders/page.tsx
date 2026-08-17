@@ -29,7 +29,8 @@ import {
   UserPlus,
   Key,
   Copy,
-  Check
+  Check,
+  Mail
 } from 'lucide-react';
 
 interface OrderItem {
@@ -117,11 +118,41 @@ export default function OrdersAdminPage() {
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [sendingInvoiceId, setSendingInvoiceId] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const showToast = (type: 'success' | 'error', text: string) => {
     setToastMessage({ type, text });
     setTimeout(() => setToastMessage(null), 4000);
+  };
+
+  const handleSendTaxInvoiceEmail = async (order: Order) => {
+    const orderIdentifier = order.id || order.order_number;
+    const custEmail = order.users?.email || order.guest_email || order.shipping_address?.email;
+    if (!custEmail) {
+      showToast('error', 'No customer email address found for this order.');
+      return;
+    }
+
+    try {
+      setSendingInvoiceId(order.id);
+      const res = await fetch(`/api/orders/${orderIdentifier}/email-invoice`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: custEmail }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showToast('success', `Official GST Tax Invoice #${order.order_number} sent to ${custEmail}`);
+      } else {
+        showToast('error', data.error || 'Failed to dispatch invoice email.');
+      }
+    } catch (err: any) {
+      showToast('error', 'Network error while dispatching invoice email.');
+    } finally {
+      setSendingInvoiceId(null);
+    }
   };
 
   const handleOpenConvertGuestModal = (order: Order) => {
@@ -562,6 +593,18 @@ export default function OrdersAdminPage() {
                       {/* Actions */}
                       <td className="py-4 px-6 text-right space-x-2">
                         <button
+                          onClick={() => handleSendTaxInvoiceEmail(o)}
+                          disabled={sendingInvoiceId === o.id}
+                          className="p-2 rounded-xl bg-emerald-100 border border-emerald-300 text-emerald-950 hover:bg-emerald-200 transition-all shadow-xs disabled:opacity-50"
+                          title={`Email GST Tax Invoice to ${o.users?.email || o.guest_email || 'Customer'}`}
+                        >
+                          {sendingInvoiceId === o.id ? (
+                            <RefreshCw className="w-4 h-4 animate-spin text-emerald-700" />
+                          ) : (
+                            <Mail className="w-4 h-4 text-emerald-800" />
+                          )}
+                        </button>
+                        <button
                           onClick={() => handleOpenConvertGuestModal(o)}
                           className="p-2 rounded-xl bg-amber-100 border border-amber-300 text-amber-950 hover:bg-amber-200 transition-all shadow-xs"
                           title="Generate Regular Account for Guest"
@@ -758,10 +801,26 @@ export default function OrdersAdminPage() {
             </div>
 
             <div className="pt-4 flex flex-wrap items-center justify-between gap-3 border-t border-[#F7D1D8]">
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={() => handleSendTaxInvoiceEmail(selectedOrder)}
+                  disabled={sendingInvoiceId === selectedOrder.id}
+                  className="px-4 py-2.5 rounded-xl bg-emerald-700 text-white text-xs font-black uppercase tracking-wider hover:bg-emerald-800 transition-all flex items-center gap-1.5 shadow-xs disabled:opacity-50 cursor-pointer"
+                  title={`Email GST Tax Invoice to ${selectedOrder.users?.email || selectedOrder.guest_email || 'Customer'}`}
+                >
+                  {sendingInvoiceId === selectedOrder.id ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" /> Sending Invoice...
+                    </>
+                  ) : (
+                    <>
+                      <Mail className="w-4 h-4" /> Send Invoice Email
+                    </>
+                  )}
+                </button>
                 <button
                   onClick={() => handleOpenFulfillmentModal(selectedOrder)}
-                  className="px-4 py-2.5 rounded-xl bg-[#F6A6BB] text-[#4A0D25] text-xs font-black uppercase tracking-wider hover:bg-[#F4BBC9] transition-all flex items-center gap-2 shadow-xs"
+                  className="px-4 py-2.5 rounded-xl bg-[#F6A6BB] text-[#4A0D25] text-xs font-black uppercase tracking-wider hover:bg-[#F4BBC9] transition-all flex items-center gap-2 shadow-xs cursor-pointer"
                 >
                   <Truck className="w-4 h-4" /> Shipment Tracking
                 </button>

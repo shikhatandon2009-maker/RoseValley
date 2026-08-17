@@ -4,6 +4,8 @@ export const STORE_NAME = "Rose Valley Kannauj";
 
 export const DEFAULT_CURRENCY = "INR";
 
+export const PAYPAL_MERCHANT_EMAIL = process.env.NEXT_PUBLIC_PAYPAL_MERCHANT_EMAIL || "Shikhatandon2009@gmail.com";
+
 export const CURRENCY_SYMBOLS: Record<string, string> = {
   INR: "₹",
   USD: "$",

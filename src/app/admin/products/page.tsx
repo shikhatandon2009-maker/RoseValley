@@ -110,12 +110,22 @@ export default function ProductsAdminPage() {
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isBulkImageModalOpen, setIsBulkImageModalOpen] = useState(false);
+  const [isBulkDeleteModalOpen, setIsBulkDeleteModalOpen] = useState(false);
+
+  // Multi-Selection State
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 
   // CSV Import State
   const [importCsvText, setImportCsvText] = useState('');
   const [importCsvFileName, setImportCsvFileName] = useState('');
   const [isImporting, setIsImporting] = useState(false);
   const [importErrors, setImportErrors] = useState<string[]>([]);
+  const [lastImportSummary, setLastImportSummary] = useState<{
+    updatedCount: number;
+    createdCount: number;
+    totalProcessed: number;
+  } | null>(null);
 
   // Bulk Image Assign State
   const [bulkImageUrl, setBulkImageUrl] = useState('');
@@ -1077,6 +1087,69 @@ const compressImageFile = (file: File, maxWidth = 1000, quality = 0.82): Promise
     reader.readAsText(file);
   };
 
+  // Multi-select helpers
+  const isAllSelected =
+    filteredProducts.length > 0 &&
+    filteredProducts.every((p) => selectedProductIds.includes(p.id));
+  const isSomeSelected =
+    filteredProducts.some((p) => selectedProductIds.includes(p.id)) && !isAllSelected;
+
+  const handleToggleSelectProduct = (productId: string) => {
+    setSelectedProductIds((prev) =>
+      prev.includes(productId) ? prev.filter((id) => id !== productId) : [...prev, productId]
+    );
+  };
+
+  const handleToggleSelectAll = () => {
+    if (isAllSelected) {
+      const filteredIds = new Set(filteredProducts.map((p) => p.id));
+      setSelectedProductIds((prev) => prev.filter((id) => !filteredIds.has(id)));
+    } else {
+      const combined = new Set([...selectedProductIds, ...filteredProducts.map((p) => p.id)]);
+      setSelectedProductIds(Array.from(combined));
+    }
+  };
+
+  const handleClearSelection = () => {
+    setSelectedProductIds([]);
+  };
+
+  // Bulk Delete Submit Handler
+  const handleBulkDeleteSubmit = async () => {
+    if (selectedProductIds.length === 0) return;
+    const countToDelete = selectedProductIds.length;
+    const idsToDelete = [...selectedProductIds];
+    setIsBulkDeleting(true);
+
+    // Optimistic instant UI update
+    const deletedSet = new Set(idsToDelete);
+    const previousProducts = [...products];
+    setProducts((prev) => prev.filter((p) => !deletedSet.has(p.id)));
+    setSelectedProductIds([]);
+    setIsBulkDeleteModalOpen(false);
+
+    showToast('success', `Deleting ${countToDelete} selected product(s)...`);
+
+    try {
+      const res = await fetch('/api/admin/products/bulk-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productIds: idsToDelete }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to delete selected products');
+      showToast('success', `✨ Successfully deleted ${data.deletedCount || countToDelete} product(s)!`);
+      fetchProducts(false);
+    } catch (err: any) {
+      // Revert state on error
+      setProducts(previousProducts);
+      setSelectedProductIds(idsToDelete);
+      showToast('error', err.message || 'Failed to delete selected products');
+    } finally {
+      setIsBulkDeleting(false);
+    }
+  };
+
   // CSV Import Submit
   const handleImportCsvSubmit = async () => {
     if (!importCsvText.trim()) {
@@ -1086,6 +1159,7 @@ const compressImageFile = (file: File, maxWidth = 1000, quality = 0.82): Promise
     try {
       setIsImporting(true);
       setImportErrors([]);
+      setLastImportSummary(null);
       const res = await fetch('/api/admin/products/import', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1094,15 +1168,31 @@ const compressImageFile = (file: File, maxWidth = 1000, quality = 0.82): Promise
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to import CSV');
 
-      showToast('success', `Successfully imported/updated ${data.count} product(s)!`);
+      const updated = data.updatedCount ?? 0;
+      const created = data.createdCount ?? 0;
+      const total = data.totalProcessed ?? data.count ?? (updated + created);
+
+      setLastImportSummary({
+        updatedCount: updated,
+        createdCount: created,
+        totalProcessed: total,
+      });
+
+      showToast(
+        'success',
+        `✨ Import completed: ${updated} updated, ${created} created (${total} total processed)!`
+      );
+
       if (data.errors && data.errors.length > 0) {
         setImportErrors(data.errors);
       } else {
-        setIsImportModalOpen(false);
-        setImportCsvText('');
-        setImportCsvFileName('');
+        setTimeout(() => {
+          setIsImportModalOpen(false);
+          setImportCsvText('');
+          setImportCsvFileName('');
+        }, 2200);
       }
-      fetchProducts();
+      fetchProducts(false);
     } catch (err: any) {
       showToast('error', err.message || 'CSV Import Error');
     } finally {
@@ -1406,6 +1496,18 @@ const compressImageFile = (file: File, maxWidth = 1000, quality = 0.82): Promise
             <table className="w-full text-left text-xs text-stone-800">
               <thead className="bg-stone-100/70 text-stone-600 uppercase text-[10px] font-bold tracking-wider border-b border-stone-200">
                 <tr>
+                  <th className="py-4 px-3 w-10 text-center">
+                    <input
+                      type="checkbox"
+                      checked={isAllSelected}
+                      ref={(el) => {
+                        if (el) el.indeterminate = isSomeSelected;
+                      }}
+                      onChange={handleToggleSelectAll}
+                      className="w-4 h-4 rounded border-stone-300 text-amber-600 focus:ring-amber-500 cursor-pointer accent-amber-600"
+                      title={isAllSelected ? 'Deselect all products' : 'Select all products'}
+                    />
+                  </th>
                   <th className="py-4 px-3 w-12 text-center">Order</th>
                   <th className="py-4 px-4">Product / Fragrance</th>
                   <th className="py-4 px-4">Categories</th>
@@ -1420,6 +1522,7 @@ const compressImageFile = (file: File, maxWidth = 1000, quality = 0.82): Promise
                   const mainImage = p.images && p.images.length > 0 ? p.images[0] : null;
                   const isBeingDragged = draggedProductIndex === idx;
                   const isOver = dragOverProductIndex === idx && !isBeingDragged;
+                  const isSelected = selectedProductIds.includes(p.id);
 
                   return (
                     <tr
@@ -1433,13 +1536,25 @@ const compressImageFile = (file: File, maxWidth = 1000, quality = 0.82): Promise
                         setDragOverProductIndex(null);
                       }}
                       className={`transition-all duration-200 group ${
-                        isBeingDragged
+                        isSelected
+                          ? 'bg-amber-50/70 hover:bg-amber-50'
+                          : isBeingDragged
                           ? 'opacity-30 bg-amber-50/50 border-y-2 border-dashed border-amber-600'
                           : isOver
                           ? 'bg-amber-100/60 border-y-2 border-amber-600'
                           : 'hover:bg-stone-50'
                       }`}
                     >
+                      {/* Select Checkbox Column */}
+                      <td className="py-4 px-3 text-center" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => handleToggleSelectProduct(p.id)}
+                          className="w-4 h-4 rounded border-stone-300 text-amber-600 focus:ring-amber-500 cursor-pointer accent-amber-600"
+                        />
+                      </td>
+
                       {/* Drag & Reorder Column */}
                       <td className="py-4 px-3 text-center">
                         <div className="flex items-center justify-center gap-1 text-stone-400">
@@ -2800,7 +2915,110 @@ const compressImageFile = (file: File, maxWidth = 1000, quality = 0.82): Promise
         </div>
       )}
 
-      {/* DELETE PRODUCT MODAL (LIGHT THEME) */}
+      {/* BULK SELECTION FLOATING ACTION BAR */}
+      {selectedProductIds.length > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-stone-900/95 text-white border border-stone-700 shadow-2xl rounded-2xl px-5 py-3 flex items-center gap-4 backdrop-blur-md animate-fade-in">
+          <div className="flex items-center gap-2">
+            <span className="w-6 h-6 rounded-full bg-amber-500 text-stone-900 flex items-center justify-center text-xs font-black">
+              {selectedProductIds.length}
+            </span>
+            <span className="text-xs font-bold text-stone-200">
+              {selectedProductIds.length === 1 ? '1 product selected' : `${selectedProductIds.length} products selected`}
+            </span>
+          </div>
+
+          <div className="h-4 w-px bg-stone-700 hidden sm:block" />
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleToggleSelectAll}
+              className="px-3 py-1.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-[11px] font-bold text-stone-300 transition-all hidden sm:block"
+            >
+              {isAllSelected ? 'Deselect All' : `Select All (${filteredProducts.length})`}
+            </button>
+            <button
+              type="button"
+              onClick={handleClearSelection}
+              className="px-3 py-1.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-[11px] font-bold text-stone-400 hover:text-stone-200 transition-all"
+            >
+              Clear
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsBulkDeleteModalOpen(true)}
+              className="px-4 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-all shadow-md flex items-center gap-1.5"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Delete Selected ({selectedProductIds.length})</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* BULK DELETE CONFIRMATION MODAL */}
+      {isBulkDeleteModalOpen && (
+        <div className="fixed inset-0 z-50 bg-stone-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white border border-rose-200 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl p-6 space-y-5 text-stone-900 animate-fade-in">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600 shadow-xs">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-serif font-bold text-stone-900">
+                  Delete {selectedProductIds.length} Products
+                </h3>
+                <p className="text-xs text-rose-700 font-bold">This action is permanent.</p>
+              </div>
+            </div>
+
+            <div className="p-3.5 bg-stone-50 rounded-2xl border border-stone-200 max-h-40 overflow-y-auto space-y-1">
+              <p className="text-[10px] font-bold text-stone-500 uppercase tracking-wider mb-1">
+                Selected items ({selectedProductIds.length}):
+              </p>
+              {products
+                .filter((p) => selectedProductIds.includes(p.id))
+                .slice(0, 10)
+                .map((p) => (
+                  <div key={p.id} className="text-xs text-stone-800 font-medium truncate flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
+                    <span className="truncate">{p.name}</span>
+                  </div>
+                ))}
+              {selectedProductIds.length > 10 && (
+                <p className="text-[11px] text-stone-500 font-bold italic pt-1">
+                  ...and {selectedProductIds.length - 10} more items
+                </p>
+              )}
+            </div>
+
+            <p className="text-xs text-stone-600 leading-relaxed font-medium">
+              Are you sure you want to delete these {selectedProductIds.length} products? All variants, price configurations, and category associations will be permanently removed.
+            </p>
+
+            <div className="pt-4 flex items-center justify-end gap-3 border-t border-stone-200">
+              <button
+                type="button"
+                onClick={() => setIsBulkDeleteModalOpen(false)}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-stone-600 hover:text-stone-900 hover:bg-stone-100 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleBulkDeleteSubmit}
+                disabled={isBulkDeleting}
+                className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-lg shadow-rose-600/20 disabled:opacity-50 transition-all flex items-center gap-2"
+              >
+                <Trash2 className="w-4 h-4" />
+                {isBulkDeleting ? 'Deleting...' : `Yes, Delete (${selectedProductIds.length})`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DELETE PRODUCT MODAL (SINGLE ITEM) */}
       {deletingProduct && (
         <div className="fixed inset-0 z-50 bg-stone-900/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white border border-rose-200 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl p-6 space-y-5 text-stone-900">
@@ -2850,17 +3068,47 @@ const compressImageFile = (file: File, maxWidth = 1000, quality = 0.82): Promise
                   <FileSpreadsheet className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-serif font-bold text-stone-900">Bulk Import Products with Variants</h3>
+                  <h3 className="text-lg font-serif font-bold text-stone-900">Fast Bulk Import Products</h3>
                   <p className="text-xs text-stone-500 font-medium">Upload or paste CSV with pricing, categories, scent notes & variants.</p>
                 </div>
               </div>
               <button
-                onClick={() => setIsImportModalOpen(false)}
+                onClick={() => {
+                  setIsImportModalOpen(false);
+                  setLastImportSummary(null);
+                }}
                 className="p-2 rounded-xl text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-all"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
+
+            {/* Real-time Import Results Summary */}
+            {lastImportSummary && (
+              <div className="p-4 rounded-2xl bg-emerald-50/90 border border-emerald-200 space-y-3 animate-fade-in">
+                <div className="flex items-center gap-2 text-xs font-bold text-emerald-900">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  <span>Import Completed Successfully!</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2.5 pt-1 text-center">
+                  <div className="p-2.5 bg-white rounded-xl border border-emerald-200/80 shadow-2xs">
+                    <div className="text-[10px] text-stone-500 font-bold uppercase tracking-wider">Updated</div>
+                    <div className="text-xl font-extrabold text-amber-700 mt-0.5">{lastImportSummary.updatedCount}</div>
+                    <div className="text-[10px] text-stone-400">Existing products</div>
+                  </div>
+                  <div className="p-2.5 bg-white rounded-xl border border-emerald-200/80 shadow-2xs">
+                    <div className="text-[10px] text-stone-500 font-bold uppercase tracking-wider">New Created</div>
+                    <div className="text-xl font-extrabold text-emerald-700 mt-0.5">{lastImportSummary.createdCount}</div>
+                    <div className="text-[10px] text-stone-400">Fresh products</div>
+                  </div>
+                  <div className="p-2.5 bg-white rounded-xl border border-emerald-200/80 shadow-2xs">
+                    <div className="text-[10px] text-stone-500 font-bold uppercase tracking-wider">Total Processed</div>
+                    <div className="text-xl font-extrabold text-stone-900 mt-0.5">{lastImportSummary.totalProcessed}</div>
+                    <div className="text-[10px] text-stone-400">Catalog entries</div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Template Download Banner */}
             <div className="p-4 rounded-2xl bg-[#FAE6E7]/80 border border-[#F7D1D8] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -2885,7 +3133,7 @@ const compressImageFile = (file: File, maxWidth = 1000, quality = 0.82): Promise
                 <span className="text-xs font-bold text-stone-800">
                   {importCsvFileName ? importCsvFileName : 'Click or Drag & Drop .CSV file here'}
                 </span>
-                <span className="text-[10px] text-stone-500 font-medium mt-0.5">Supports UTF-8 CSV with all product fields and multiple variants</span>
+                <span className="text-[10px] text-stone-500 font-medium mt-0.5">High-speed parallel batch processing enabled</span>
                 <input type="file" accept=".csv" onChange={handleCsvFileSelect} className="hidden" />
               </label>
             </div>
@@ -2927,10 +3175,13 @@ const compressImageFile = (file: File, maxWidth = 1000, quality = 0.82): Promise
             <div className="pt-4 flex items-center justify-end gap-3 border-t border-stone-200">
               <button
                 type="button"
-                onClick={() => setIsImportModalOpen(false)}
+                onClick={() => {
+                  setIsImportModalOpen(false);
+                  setLastImportSummary(null);
+                }}
                 className="px-4 py-2 rounded-xl text-xs font-bold text-stone-600 hover:text-stone-900 hover:bg-stone-100 transition-all"
               >
-                Cancel
+                Close
               </button>
               <button
                 type="button"
@@ -2939,7 +3190,7 @@ const compressImageFile = (file: File, maxWidth = 1000, quality = 0.82): Promise
                 className="px-6 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-md disabled:opacity-50 transition-all flex items-center gap-2"
               >
                 <FileSpreadsheet className="w-4 h-4" />
-                {isImporting ? 'Importing Products...' : 'Execute Bulk Import'}
+                {isImporting ? 'Importing Products (Fast Mode)...' : 'Execute Fast Bulk Import'}
               </button>
             </div>
           </div>

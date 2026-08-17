@@ -179,9 +179,9 @@ export default function ViewCartPage() {
               </Link>
             </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10">
               {/* Items List (7 cols) */}
-              <div className="lg:col-span-7 space-y-4">
+              <div className="lg:col-span-7 space-y-3 sm:space-y-4">
                 <div className="flex items-center justify-between border-b border-[#F7D1D8] pb-3 text-xs font-black text-[#4A0D25] uppercase tracking-wider">
                   <span>Selected Items ({items.length})</span>
                   <span>Unit Price</span>
@@ -190,10 +190,10 @@ export default function ViewCartPage() {
                 {items.map((item) => (
                   <div
                     key={item.id}
-                    className="p-5 rounded-3xl bg-[#FAE6E7]/30 border-2 border-[#F7D1D8] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs hover:border-[#F6A6BB] transition-colors"
+                    className="p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl bg-[#FAE6E7]/30 border-2 border-[#F7D1D8] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 shadow-xs hover:border-[#F6A6BB] transition-colors"
                   >
-                    <div className="flex items-center gap-4">
-                      <div className="w-20 h-20 rounded-2xl overflow-hidden bg-white border border-[#F7D1D8] relative flex-shrink-0">
+                    <div className="flex items-center gap-3 sm:gap-4">
+                      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl sm:rounded-2xl overflow-hidden bg-white border border-[#F7D1D8] relative flex-shrink-0">
                         {item.image ? (
                           <Image
                             src={item.image}
@@ -203,24 +203,24 @@ export default function ViewCartPage() {
                           />
                         ) : (
                           <div className="w-full h-full bg-[#FAE6E7] flex items-center justify-center text-[#F6A6BB]">
-                            <ShoppingBag className="w-6 h-6" />
+                            <ShoppingBag className="w-5 h-5 sm:w-6 sm:h-6" />
                           </div>
                         )}
                       </div>
-                      <div>
-                        <h3 className="font-serif font-extrabold text-base text-[#1A0510]">{item.name}</h3>
+                      <div className="min-w-0">
+                        <h3 className="font-serif font-extrabold text-sm sm:text-base text-[#1A0510] line-clamp-1">{item.name}</h3>
                         {item.variantName && (
-                          <span className="inline-block px-2.5 py-0.5 rounded-full bg-[#FAE6E7] text-[#4A0D25] text-[10px] font-extrabold mt-1 border border-[#F7D1D8]">
+                          <span className="inline-block px-2 py-0.5 rounded-full bg-[#FAE6E7] text-[#4A0D25] text-[9px] sm:text-[10px] font-extrabold mt-0.5 border border-[#F7D1D8]">
                             Size: {item.variantName}
                           </span>
                         )}
-                        <p className="text-xs font-black text-[#4A0D25] mt-1.5" suppressHydrationWarning>
+                        <p className="text-xs font-black text-[#4A0D25] mt-1" suppressHydrationWarning>
                           {formatPrice(item.price)} each
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto gap-4 pt-2 sm:pt-0 border-t sm:border-t-0 border-[#F7D1D8]">
+                    <div className="flex items-center justify-between sm:flex-col sm:items-end w-full sm:w-auto gap-3 sm:gap-4 pt-2.5 sm:pt-0 border-t sm:border-t-0 border-[#F7D1D8]">
                       <div className="flex items-center border border-[#F7D1D8] rounded-xl bg-white text-xs px-2 py-1 shadow-xs">
                         <button
                           onClick={() => updateQuantity(item.id, -1)}
@@ -228,7 +228,7 @@ export default function ViewCartPage() {
                         >
                           -
                         </button>
-                        <span className="px-3 font-black text-[#1A0510] text-sm">{item.quantity > 99 ? 1 : item.quantity}</span>
+                        <span className="px-2.5 font-black text-[#1A0510] text-xs sm:text-sm">{item.quantity > 99 ? 1 : item.quantity}</span>
                         <button
                           onClick={() => updateQuantity(item.id, 1)}
                           className="px-2 py-0.5 font-bold text-stone-600 hover:text-[#4A0D25]"
@@ -238,15 +238,15 @@ export default function ViewCartPage() {
                       </div>
 
                       <div className="flex items-center gap-3">
-                        <span className="font-serif font-black text-lg text-[#1A0510]" suppressHydrationWarning>
+                        <span className="font-serif font-black text-base sm:text-lg text-[#1A0510]" suppressHydrationWarning>
                           {formatPrice(item.price * item.quantity)}
                         </span>
                         <button
                           onClick={() => removeItem(item.id)}
-                          className="p-2 rounded-xl bg-rose-100 border border-rose-300 text-rose-800 hover:bg-rose-200 transition-colors"
+                          className="p-1.5 sm:p-2 rounded-xl bg-rose-100 border border-rose-300 text-rose-800 hover:bg-rose-200 transition-colors cursor-pointer"
                           title="Remove item from bag"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                         </button>
                       </div>
                     </div>
@@ -256,8 +256,8 @@ export default function ViewCartPage() {
 
               {/* Order Summary & Coupon Sidebar (5 cols) */}
               <div className="lg:col-span-5">
-                <div className="p-8 rounded-3xl bg-[#FAE6E7]/50 border-2 border-[#F7D1D8] shadow-xl text-left space-y-6 sticky top-24">
-                  <h3 className="font-serif font-extrabold text-2xl text-[#1A0510]">
+                <div className="p-4 sm:p-8 rounded-2xl sm:rounded-3xl bg-[#FAE6E7]/50 border-2 border-[#F7D1D8] shadow-xl text-left space-y-5 sm:space-y-6 sticky top-24">
+                  <h3 className="font-serif font-extrabold text-xl sm:text-2xl text-[#1A0510]">
                     Order Summary
                   </h3>
 

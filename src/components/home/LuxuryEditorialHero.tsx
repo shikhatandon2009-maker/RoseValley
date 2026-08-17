@@ -146,63 +146,6 @@ export function LuxuryEditorialHero({ products }: { products?: any[] }) {
 
   return (
     <div className="relative w-full overflow-hidden border-b border-[#F7D1D8]">
-      {/* ════ KEYFRAMES ════ */}
-      <style>{`
-        @keyframes petalDrift {
-          0%   { transform: translateY(0) translateX(0) rotate(0deg); opacity: 0; }
-          8%   { opacity: 0.6; }
-          92%  { opacity: 0.3; }
-          100% { transform: translateY(-110vh) translateX(30px) rotate(360deg); opacity: 0; }
-        }
-        @keyframes tickerScroll {
-          0%   { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
-        }
-        @keyframes slideUp {
-          from { opacity: 0; transform: translateY(20px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes bottleIn {
-          from { opacity: 0; transform: scale(0.9) translateY(20px); }
-          to   { opacity: 1; transform: scale(1) translateY(0); }
-        }
-        @keyframes bottleFloat {
-          0%, 100% { transform: translateY(0px); }
-          50%       { transform: translateY(-12px); }
-        }
-        @keyframes glowBreath {
-          0%, 100% { opacity: 0.5; transform: scale(1); }
-          50%       { opacity: 0.8; transform: scale(1.05); }
-        }
-        @keyframes ringOut {
-          0%   { opacity: 0.5; transform: scale(0.82); }
-          100% { opacity: 0;   transform: scale(1.35); }
-        }
-        @keyframes shimmer {
-          0%   { transform: translateX(-160%); }
-          100% { transform: translateX(160%); }
-        }
-        .petal {
-          position: absolute;
-          border-radius: 50% 0 50% 0;
-          pointer-events: none;
-          animation: petalDrift linear infinite;
-        }
-        .ticker-track {
-          display: flex;
-          white-space: nowrap;
-          animation: tickerScroll 30s linear infinite;
-        }
-        .shimmer-btn::after {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.3) 50%, transparent 70%);
-          transform: translateX(-160%);
-          animation: shimmer 3.5s ease-in-out infinite 1.2s;
-        }
-      `}</style>
-
       {/* ════ PETALS ════ */}
       {[
         { l: '7%',  s: 9,  d: '0s',   r: '16s', c: '#F6A6BB' },

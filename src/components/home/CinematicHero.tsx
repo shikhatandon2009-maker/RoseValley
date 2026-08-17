@@ -380,62 +380,6 @@ export function CinematicHero({ products }: CinematicHeroProps) {
           </div>
         </div>
       </div>
-
-      {/* ═══════ CSS Keyframes ═══════ */}
-      <style jsx>{`
-        @keyframes auroraFloat {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          33% { transform: translate(5%, -8%) scale(1.05); }
-          66% { transform: translate(-3%, 5%) scale(0.95); }
-        }
-
-        @keyframes heroTextReveal {
-          from {
-            opacity: 0;
-            transform: translateY(30px);
-            filter: blur(8px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-            filter: blur(0);
-          }
-        }
-
-        @keyframes heroFadeUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        @keyframes bottleFloat {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-12px); }
-        }
-
-        @keyframes bottleReveal {
-          from {
-            opacity: 0;
-            transform: translateY(40px) scale(0.92);
-            filter: blur(6px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-            filter: blur(0);
-          }
-        }
-
-        @keyframes ringPulse {
-          0%, 100% { transform: scale(1); opacity: 1; }
-          50% { transform: scale(1.04); opacity: 0.5; }
-        }
-      `}</style>
     </section>
   );
 }

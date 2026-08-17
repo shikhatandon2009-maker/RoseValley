@@ -16,17 +16,33 @@ const nextConfig = {
     ],
   },
   experimental: {
-    optimizePackageImports: [
-      'lucide-react',
-      'framer-motion',
-      'clsx',
-      'tailwind-merge',
-      'zod',
-      'zustand',
-    ],
     serverActions: {
       bodySizeLimit: '10mb',
     },
+  },
+  async redirects() {
+    return [
+      {
+        source: '/category',
+        destination: '/products',
+        permanent: false,
+      },
+      {
+        source: '/category/:slug',
+        destination: '/products?category=:slug',
+        permanent: false,
+      },
+      {
+        source: '/product',
+        destination: '/products',
+        permanent: false,
+      },
+      {
+        source: '/product/:slug',
+        destination: '/products/:slug',
+        permanent: false,
+      },
+    ];
   },
   async headers() {
     return [

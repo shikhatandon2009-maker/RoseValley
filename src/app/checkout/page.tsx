@@ -828,24 +828,24 @@ export default function CheckoutPage() {
     <div className="min-h-screen bg-[#F7EEED] text-[#1A0510] font-sans flex flex-col justify-between selection:bg-[#F6A6BB] selection:text-[#4A0D25] relative">
       <LuxuryHeader />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex-1 w-full">
-        <div className="text-center max-w-xl mx-auto mb-10 space-y-2">
-          <span className="text-xs uppercase tracking-widest text-[#4A0D25] font-bold flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#FAE6E7] border border-[#F7D1D8] w-fit mx-auto shadow-xs">
+      <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-12 flex-1 w-full">
+        <div className="text-center max-w-xl mx-auto mb-6 sm:mb-10 space-y-2">
+          <span className="text-[11px] sm:text-xs uppercase tracking-widest text-[#4A0D25] font-bold flex items-center justify-center gap-1.5 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-[#FAE6E7] border border-[#F7D1D8] w-fit mx-auto shadow-xs">
             <Lock className="w-3.5 h-3.5 text-[#F6A6BB]" /> 256-Bit Encrypted Secure Checkout
           </span>
-          <h1 className="font-serif text-3xl sm:text-5xl font-bold text-[#1A0510]">Complete Your Order</h1>
+          <h1 className="font-serif text-2xl sm:text-5xl font-bold text-[#1A0510]">Complete Your Order</h1>
         </div>
 
         {/* Failure & Retry Alert Banner */}
         {paymentFailed && (
-          <div className="max-w-4xl mx-auto mb-8 p-5 rounded-2xl bg-rose-50 border-2 border-rose-300 text-rose-950 space-y-3 shadow-md animate-fade-in">
+          <div className="max-w-4xl mx-auto mb-6 sm:mb-8 p-4 sm:p-5 rounded-2xl bg-rose-50 border-2 border-rose-300 text-rose-950 space-y-3 shadow-md animate-fade-in">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-rose-200 text-rose-900">
-                  <AlertTriangle className="w-6 h-6" />
+                <div className="p-2 sm:p-2.5 rounded-xl bg-rose-200 text-rose-900 shrink-0">
+                  <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6" />
                 </div>
                 <div>
-                  <h4 className="font-serif font-bold text-base text-rose-900">Payment Transaction Failed</h4>
+                  <h4 className="font-serif font-bold text-sm sm:text-base text-rose-900">Payment Transaction Failed</h4>
                   <p className="text-xs font-semibold text-rose-800">
                     Payment was declined or cancelled. All items in your reserve bag have been preserved.
                   </p>
@@ -854,7 +854,7 @@ export default function CheckoutPage() {
               <button
                 type="button"
                 onClick={() => setPaymentFailed(false)}
-                className="p-1 rounded-lg text-rose-700 hover:bg-rose-100"
+                className="p-1 rounded-lg text-rose-700 hover:bg-rose-100 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -863,19 +863,19 @@ export default function CheckoutPage() {
               <button
                 type="button"
                 onClick={handleInitiatePayment}
-                className="px-5 py-2.5 rounded-xl bg-[#F6A6BB] text-[#4A0D25] text-xs font-extrabold uppercase tracking-wider hover:bg-[#F4BBC9] transition-all flex items-center gap-2 shadow-xs"
+                className="px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-[#F6A6BB] text-[#4A0D25] text-xs font-extrabold uppercase tracking-wider hover:bg-[#F4BBC9] transition-all flex items-center gap-2 shadow-xs cursor-pointer"
               >
-                <RotateCcw className="w-4 h-4" /> Retry Payment
+                <RotateCcw className="w-3.5 h-3.5" /> Retry Payment
               </button>
-              <span className="text-xs text-rose-700 font-medium">Cart reloaded with {items.length} items. Ready for immediate retry.</span>
+              <span className="text-[11px] sm:text-xs text-rose-700 font-medium">Cart reloaded with {items.length} items. Ready for immediate retry.</span>
             </div>
           </div>
         )}
 
-        <form onSubmit={handleInitiatePayment} className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+        <form onSubmit={handleInitiatePayment} className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10">
           
           {/* Left: Shipping & Client Details */}
-          <div className="lg:col-span-7 space-y-6">
+          <div className="lg:col-span-7 space-y-5 sm:space-y-6">
             
             {/* REQUIREMENT 3: For logged-in customer, show Saved Shipping Address card by default with Edit button */}
             {currentUser && hasSavedAddress && !isEditingAddress ? (
@@ -1227,9 +1227,9 @@ export default function CheckoutPage() {
             </div>
 
             {/* REQUIREMENT 4: Payment Terms & Gateway Selection (Razorpay + PayPal) */}
-            <div className="p-6 rounded-3xl bg-[#FAE6E7]/80 border border-[#F7D1D8] space-y-4 shadow-sm">
+            <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-[#FAE6E7]/80 border border-[#F7D1D8] space-y-4 shadow-sm">
               <div className="flex items-center justify-between border-b border-[#F7D1D8] pb-3">
-                <h3 className="font-serif font-bold text-[#1A0510] text-base flex items-center gap-2">
+                <h3 className="font-serif font-bold text-[#1A0510] text-sm sm:text-base flex items-center gap-2">
                   <CreditCard className="w-4 h-4 text-[#F6A6BB]" /> Select Payment Gateway
                 </h3>
                 <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#4A0D25] bg-white px-2.5 py-1 rounded-full border border-[#F7D1D8]">
@@ -1241,7 +1241,7 @@ export default function CheckoutPage() {
                 {/* Gateway Option 1: Razorpay */}
                 <div
                   onClick={() => setPaymentMethod('razorpay')}
-                  className={`p-4 rounded-2xl border-2 transition-all cursor-pointer space-y-1.5 ${
+                  className={`p-3.5 sm:p-4 rounded-2xl border-2 transition-all cursor-pointer space-y-1.5 ${
                     paymentMethod === 'razorpay'
                       ? 'bg-white border-[#F6A6BB] shadow-md ring-2 ring-[#F6A6BB]/30'
                       : 'bg-white/50 border-[#F7D1D8] hover:bg-white'
@@ -1268,7 +1268,7 @@ export default function CheckoutPage() {
                 {/* Gateway Option 2: PayPal */}
                 <div
                   onClick={() => setPaymentMethod('paypal')}
-                  className={`p-4 rounded-2xl border-2 transition-all cursor-pointer space-y-1.5 ${
+                  className={`p-3.5 sm:p-4 rounded-2xl border-2 transition-all cursor-pointer space-y-1.5 ${
                     paymentMethod === 'paypal'
                       ? 'bg-white border-[#0079C1] shadow-md ring-2 ring-[#0079C1]/30'
                       : 'bg-white/50 border-[#F7D1D8] hover:bg-white'
@@ -1300,9 +1300,9 @@ export default function CheckoutPage() {
 
           {/* Right: Order Summary */}
           <div className="lg:col-span-5 space-y-6">
-            <div className="p-6 rounded-3xl bg-white border border-[#F7D1D8] space-y-6 sticky top-28 shadow-md">
+            <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-white border border-[#F7D1D8] space-y-5 sm:space-y-6 sticky top-28 shadow-md">
               <div className="flex items-center justify-between border-b border-[#F7D1D8] pb-3">
-                <h3 className="font-serif font-bold text-[#1A0510] text-xl">
+                <h3 className="font-serif font-bold text-[#1A0510] text-lg sm:text-xl">
                   Order Summary ({items.length} {items.length === 1 ? 'item' : 'items'})
                 </h3>
                 <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">

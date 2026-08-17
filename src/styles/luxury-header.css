@@ -1005,7 +1005,7 @@
   transition: all 0.35s var(--ease-spring);
 }
 
-/admin/products .luxury-currency-btn:hover {
+.luxury-currency-btn:hover {
   background: var(--cart-btn-hover-gradient);
   border-color: #F6A6BB;
   box-shadow: 0 6px 24px rgba(246, 166, 187, 0.55);
@@ -1288,23 +1288,40 @@
 
 @media (max-width: 1024px) {
   .luxury-nav-menu-centered {
-    display: none;
+    display: none !important;
   }
 
   .luxury-header-bottom-row {
     display: none !important;
   }
+
+  .luxury-header-top-row {
+    grid-template-columns: auto 1fr auto;
+    gap: 0.75rem;
+    padding: 0.6rem 1rem 0.5rem;
+  }
+
+  .luxury-brand-link-centered {
+    align-items: center;
+  }
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 1025px) {
   .luxury-mobile-menu-btn {
     display: none !important;
   }
 }
 
 @media (max-width: 640px) {
+  .luxury-top-bar {
+    font-size: 0.6rem;
+    padding: 0.35rem 0.5rem;
+    gap: 0.75rem;
+    letter-spacing: 0.08em;
+  }
+
   .luxury-header-top-row {
-    padding: 0.6rem 0.75rem 0.45rem;
+    padding: 0.5rem 0.75rem 0.4rem;
     gap: 0.5rem;
   }
 
@@ -1313,14 +1330,25 @@
     letter-spacing: 0.08em;
   }
 
+  .luxury-brand-subtitle {
+    font-size: 0.52rem !important;
+    letter-spacing: 0.2em;
+  }
+
   .luxury-cart-btn {
-    padding: 0.4rem 0.65rem;
-    font-size: 0.68rem;
-    gap: 0.35rem;
+    padding: 0.35rem 0.6rem;
+    font-size: 0.65rem;
+    gap: 0.3rem;
+    border-radius: 9999px;
   }
 
   .luxury-cart-hover-menu {
-    width: calc(100vw - 2rem);
+    width: calc(100vw - 1.5rem);
     right: -0.5rem;
+    left: auto;
+  }
+
+  .luxury-mobile-drawer {
+    width: min(320px, 85vw);
   }
 }

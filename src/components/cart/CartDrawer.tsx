@@ -50,11 +50,11 @@ export function CartDrawer() {
         className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
       />
 
-      <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
+      <div className="fixed inset-y-0 right-0 max-w-full flex pl-0 sm:pl-10">
         <div className="w-screen max-w-md bg-white shadow-2xl border-l-2 border-[#F7D1D8] flex flex-col justify-between text-[#1A0510]">
           
           {/* Header */}
-          <div className="p-6 border-b border-[#F7D1D8] flex items-center justify-between bg-[#FAE6E7]/80">
+          <div className="p-4 sm:p-6 border-b border-[#F7D1D8] flex items-center justify-between bg-[#FAE6E7]/80">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-white border border-[#F7D1D8] flex items-center justify-center text-[#4A0D25]">
                 <ShoppingBag className="w-5 h-5 text-[#F6A6BB]" />

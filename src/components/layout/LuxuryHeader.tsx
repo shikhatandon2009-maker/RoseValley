@@ -404,10 +404,10 @@ export function LuxuryHeader() {
           <Link href="/" className="luxury-brand-link-centered flex flex-col items-center group py-0.5 text-center">
             {settings.use_text_logo ? (
               <div className="flex flex-col items-center">
-                <span className={`font-serif font-black tracking-widest text-[#1A0510] uppercase transition-all duration-300 group-hover:text-[#4A0D25] ${scrolled ? 'text-lg sm:text-xl' : 'text-xl sm:text-3xl'}`}>
+                <span className={`font-serif font-black tracking-widest text-[#1A0510] uppercase transition-all duration-300 group-hover:text-[#4A0D25] ${scrolled ? 'text-lg sm:text-xl' : 'text-xl sm:text-3xl'}`} suppressHydrationWarning>
                   {settings.site_name || 'Rose Valley Kannauj'}
                 </span>
-                <span className={`luxury-brand-subtitle hidden sm:block ${scrolled ? 'luxury-brand-subtitle-hidden' : ''}`}>
+                <span className={`luxury-brand-subtitle hidden sm:block ${scrolled ? 'luxury-brand-subtitle-hidden' : ''}`} suppressHydrationWarning>
                   {settings.tagline || 'Est. 1620 • Pure Hydro-Distillates'}
                 </span>
               </div>
@@ -423,7 +423,7 @@ export function LuxuryHeader() {
                     }}
                   />
                 </div>
-                <span className={`luxury-brand-subtitle hidden sm:block ${scrolled ? 'luxury-brand-subtitle-hidden' : ''}`}>
+                <span className={`luxury-brand-subtitle hidden sm:block ${scrolled ? 'luxury-brand-subtitle-hidden' : ''}`} suppressHydrationWarning>
                   Est. 1620 • Pure Hydro-Distillates
                 </span>
               </>
@@ -1034,7 +1034,7 @@ export function LuxuryHeader() {
               className="luxury-mobile-footer-btn"
             >
               <ShoppingBag className="w-4 h-4" />
-              <span>Cart ({mounted ? totalCartCount : 0})</span>
+              <span suppressHydrationWarning>Cart ({mounted ? totalCartCount : 0})</span>
             </Link>
             <Link
               href="/wishlist"
@@ -1042,7 +1042,7 @@ export function LuxuryHeader() {
               className="luxury-mobile-footer-btn"
             >
               <Heart className="w-4 h-4" />
-              <span>Wishlist ({mounted ? productIds.length : 0})</span>
+              <span suppressHydrationWarning>Wishlist ({mounted ? productIds.length : 0})</span>
             </Link>
           </div>
           {currentUser ? (
@@ -1053,7 +1053,7 @@ export function LuxuryHeader() {
                 className="luxury-mobile-footer-btn-primary"
               >
                 <User className="w-4 h-4" />
-                <span>My Account ({currentUser.full_name ? currentUser.full_name.split(' ')[0] : 'Member'})</span>
+                <span suppressHydrationWarning>My Account ({mounted && currentUser?.full_name ? currentUser.full_name.split(' ')[0] : 'Member'})</span>
                 <ArrowRight className="w-3.5 h-3.5 ml-auto" />
               </Link>
               <button

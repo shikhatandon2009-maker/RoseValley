@@ -14,7 +14,7 @@ export interface AIGenerateRequest {
 
 export async function generateAIContent(request: AIGenerateRequest): Promise<string> {
   const apiKey = process.env.GEMINI_API_KEY || process.env.AI_PROVIDER_API_KEY;
-  const model = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
+  const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 
   if (!apiKey) {
     return fallbackAIGeneration(request);
@@ -56,7 +56,15 @@ export async function generateAIContent(request: AIGenerateRequest): Promise<str
       return fallbackAIGeneration(request);
     }
 
-    return resultText.trim();
+    // Clean JSON code blocks if prompt expects JSON
+    let cleaned = resultText.trim();
+    if (cleaned.startsWith('```json')) {
+      cleaned = cleaned.replace(/^```json\s*/i, '').replace(/\s*```$/i, '').trim();
+    } else if (cleaned.startsWith('```')) {
+      cleaned = cleaned.replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
+    }
+
+    return cleaned;
   } catch (err) {
     console.error('[Gemini AI Service Error]:', err);
     return fallbackAIGeneration(request);

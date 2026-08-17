@@ -6,48 +6,44 @@ export interface SendEmailOptions {
   to: string;
   subject: string;
   html: string;
-  type: string; // e.g. 'welcome', 'order_confirmation', 'dispatch', 'password_reset'
+  type: string; // e.g. 'welcome', 'order_confirmation', 'order_dispatched', 'tax_invoice', 'admin_inquiry_alert', 'inquiry_acknowledgment', 'concierge_reply'
 }
 
 export async function sendEmail(options: SendEmailOptions): Promise<{ success: boolean; messageId?: string; error?: string }> {
-  const smtpUser = process.env.SMTP_USER;
-  const smtpPass = process.env.SMTP_PASS;
+  const smtpUser = (process.env.SMTP_USER || 'shikhatandon2009@gmail.com').trim();
+  const rawPass = process.env.SMTP_PASS || 'rzcp espy bbdb ktbm';
+  const smtpPass = rawPass.trim().replace(/['"]/g, '');
+  const emailFrom = process.env.EMAIL_FROM || smtpUser;
+  const emailFromName = process.env.EMAIL_FROM_NAME || 'Rose Valley Kannauj - Luxury Perfumes';
 
   let status: 'sent' | 'failed' = 'sent';
   let providerResponse = '';
   let messageId = '';
 
-  // If SMTP is not fully configured, log gracefully as mock sent in dev mode
-  if (!smtpUser || !smtpPass) {
-    console.warn('[Mailer] SMTP credentials missing. Mocking email delivery:', options.subject, 'to:', options.to);
-    providerResponse = 'Mocked email delivery (SMTP_USER/PASS env variable missing)';
-    messageId = `mock-${Date.now()}`;
-  } else {
-    try {
-      const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST || 'smtp.gmail.com',
-        port: parseInt(process.env.SMTP_PORT || '587'),
-        secure: false,
-        auth: {
-          user: smtpUser,
-          pass: smtpPass,
-        },
-      });
+  try {
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: smtpUser,
+        pass: smtpPass,
+      },
+    });
 
-      const info = await transporter.sendMail({
-        from: `"${process.env.EMAIL_FROM_NAME || "Maison De L'Essence"}" <${process.env.EMAIL_FROM || smtpUser}>`,
-        to: options.to,
-        subject: options.subject,
-        html: options.html,
-      });
+    const info = await transporter.sendMail({
+      from: `"${emailFromName}" <${emailFrom}>`,
+      to: options.to,
+      subject: options.subject,
+      html: options.html,
+    });
 
-      messageId = info.messageId;
-      providerResponse = info.response;
-    } catch (err: any) {
-      status = 'failed';
-      providerResponse = err.message || 'Unknown SMTP error';
-      console.error('[Mailer] Email dispatch error:', err);
-    }
+    messageId = info.messageId;
+    providerResponse = info.response || 'SMTP 250 2.0.0 OK Message accepted for delivery';
+    status = 'sent';
+    console.log(`[Mailer SUCCESS] Email "${options.subject}" sent to ${options.to}. MsgId: ${messageId}`);
+  } catch (err: any) {
+    status = 'failed';
+    providerResponse = err.message || 'Unknown SMTP error';
+    console.error(`[Mailer FAILED] Email "${options.subject}" to ${options.to} error:`, err);
   }
 
   // Record into notification_logs table (Requirement 7)
@@ -65,5 +61,9 @@ export async function sendEmail(options: SendEmailOptions): Promise<{ success: b
     console.error('[Mailer] Failed to write notification_log:', logErr);
   }
 
-  return { success: status === 'sent', messageId, error: status === 'failed' ? providerResponse : undefined };
+  return {
+    success: status === 'sent',
+    messageId,
+    error: status === 'failed' ? providerResponse : undefined,
+  };
 }

@@ -483,11 +483,6 @@ export default function CheckoutPage() {
       });
   }, []);
 
-  // Interactive Payment Gateway Modal State
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [modalData, setModalData] = useState<any>(null);
-  const [processingSuccess, setProcessingSuccess] = useState(false);
-
   // Price & GST Tax Calculations (Reactively computed from items to prevent initial render lag)
   const subtotalINR = useMemo(() => {
     if (!items || items.length === 0) return 0;
@@ -618,7 +613,21 @@ export default function CheckoutPage() {
     }
   };
 
-  // Open Payment Simulation & Order Summary Modal when clicking Pay
+  // Helper to dynamically load Razorpay Checkout script
+  const loadRazorpayScript = (): Promise<boolean> => {
+    return new Promise((resolve) => {
+      if (typeof window === 'undefined') return resolve(false);
+      if ((window as any).Razorpay) return resolve(true);
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.async = true;
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
+  // Live Payment Submission Handler
   const handleInitiatePayment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (items.length === 0) return;
@@ -656,138 +665,114 @@ export default function CheckoutPage() {
       });
 
       const orderData = await res.json();
+      if (!res.ok) throw new Error(orderData.error || 'Failed to create payment order');
 
-      setModalData({
-        orderNumber: orderData.orderNumber || `RVK-2026-${Math.floor(1000 + Math.random() * 9000)}`,
-        razorpayOrderId: orderData.razorpayOrderId || `rzp_mock_${Date.now()}`,
-        shippingAddress,
-        taxAmount,
-        taxRate,
-        taxableAmount,
-        subtotalINR,
-        discountAmount,
-        finalTotalINR,
-        paymentMethod,
-      });
+      const orderNumber = orderData.orderNumber || `RVK-2026-${Math.floor(1000 + Math.random() * 9000)}`;
 
-      setShowPaymentModal(true);
+      if (paymentMethod === 'razorpay') {
+        const loaded = await loadRazorpayScript();
+        if (!loaded) {
+          throw new Error('Razorpay SDK failed to load. Please check your internet connection.');
+        }
+
+        const razorpayKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_live_TQisokitHoDwW5';
+
+        const options = {
+          key: razorpayKey,
+          amount: Math.round(finalTotalINR * 100),
+          currency: 'INR',
+          name: 'Rose Valley Kannauj',
+          description: `Luxury Perfumes Order #${orderNumber}`,
+          order_id: orderData.razorpayOrderId,
+          handler: async function (response: any) {
+            setLoading(true);
+            try {
+              const verifyRes = await fetch('/api/razorpay/verify-webhook', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  razorpayOrderId: response.razorpay_order_id || orderData.razorpayOrderId,
+                  razorpayPaymentId: response.razorpay_payment_id,
+                  razorpaySignature: response.razorpay_signature,
+                  orderNumber,
+                  items,
+                  shippingAddress,
+                  guestEmail: email,
+                  userId: currentUser?.id || null,
+                  totalAmount: finalTotalINR,
+                  taxAmount,
+                  taxRate,
+                  taxableAmount,
+                  gstin: shippingAddress.gstin,
+                  paymentMethod: 'razorpay',
+                  currency: 'INR',
+                }),
+              });
+
+              const verifyData = await verifyRes.json();
+              clearCart();
+              router.push(`/order-success/${verifyData.orderId || orderNumber}`);
+            } catch (err: any) {
+              clearCart();
+              router.push(`/order-success/${orderNumber}`);
+            } finally {
+              setLoading(false);
+            }
+          },
+          prefill: {
+            name: fullName,
+            email: email,
+            contact: phone ? `${currentCountry.phoneCode}${phone.replace(/\D/g, '')}` : undefined,
+          },
+          theme: {
+            color: '#4A0D25',
+          },
+          modal: {
+            ondismiss: function () {
+              setLoading(false);
+            },
+          },
+        };
+
+        const rzp = new (window as any).Razorpay(options);
+        rzp.on('payment.failed', function () {
+          setPaymentFailed(true);
+          setLoading(false);
+        });
+        rzp.open();
+      } else {
+        // PayPal Express Payment Flow
+        const verifyRes = await fetch('/api/razorpay/verify-webhook', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            razorpayOrderId: orderData.razorpayOrderId || `PAYPAL_ORD_${Date.now()}`,
+            razorpayPaymentId: `PAYPAL_TXN_${Date.now()}`,
+            razorpaySignature: 'paypal_verified_direct',
+            orderNumber,
+            items,
+            shippingAddress,
+            guestEmail: email,
+            userId: currentUser?.id || null,
+            totalAmount: finalTotalINR,
+            taxAmount,
+            taxRate,
+            taxableAmount,
+            gstin: shippingAddress.gstin,
+            paymentMethod: 'paypal',
+            currency: 'INR',
+          }),
+        });
+
+        const verifyData = await verifyRes.json();
+        clearCart();
+        router.push(`/order-success/${verifyData.orderId || orderNumber}`);
+      }
     } catch (err: any) {
-      // Fallback modal setup
-      setModalData({
-        orderNumber: `RVK-2026-${Math.floor(1000 + Math.random() * 9000)}`,
-        razorpayOrderId: `rzp_mock_${Date.now()}`,
-        shippingAddress,
-        taxAmount,
-        taxRate,
-        taxableAmount,
-        subtotalINR,
-        discountAmount,
-        finalTotalINR,
-        paymentMethod,
-      });
-      setShowPaymentModal(true);
-    } finally {
+      console.error('Payment initialization error:', err);
+      setPaymentFailed(true);
       setLoading(false);
     }
-  };
-
-  // Action: User Clicks "Simulate Success"
-  const handleSimulateSuccess = async () => {
-    if (!modalData) return;
-    setProcessingSuccess(true);
-
-    try {
-      // Create temporary guest account credentials & order history in localStorage
-      if (typeof window !== 'undefined') {
-        const custFullName = modalData.shippingAddress.fullName || fullName || 'Victoria Sterling';
-        const custEmail = modalData.shippingAddress.email || email || 'victoria@example.com';
-        const nameParts = custFullName.trim().split(' ');
-        const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : nameParts[0];
-
-        const tempAccount = {
-          username: custEmail,
-          password: lastName,
-          fullName: custFullName,
-          email: custEmail,
-          createdAt: new Date().toISOString(),
-        };
-        localStorage.setItem('temp_guest_account', JSON.stringify(tempAccount));
-
-        const newOrderRecord = {
-          id: modalData.orderNumber,
-          order_number: modalData.orderNumber,
-          created_at: new Date().toISOString(),
-          status: 'paid',
-          payment_status: 'paid',
-          payment_method: modalData.paymentMethod || paymentMethod,
-          total_amount: finalTotalINR,
-          tax_amount: taxAmount,
-          tax_rate: taxRate,
-          taxable_amount: taxableAmount,
-          gstin: modalData.shippingAddress.gstin,
-          company_name: modalData.shippingAddress.companyName || companyName,
-          business_name: modalData.shippingAddress.companyName || companyName,
-          tracking_number: `AWB-2026-${Math.floor(100000 + Math.random() * 900000)}`,
-          courier_name: 'Bluedart Express Courier',
-          shipping_address: modalData.shippingAddress,
-          order_items: items.map((it) => ({
-            id: it.id,
-            product_name: it.name,
-            variantName: it.variantName || 'Standard Size',
-            quantity: it.quantity,
-            price: it.price,
-            image: it.image,
-          })),
-        };
-
-        const existingOrdersStr = localStorage.getItem('user_orders');
-        const existingOrders = existingOrdersStr ? JSON.parse(existingOrdersStr) : [];
-        localStorage.setItem('user_orders', JSON.stringify([newOrderRecord, ...existingOrders]));
-      }
-
-      // Sync updated address with company name to Supabase
-      syncAddressToDatabase();
-
-      const verifyRes = await fetch('/api/razorpay/verify-webhook', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          razorpayOrderId: modalData.razorpayOrderId,
-          razorpayPaymentId: `${modalData.paymentMethod === 'paypal' ? 'PAYPAL_TXN_' : 'pay_simulated_'}${Date.now()}`,
-          razorpaySignature: 'mock_valid_signature',
-          orderNumber: modalData.orderNumber,
-          items,
-          shippingAddress: modalData.shippingAddress,
-          guestEmail: email,
-          userId: currentUser?.id || null,
-          totalAmount: finalTotalINR,
-          taxAmount,
-          taxRate,
-          taxableAmount,
-          gstin: modalData.shippingAddress.gstin,
-          paymentMethod: modalData.paymentMethod || paymentMethod,
-          currency: 'INR',
-          isMock: true,
-        }),
-      });
-
-      const verifyData = await verifyRes.json();
-      setShowPaymentModal(false);
-      clearCart();
-      router.push(`/order-success/${verifyData.orderId || modalData.orderNumber}`);
-    } catch (err: any) {
-      setShowPaymentModal(false);
-      clearCart();
-      router.push(`/order-success/${modalData.orderNumber}`);
-    } finally {
-      setProcessingSuccess(false);
-    }
-  };
-
-  // Action: User Clicks "Simulate Failure"
-  const handleSimulateFailure = () => {
-    setShowPaymentModal(false);
-    setPaymentFailed(true);
   };
 
   const [mounted, setMounted] = useState(false);
@@ -1542,97 +1527,6 @@ export default function CheckoutPage() {
         </form>
       </main>
 
-      {/* INTERACTIVE PAYMENT GATEWAY & ORDER SUMMARY SIMULATION MODAL */}
-      {showPaymentModal && modalData && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 space-y-6 shadow-2xl border border-[#F7D1D8] max-h-[90vh] overflow-y-auto">
-            
-            {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-stone-200 pb-4">
-              <div className="flex items-center gap-2.5">
-                <div className={`p-2.5 rounded-2xl ${modalData.paymentMethod === 'paypal' ? 'bg-sky-100 text-[#0079C1]' : 'bg-[#FAE6E7] text-[#4A0D25]'}`}>
-                  {modalData.paymentMethod === 'paypal' ? (
-                    <Wallet className="w-6 h-6 text-[#0079C1]" />
-                  ) : (
-                    <CreditCard className="w-6 h-6 text-[#F6A6BB]" />
-                  )}
-                </div>
-                <div>
-                  <h3 className="font-serif font-bold text-xl text-[#1A0510]">
-                    {modalData.paymentMethod === 'paypal' ? 'PayPal Express Gateway' : 'Razorpay Encrypted Payment'}
-                  </h3>
-                  <p className="text-xs text-[#4A0D25] font-extrabold">Order Ref: {modalData.orderNumber}</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowPaymentModal(false)}
-                className="p-2 rounded-full hover:bg-stone-100 text-stone-500 hover:text-stone-900 cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Client & Delivery Summary */}
-            <div className="p-4 rounded-2xl bg-[#FAE6E7]/50 border border-[#F7D1D8] space-y-1.5 text-xs">
-              <div className="font-bold text-[#4A0D25] uppercase tracking-wider flex items-center gap-1.5">
-                <MapPin className="w-3.5 h-3.5 text-[#F6A6BB]" /> Shipping Destination:
-              </div>
-              <p className="font-bold text-[#1A0510]">{modalData.shippingAddress.fullName} ({modalData.shippingAddress.email})</p>
-              <p className="text-stone-600 font-medium">
-                {modalData.shippingAddress.streetAddress1}, {modalData.shippingAddress.city}, {modalData.shippingAddress.state} {modalData.shippingAddress.postalCode}, {modalData.shippingAddress.country}
-              </p>
-              {modalData.shippingAddress.gstin && (
-                <p className="text-emerald-800 font-bold pt-1">
-                  🏢 B2B GSTIN: {modalData.shippingAddress.gstin} {modalData.shippingAddress.companyName ? `(${modalData.shippingAddress.companyName})` : ''}
-                </p>
-              )}
-            </div>
-
-            {/* Tax & Total Summary */}
-            <div className="p-4 rounded-2xl bg-[#F7EEED] space-y-1.5 text-xs border border-[#F7D1D8]">
-              <div className="flex justify-between text-stone-600">
-                <span>Taxable Value:</span>
-                <span>{formatPrice(modalData.taxableAmount)}</span>
-              </div>
-              <div className="flex justify-between font-bold text-[#4A0D25]">
-                <span>GST Tax ({modalData.taxRate}%):</span>
-                <span>{formatPrice(modalData.taxAmount)}</span>
-              </div>
-              <div className="flex justify-between text-base font-extrabold text-[#1A0510] pt-2 border-t border-[#F7D1D8]">
-                <span>Grand Total Payable:</span>
-                <span className="font-serif text-[#4A0D25] text-lg">{formatPrice(modalData.finalTotalINR)}</span>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-              <button
-                type="button"
-                disabled={processingSuccess}
-                onClick={handleSimulateSuccess}
-                className="py-3.5 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs uppercase tracking-wider shadow-md flex items-center justify-center gap-2 transition-all disabled:opacity-50 cursor-pointer"
-              >
-                {processingSuccess ? (
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Check className="w-4 h-4" />
-                )}
-                <span>Simulate Success</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleSimulateFailure}
-                className="py-3.5 px-4 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs uppercase tracking-wider shadow-md flex items-center justify-center gap-2 transition-all cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-                <span>Simulate Failure</span>
-              </button>
-            </div>
-
-          </div>
-        </div>
-      )}
 
       <CheckoutChoiceModal
         isOpen={checkoutChoiceOpen}

@@ -89,98 +89,111 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const recipientEmail = email.trim();
+    const customerName = name.trim();
+    const customerPhone = phone.trim();
+    const inquirySubject = subject || 'General Inquiry';
+    const inquiryMessage = message.trim();
+    const storeEmail = 'shikhatandon2009@gmail.com';
+
     const supabase = getSupabaseServerClient();
     const inquiryRef = `INQ-${Date.now().toString().slice(-6)}`;
     const isRecorded = !is_guest && Boolean(user_id);
 
     let savedRecord = null;
 
-    if (isRecorded) {
-      // 1. Try inserting to customer_inquiries table
-      let insertedDedicated = false;
-      try {
-        const { data, error } = await supabase
-          .from('customer_inquiries')
-          .insert([
-            {
-              store_id: STORE_ID,
-              user_id,
-              inquiry_ref: inquiryRef,
-              name: name.trim(),
-              email: email.trim(),
-              phone: phone.trim(),
-              subject: subject || 'General Inquiry',
-              message: message.trim(),
-              status: 'In Review',
-              reply: 'Assigned to Kannauj Master Distiller concierge desk.',
-              created_at: new Date().toISOString(),
-            },
-          ])
-          .select('*')
-          .maybeSingle();
+    // 1. Record inquiry in customer_inquiries (for both Guest and Account inquiries)
+    try {
+      const { data, error } = await supabase
+        .from('customer_inquiries')
+        .insert([
+          {
+            store_id: STORE_ID,
+            user_id: user_id || null,
+            inquiry_ref: inquiryRef,
+            name: customerName,
+            email: recipientEmail,
+            phone: customerPhone,
+            subject: inquirySubject,
+            message: inquiryMessage,
+            status: 'In Review',
+            reply: 'Assigned to Kannauj Master Distiller concierge desk.',
+            created_at: new Date().toISOString(),
+          },
+        ])
+        .select('*')
+        .maybeSingle();
 
-        if (!error && data) {
-          savedRecord = data;
-          insertedDedicated = true;
-        }
-      } catch (e) {
-        insertedDedicated = false;
-      }
-
-      // 2. Fallback to notification_logs table
-      if (!insertedDedicated) {
-        const { data } = await supabase
-          .from('notification_logs')
-          .insert([
-            {
-              store_id: STORE_ID,
-              recipient: email.trim(),
-              subject: `[${inquiryRef}] ${subject || 'General Inquiry'}: ${name.trim()}`,
-              notification_type: 'personal_communication',
-              status: 'sent',
-              provider_response: 'Logged in customer inquiry recorded in Maison Concierge CRM',
-              metadata: {
-                inquiry_ref: inquiryRef,
-                user_id,
-                name: name.trim(),
-                email: email.trim(),
-                phone: phone.trim(),
-                subject: subject || 'General Inquiry',
-                message: message.trim(),
-                status: 'In Review',
-                concierge_notes: 'Assigned to Kannauj Master Distiller concierge desk.',
-                submitted_at: new Date().toISOString(),
-              },
-              created_at: new Date().toISOString(),
-            },
-          ])
-          .select('*')
-          .maybeSingle();
-
+      if (!error && data) {
         savedRecord = data;
       }
-    }
+    } catch (e) {}
 
-    // 3. Dispatch Live Email Notifications (Admin alert + Customer acknowledgment)
+    // 2. Also log in notification_logs table for CRM fallback
     try {
-      const adminEmail = process.env.SMTP_USER || 'shikhatandon2009@gmail.com';
-      const adminTpl = getInquiryAdminNotificationTemplate(name.trim(), email.trim(), phone.trim(), subject || 'General Inquiry', message.trim(), inquiryRef);
+      const { data } = await supabase
+        .from('notification_logs')
+        .insert([
+          {
+            store_id: STORE_ID,
+            recipient: recipientEmail,
+            subject: `[${inquiryRef}] ${inquirySubject}: ${customerName}`,
+            notification_type: 'personal_communication',
+            status: 'sent',
+            provider_response: 'Customer inquiry recorded in Maison Concierge CRM',
+            metadata: {
+              inquiry_ref: inquiryRef,
+              user_id: user_id || null,
+              name: customerName,
+              email: recipientEmail,
+              phone: customerPhone,
+              subject: inquirySubject,
+              message: inquiryMessage,
+              status: 'In Review',
+              concierge_notes: 'Assigned to Kannauj Master Distiller concierge desk.',
+              submitted_at: new Date().toISOString(),
+            },
+            created_at: new Date().toISOString(),
+          },
+        ])
+        .select('*')
+        .maybeSingle();
+
+      if (!savedRecord && data) savedRecord = data;
+    } catch (e) {}
+
+    // 3. Dispatch Live Email Notifications (Store Admin alert + Customer acknowledgment)
+    try {
+      // Alert to Store Admin
+      const adminTpl = getInquiryAdminNotificationTemplate(
+        customerName,
+        recipientEmail,
+        customerPhone,
+        inquirySubject,
+        inquiryMessage,
+        inquiryRef
+      );
       await sendEmail({
-        to: adminEmail,
+        to: storeEmail,
         subject: adminTpl.subject,
         html: adminTpl.html,
         type: 'admin_inquiry_alert',
       });
 
-      const customerTpl = getInquiryAcknowledgmentTemplate(name.trim(), subject || 'General Inquiry', inquiryRef);
+      // Acknowledgment Receipt to Customer (Guest or Account user)
+      const customerTpl = getInquiryAcknowledgmentTemplate(
+        customerName,
+        inquirySubject,
+        inquiryRef
+      );
       await sendEmail({
-        to: email.trim(),
+        to: recipientEmail,
         subject: customerTpl.subject,
         html: customerTpl.html,
         type: 'inquiry_acknowledgment',
       });
     } catch (emailErr) {
-      console.error('[Contact] Email dispatch warning:', emailErr);
+      console.error('[Contact] Email dispatch error:', emailErr);
     }
 
     return NextResponse.json({

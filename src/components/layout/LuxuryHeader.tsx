@@ -923,7 +923,25 @@ export function LuxuryHeader() {
         {/* Drawer Header */}
         <div className="luxury-mobile-drawer-header flex items-center justify-between">
           <Link href="/" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2">
-            <img src="/images/rvk-logo.png" alt="Rose Valley Kannauj" className="h-10 w-auto object-contain" />
+            {settings.use_text_logo ? (
+              <div className="flex flex-col">
+                <span className="font-serif font-black text-lg text-[#1A0510] uppercase tracking-widest leading-none">
+                  {settings.site_name || 'Rose Valley'}
+                </span>
+                <span className="text-[9px] font-bold text-[#4A0D25] tracking-widest uppercase">
+                  {settings.tagline || 'Kannauj'}
+                </span>
+              </div>
+            ) : (
+              <img
+                src={formatImageUrl(settings.logo_url, '/images/rvk-logo.png')}
+                alt={settings.site_name || 'Rose Valley Kannauj'}
+                className="h-10 sm:h-12 w-auto object-contain"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = '/images/rvk-logo.png';
+                }}
+              />
+            )}
           </Link>
           <button
             onClick={() => setMobileMenuOpen(false)}

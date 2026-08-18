@@ -1,7 +1,8 @@
 import React from 'react';
 import Link from 'next/link';
 import { SectionWrapper } from '@/components/common/SectionWrapper';
-import { LuxuryEditorialHero } from '@/components/home/LuxuryEditorialHero';
+import { CinematicHeroV2 } from '@/components/home/CinematicHeroV2';
+// import { LuxuryEditorialHero } from '@/components/home/LuxuryEditorialHero';
 // import { CinematicHero } from '@/components/home/CinematicHero';
 // import { RoseOilBottlesOrbitalSpinner } from '@/components/home/RoseOilBottlesOrbitalSpinner';
 import { AnimatedCounter } from '@/components/common/AnimatedCounter';
@@ -37,8 +38,12 @@ export default async function Home() {
       </div>
 
       <div className="flex-1">
-        {/* ✨ HERO A — Editorial Split-Screen (LuxuryEditorialHero) */}
+        {/* ✨ NEW HERO — Cinematic V2 Dark Immersive Carousel */}
+        <CinematicHeroV2 products={heroProducts} />
+
+        {/* ✨ HERO A — Editorial Split-Screen (commented out, file kept at LuxuryEditorialHero.tsx)
         <LuxuryEditorialHero products={heroProducts} />
+        */}
 
         {/* ✨ HERO B — Dark Cinematic Aurora (commented out, file kept at CinematicHero.tsx)
         <CinematicHero products={heroProducts} />

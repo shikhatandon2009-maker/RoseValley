@@ -24,7 +24,8 @@ import {
   FileText,
   Upload,
   Info,
-  DollarSign,
+  Download,
+  FileSpreadsheet,
   Droplets,
 } from 'lucide-react';
 import { STORE_ID } from '@/lib/constants';
@@ -76,10 +77,6 @@ interface Stats {
   lowStockCount: number;
 }
 
-const PREDEFINED_SIZES = [
-  'Sample', '100 ml', '250 ml', '500 ml', '1 Kg', '5 Kg', '10 Kg', '20 Kg'
-];
-
 function roundToNearest10(n: number): number {
   return Math.round(n / 10) * 10;
 }
@@ -117,33 +114,29 @@ export default function ProductsAdminPage() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
 
+  // CSV Import / Export States
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [importResult, setImportResult] = useState<{ message: string; stats?: any } | null>(null);
+
   // Form State with 6 Structured Sections
   const [formData, setFormData] = useState({
-    // Section 1: Basic Information
     name: '',
     slug: '',
     price: '' as string | number,
     compare_at_price: '' as string | number,
     stock: '10' as string | number,
     selectedCategoryIds: [] as string[],
-
-    // Section 2: Product Variants Table
     variants: [] as ProductVariant[],
-
-    // Section 3: Image Gallery
     imagesList: [] as string[],
     imagesText: '',
-
-    // Section 4: Fragrance Notes Pyramid
     topNotesText: '',
     heartNotesText: '',
     baseNotesText: '',
-
-    // Section 5: Product Story & Formulation
     description: '',
     ingredientsText: '',
-
-    // Section 6: SEO & Badges
     is_featured: false,
     is_bestseller: false,
     meta_title: '',
@@ -197,6 +190,66 @@ export default function ProductsAdminPage() {
       }
     } catch (err) {
       console.error('Error loading categories:', err);
+    }
+  };
+
+  // Export CSV Handler
+  const handleExportCsv = async () => {
+    try {
+      setIsExporting(true);
+      showToast('success', 'Preparing CSV export file...');
+      const res = await fetch('/api/admin/products/export');
+      if (!res.ok) throw new Error('Failed to export CSV');
+      
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `rose_valley_products_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      showToast('success', 'CSV export downloaded successfully!');
+    } catch (err: any) {
+      showToast('error', err.message || 'Export error');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // Import CSV Handler
+  const handleImportCsv = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!importFile) {
+      showToast('error', 'Please select a CSV file to upload.');
+      return;
+    }
+
+    try {
+      setIsImporting(true);
+      setImportResult(null);
+
+      const form = new FormData();
+      form.append('file', importFile);
+
+      const res = await fetch('/api/admin/products/import', {
+        method: 'POST',
+        body: form,
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Import failed');
+
+      setImportResult({ message: data.message, stats: data.stats });
+      showToast('success', 'CSV imported successfully!');
+      
+      // Instant background refresh
+      fetchProducts(false);
+    } catch (err: any) {
+      showToast('error', err.message || 'CSV Import error');
+    } finally {
+      setIsImporting(false);
     }
   };
 
@@ -519,10 +572,33 @@ export default function ProductsAdminPage() {
             <Package className="w-4 h-4" /> Products & Variants Manager
           </div>
           <h1 className="text-2xl font-serif font-bold text-stone-900 mt-1">Products Catalog (Supabase)</h1>
-          <p className="text-xs text-stone-500 font-medium">Manage product details, bottle variants, notes pyramid, images, and SEO.</p>
+          <p className="text-xs text-stone-500 font-medium">Manage product details, bottle variants, notes pyramid, images, and CSV import/export.</p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <button
+            onClick={handleExportCsv}
+            disabled={isExporting}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-stone-200 bg-white hover:bg-stone-50 text-stone-700 text-xs font-bold transition-all shadow-xs active:scale-95 disabled:opacity-50"
+            title="Download complete products CSV sheet"
+          >
+            <Download className="w-4 h-4 text-amber-700" />
+            {isExporting ? 'Exporting...' : 'Export CSV'}
+          </button>
+
+          <button
+            onClick={() => {
+              setImportFile(null);
+              setImportResult(null);
+              setIsImportModalOpen(true);
+            }}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-stone-200 bg-white hover:bg-stone-50 text-stone-700 text-xs font-bold transition-all shadow-xs active:scale-95"
+            title="Import products from CSV file"
+          >
+            <FileSpreadsheet className="w-4 h-4 text-amber-700" />
+            Import CSV
+          </button>
+
           <button
             onClick={() => fetchProducts(true)}
             className="p-2.5 rounded-xl border border-stone-200 bg-white hover:bg-stone-50 text-stone-700 transition-all shadow-xs"
@@ -775,6 +851,89 @@ export default function ProductsAdminPage() {
         </div>
       </div>
 
+      {/* CSV IMPORT MODAL */}
+      {isImportModalOpen && (
+        <div className="fixed inset-0 z-50 bg-stone-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white border border-stone-200 rounded-3xl w-full max-w-lg p-6 space-y-6 shadow-2xl animate-fade-in text-stone-900">
+            <div className="flex items-center justify-between border-b border-stone-200 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-amber-100 border border-amber-300 flex items-center justify-center text-amber-800">
+                  <FileSpreadsheet className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-serif font-bold text-stone-900">Import Products CSV</h3>
+                  <p className="text-xs text-stone-500 font-medium">Batch create/update products & variants directly in Supabase.</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsImportModalOpen(false)}
+                className="p-2 rounded-xl text-stone-400 hover:text-stone-700 hover:bg-stone-100"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleImportCsv} className="space-y-4">
+              <div className="p-6 rounded-2xl border-2 border-dashed border-stone-300 hover:border-amber-700 transition-colors bg-stone-50 flex flex-col items-center justify-center text-center cursor-pointer relative">
+                <Upload className="w-8 h-8 text-amber-700 mb-2" />
+                <p className="text-xs font-bold text-stone-800">
+                  {importFile ? importFile.name : 'Select or drag CSV file here'}
+                </p>
+                <p className="text-[11px] text-stone-500 mt-1">Accepts standard .csv product files</p>
+                <input
+                  type="file"
+                  accept=".csv,text/csv"
+                  onChange={(e) => setImportFile(e.target.files?.[0] || null)}
+                  className="absolute inset-0 opacity-0 cursor-pointer"
+                />
+              </div>
+
+              {importResult && (
+                <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs space-y-1">
+                  <div className="flex items-center gap-1.5 font-bold">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    {importResult.message}
+                  </div>
+                  {importResult.stats && (
+                    <p className="text-[11px] text-emerald-700">
+                      Processed: {importResult.stats.processedCount} | New: {importResult.stats.insertedCount} | Updated: {importResult.stats.updatedCount}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              <div className="flex items-center justify-between pt-2">
+                <button
+                  type="button"
+                  onClick={handleExportCsv}
+                  className="text-xs text-amber-800 hover:underline font-bold flex items-center gap-1"
+                >
+                  <Download className="w-3.5 h-3.5" /> Download current CSV template
+                </button>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsImportModalOpen(false)}
+                    className="px-4 py-2 rounded-xl text-stone-600 hover:text-stone-900 font-bold text-xs"
+                  >
+                    Close
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isImporting || !importFile}
+                    className="px-5 py-2.5 rounded-xl bg-amber-700 hover:bg-amber-800 text-white font-bold text-xs shadow-md disabled:opacity-50 transition-all flex items-center gap-2"
+                  >
+                    {isImporting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                    {isImporting ? 'Importing Batch...' : 'Start Import'}
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Delete Confirmation Modal */}
       {deletingProduct && (
         <div className="fixed inset-0 z-50 bg-stone-900/60 backdrop-blur-sm flex items-center justify-center p-4">
@@ -811,9 +970,7 @@ export default function ProductsAdminPage() {
         </div>
       )}
 
-      {/* ────────────────────────────────────────────────────────────────────── */}
-      {/* ADD / EDIT PRODUCT MODAL (6 STRUCTURED SECTIONS)                       */}
-      {/* ────────────────────────────────────────────────────────────────────── */}
+      {/* ADD / EDIT PRODUCT MODAL */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 bg-stone-900/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white border border-stone-200 rounded-3xl w-full max-w-4xl max-h-[92vh] overflow-hidden shadow-2xl flex flex-col animate-fade-in text-stone-900">

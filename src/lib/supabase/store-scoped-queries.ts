@@ -35,10 +35,32 @@ export interface CatalogProduct {
   variants?: any[];
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// HIGH-SPEED IN-MEMORY CACHE (Instant frontend response + Background revalidation)
+// ─────────────────────────────────────────────────────────────────────────────
+interface CacheEntry<T> {
+  data: T;
+  timestamp: number;
+}
+const MEMORY_CACHE = new Map<string, CacheEntry<any>>();
+const CACHE_TTL_MS = 20000; // 20 seconds
+
+export function invalidateStoreCache() {
+  MEMORY_CACHE.clear();
+}
+
 /**
- * Fetch all products dynamically from Supabase
+ * Fetch all products dynamically from Supabase with instant memory cache
  */
 export async function fetchProducts(options?: ProductQueryOptions): Promise<CatalogProduct[]> {
+  const cacheKey = `products_${JSON.stringify(options || {})}`;
+  const cached = MEMORY_CACHE.get(cacheKey);
+  const now = Date.now();
+
+  if (cached && now - cached.timestamp < CACHE_TTL_MS) {
+    return cached.data;
+  }
+
   try {
     const supabase = getSupabaseServerClient();
     const cols = 'id, store_id, name, slug, price, compare_at_price, images, description, scent_notes, ingredients, is_featured, is_bestseller, created_at, updated_at';
@@ -63,7 +85,7 @@ export async function fetchProducts(options?: ProductQueryOptions): Promise<Cata
 
     if (error || !dbProducts) {
       console.error('Error fetching products from Supabase:', error);
-      return [];
+      return cached ? cached.data : [];
     }
 
     let productList: CatalogProduct[] = dbProducts.map((p: any) => ({
@@ -113,19 +135,28 @@ export async function fetchProducts(options?: ProductQueryOptions): Promise<Cata
       productList = productList.slice(0, options.limit);
     }
 
+    MEMORY_CACHE.set(cacheKey, { data: productList, timestamp: now });
     return productList;
   } catch (err) {
     console.error('Database connection error in fetchProducts:', err);
-    return [];
+    return cached ? cached.data : [];
   }
 }
 
 /**
- * Fetch a single product dynamically from Supabase by slug
+ * Fetch a single product dynamically from Supabase by slug with memory caching
  */
 export async function fetchProductBySlug(slug: string): Promise<CatalogProduct | null> {
   const cleanSlug = (slug || '').toLowerCase().trim();
   if (!cleanSlug) return null;
+
+  const cacheKey = `product_slug_${cleanSlug}`;
+  const cached = MEMORY_CACHE.get(cacheKey);
+  const now = Date.now();
+
+  if (cached && now - cached.timestamp < CACHE_TTL_MS) {
+    return cached.data;
+  }
 
   try {
     const supabase = getSupabaseServerClient();
@@ -142,7 +173,7 @@ export async function fetchProductBySlug(slug: string): Promise<CatalogProduct |
       return null;
     }
 
-    return {
+    const product: CatalogProduct = {
       id: String(data.id),
       store_id: data.store_id || STORE_ID,
       name: data.name || 'Artisanal Fragrance',
@@ -157,9 +188,12 @@ export async function fetchProductBySlug(slug: string): Promise<CatalogProduct |
       is_bestseller: Boolean(data.is_bestseller),
       created_at: data.created_at || new Date().toISOString(),
     };
+
+    MEMORY_CACHE.set(cacheKey, { data: product, timestamp: now });
+    return product;
   } catch (err) {
     console.error('Database connection error in fetchProductBySlug:', err);
-    return null;
+    return cached ? cached.data : null;
   }
 }
 
@@ -167,6 +201,14 @@ export async function fetchProductBySlug(slug: string): Promise<CatalogProduct |
  * Fetch product variants dynamically from Supabase
  */
 export async function fetchProductVariants(productId: string, basePrice?: number) {
+  const cacheKey = `variants_${productId}`;
+  const cached = MEMORY_CACHE.get(cacheKey);
+  const now = Date.now();
+
+  if (cached && now - cached.timestamp < CACHE_TTL_MS) {
+    return cached.data;
+  }
+
   try {
     const supabase = getSupabaseServerClient();
     const { data, error } = await supabase
@@ -177,6 +219,7 @@ export async function fetchProductVariants(productId: string, basePrice?: number
       .order('price', { ascending: true });
 
     if (!error && data && data.length > 0) {
+      MEMORY_CACHE.set(cacheKey, { data, timestamp: now });
       return data;
     }
   } catch (err) {
@@ -190,6 +233,14 @@ export async function fetchProductVariants(productId: string, basePrice?: number
  * Fetch categories dynamically from Supabase
  */
 export async function fetchCategories() {
+  const cacheKey = 'store_categories';
+  const cached = MEMORY_CACHE.get(cacheKey);
+  const now = Date.now();
+
+  if (cached && now - cached.timestamp < CACHE_TTL_MS * 2) {
+    return cached.data;
+  }
+
   try {
     const supabase = getSupabaseServerClient();
     const { data, error } = await supabase
@@ -199,6 +250,7 @@ export async function fetchCategories() {
       .order('name', { ascending: true });
 
     if (!error && data && data.length > 0) {
+      MEMORY_CACHE.set(cacheKey, { data, timestamp: now });
       return data;
     }
   } catch (err) {

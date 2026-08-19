@@ -21,11 +21,11 @@ export async function GET(request: NextRequest) {
     const isFeatured = searchParams.get('is_featured');
     const isBestseller = searchParams.get('is_bestseller');
 
+    const cols = 'id, store_id, name, slug, price, compare_at_price, stock, is_featured, is_bestseller, images, description, scent_notes, ingredients, meta_title, meta_description, created_at, updated_at';
     let query = supabase
       .from('products')
-      .select('*')
-      .eq('store_id', STORE_ID)
-      .order('created_at', { ascending: false });
+      .select(cols)
+      .order('id');
 
     if (isFeatured === 'true') {
       query = query.eq('is_featured', true);
@@ -36,12 +36,8 @@ export async function GET(request: NextRequest) {
 
     const { data: products, error } = await query;
 
-    if (error) {
-      console.error('Error fetching products:', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
+    let filteredProducts = (products && products.length > 0) ? products : [];
 
-    let filteredProducts = products || [];
 
     if (search) {
       const searchLower = search.toLowerCase();

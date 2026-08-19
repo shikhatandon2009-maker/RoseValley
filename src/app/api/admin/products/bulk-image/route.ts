@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
-import { STORE_ID } from '@/lib/constants';
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,14 +12,21 @@ export async function POST(request: NextRequest) {
 
     const trimmedUrl = image_url.trim();
 
-    let query = supabase
+    // Prevent massive base64 payloads from bloating PostgreSQL
+    if (trimmedUrl.startsWith('data:image/') && trimmedUrl.length > 5000) {
+      return NextResponse.json({
+        error: 'Base64 data URLs cannot be bulk assigned to products as they bloat the database. Please provide an Image URL (Shopify CDN, Supabase Storage, or /uploads/...).',
+      }, { status: 400 });
+    }
+
+    // 1. Fetch all product IDs from Supabase
+    const { data: products, error: fetchError } = await supabase
       .from('products')
       .select('id, images')
-      .eq('store_id', STORE_ID);
-
-    const { data: products, error: fetchError } = await query;
+      .order('id');
 
     if (fetchError) {
+      console.error('Error fetching products for bulk image:', fetchError);
       return NextResponse.json({ error: fetchError.message }, { status: 500 });
     }
 
@@ -37,27 +43,31 @@ export async function POST(request: NextRequest) {
         success: true,
         message: 'No products matched criteria for update.',
         count: 0,
+        total: (products || []).length,
       });
     }
 
+    const idsToUpdate = productsToUpdate.map((p: any) => p.id);
+
+    // 2. High-performance batch update in chunks of 50
+    const CHUNK_SIZE = 50;
     let updatedCount = 0;
     const errors: string[] = [];
 
-    // Batch update products
-    for (const p of productsToUpdate) {
-      const { error: updateError } = await supabase
+    for (let i = 0; i < idsToUpdate.length; i += CHUNK_SIZE) {
+      const chunkIds = idsToUpdate.slice(i, i + CHUNK_SIZE);
+      const { error: updateError, count } = await supabase
         .from('products')
         .update({
           images: [trimmedUrl],
           updated_at: new Date().toISOString(),
         })
-        .eq('id', p.id)
-        .eq('store_id', STORE_ID);
+        .in('id', chunkIds);
 
       if (updateError) {
-        errors.push(`Product ID ${p.id}: ${updateError.message}`);
+        errors.push(`Chunk error: ${updateError.message}`);
       } else {
-        updatedCount++;
+        updatedCount += chunkIds.length;
       }
     }
 
@@ -65,6 +75,8 @@ export async function POST(request: NextRequest) {
       success: true,
       count: updatedCount,
       total: productsToUpdate.length,
+      imageUrl: trimmedUrl,
+      message: `Successfully assigned image to ${updatedCount} products!`,
       errors: errors.length > 0 ? errors : undefined,
     });
   } catch (err: any) {

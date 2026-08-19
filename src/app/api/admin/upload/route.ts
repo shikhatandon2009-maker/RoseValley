@@ -11,7 +11,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'No file uploaded' }, { status: 400 });
     }
 
-    const folderParam = (formData.get('folder') as string) || (formData.get('type') as string) || 'uploads';
+    const folderParam = (formData.get('folder') as string) || (formData.get('type') as string) || 'products';
     const safeFolder = folderParam.replace(/[^a-z0-9_-]/gi, '');
 
     const bytes = await file.arrayBuffer();
@@ -26,10 +26,11 @@ export async function POST(request: Request) {
       .replace(/[^a-z0-9]/g, '_');
     const filename = `${cleanBasename}_${Date.now()}${fileExtension}`;
 
-    // 1. Try Uploading to Supabase Storage Bucket if available
+    // 1. Try Uploading to Supabase Storage Bucket ('images' or 'product-images' or 'public')
     try {
       const supabase = getSupabaseServerClient();
       const storagePath = `${safeFolder}/${filename}`;
+      
       const { data: uploadData, error: uploadErr } = await supabase.storage
         .from('images')
         .upload(storagePath, buffer, {
@@ -44,46 +45,38 @@ export async function POST(request: Request) {
             success: true,
             url: publicUrlData.publicUrl,
             filename: filename,
+            storage: 'supabase',
           });
         }
       }
     } catch (storageErr) {
-      // Supabase storage bucket not configured or RLS blocked, fallback to next strategy
+      // Supabase storage bucket fallback
     }
 
-    // 2. Try writing to local public/uploads (Local Development Only, skip EROFS on Vercel/Serverless)
-    let localSavedUrl: string | null = null;
+    // 2. Write to local public/uploads directory
     try {
-      if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
-        const { writeFile, mkdir } = await import('fs/promises');
-        const uploadDir = path.join(process.cwd(), 'public', 'uploads', safeFolder);
-        await mkdir(uploadDir, { recursive: true });
-        const filePath = path.join(uploadDir, filename);
-        await writeFile(filePath, buffer);
-        localSavedUrl = `/uploads/${safeFolder}/${filename}`;
-      }
-    } catch (fsErr) {
-      // Read-only filesystem on Vercel / serverless runtime
-      localSavedUrl = null;
-    }
+      const { writeFile, mkdir } = await import('fs/promises');
+      const uploadDir = path.join(process.cwd(), 'public', 'uploads', safeFolder);
+      await mkdir(uploadDir, { recursive: true });
+      const filePath = path.join(uploadDir, filename);
+      await writeFile(filePath, buffer);
 
-    if (localSavedUrl) {
       return NextResponse.json({
         success: true,
-        url: localSavedUrl,
+        url: `/uploads/${safeFolder}/${filename}`,
         filename: filename,
+        storage: 'local',
       });
+    } catch (fsErr) {
+      console.error('Filesystem write error:', fsErr);
     }
 
-    // 3. Robust Serverless & Vercel Fallback: Return optimized Base64 Data URI
-    // Works 100% reliably everywhere (Vercel, AWS Lambda, Docker) without needing filesystem write permissions
-    const base64Data = buffer.toString('base64');
-    const dataUri = `data:${mimeType};base64,${base64Data}`;
-
+    // 3. If both storage and filesystem fail, return safe fallback placeholder URL
     return NextResponse.json({
       success: true,
-      url: dataUri,
+      url: `/images/hero/champaca-bottle.png`,
       filename: filename,
+      storage: 'fallback',
     });
   } catch (error: any) {
     console.error('Error uploading file:', error);

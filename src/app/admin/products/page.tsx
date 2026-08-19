@@ -315,47 +315,47 @@ export default function ProductsAdminPage() {
       : [];
   }, [formData.imagesText]);
 
-const compressImageFile = (file: File, maxWidth = 1000, quality = 0.82): Promise<string> => {
-  return new Promise((resolve) => {
-    if (file.type === 'image/svg+xml' || file.size < 80 * 1024) {
+  const compressImageFile = (file: File, maxWidth = 1000, quality = 0.82): Promise<string> => {
+    return new Promise((resolve) => {
+      if (file.type === 'image/svg+xml' || file.size < 80 * 1024) {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target?.result as string);
+        reader.readAsDataURL(file);
+        return;
+      }
+
+      const img = document.createElement('img');
       const reader = new FileReader();
-      reader.onload = (e) => resolve(e.target?.result as string);
+      reader.onload = (e) => {
+        img.src = e.target?.result as string;
+      };
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressedDataUrl = canvas.toDataURL('image/webp', quality);
+          resolve(compressedDataUrl);
+        } else {
+          const fallbackReader = new FileReader();
+          fallbackReader.onload = (ev) => resolve(ev.target?.result as string);
+          fallbackReader.readAsDataURL(file);
+        }
+      };
       reader.readAsDataURL(file);
-      return;
-    }
-
-    const img = document.createElement('img');
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      img.src = e.target?.result as string;
-    };
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      let width = img.width;
-      let height = img.height;
-
-      if (width > maxWidth) {
-        height = Math.round((height * maxWidth) / width);
-        width = maxWidth;
-      }
-
-      canvas.width = width;
-      canvas.height = height;
-
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.drawImage(img, 0, 0, width, height);
-        const compressedDataUrl = canvas.toDataURL('image/webp', quality);
-        resolve(compressedDataUrl);
-      } else {
-        const fallbackReader = new FileReader();
-        fallbackReader.onload = (ev) => resolve(ev.target?.result as string);
-        fallbackReader.readAsDataURL(file);
-      }
-    };
-    reader.readAsDataURL(file);
-  });
-};
+    });
+  };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -372,8 +372,28 @@ const compressImageFile = (file: File, maxWidth = 1000, quality = 0.82): Promise
     }
 
     try {
-      showToast('success', `Processing ${validFiles.length} image(s)...`);
-      const compressedUrls = await Promise.all(validFiles.map((file) => compressImageFile(file)));
+      showToast('success', `Uploading ${validFiles.length} image(s)...`);
+      const uploadedUrls: string[] = [];
+
+      for (const file of validFiles) {
+        const uploadFormData = new FormData();
+        uploadFormData.append('file', file);
+        uploadFormData.append('folder', 'products');
+
+        const res = await fetch('/api/admin/upload', {
+          method: 'POST',
+          body: uploadFormData,
+        });
+
+        const data = await res.json();
+        if (res.ok && data.url) {
+          uploadedUrls.push(data.url);
+        }
+      }
+
+      if (uploadedUrls.length === 0) {
+        throw new Error('Upload failed');
+      }
 
       setFormData((prev) => {
         const existing = prev.imagesText
@@ -381,15 +401,16 @@ const compressImageFile = (file: File, maxWidth = 1000, quality = 0.82): Promise
           : [];
         return {
           ...prev,
-          imagesText: [...existing, ...compressedUrls].join('\n'),
+          imagesText: [...existing, ...uploadedUrls].join('\n'),
         };
       });
-      showToast('success', `${validFiles.length} image(s) processed & optimized!`);
-    } catch (err) {
+      showToast('success', `${uploadedUrls.length} image(s) uploaded successfully!`);
+    } catch (err: any) {
       console.error(err);
-      showToast('error', 'Failed to process images.');
+      showToast('error', err.message || 'Failed to upload images.');
     }
   };
+
 
   const handleRemoveImage = (indexToRemove: number) => {
     const updated = currentImagesList.filter((_, idx) => idx !== indexToRemove);
@@ -545,7 +566,7 @@ const compressImageFile = (file: File, maxWidth = 1000, quality = 0.82): Promise
       try {
         const cached = localStorage.getItem('cached_categories_list');
         if (cached) setCategoriesList(JSON.parse(cached));
-      } catch (e) {}
+      } catch (e) { }
     }
 
     try {
@@ -1205,14 +1226,28 @@ const compressImageFile = (file: File, maxWidth = 1000, quality = 0.82): Promise
     const file = e.target.files?.[0];
     if (!file) return;
     try {
-      showToast('success', 'Optimizing uploaded image...');
-      const compressed = await compressImageFile(file);
-      setBulkImageUrl(compressed);
-      showToast('success', 'Image ready for bulk assignment!');
-    } catch (err) {
-      showToast('error', 'Failed to read image file.');
+      showToast('success', 'Uploading and processing image...');
+      const uploadFormData = new FormData();
+      uploadFormData.append('file', file);
+      uploadFormData.append('folder', 'products');
+
+      const res = await fetch('/api/admin/upload', {
+        method: 'POST',
+        body: uploadFormData,
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.url) {
+        throw new Error(data.error || 'Upload failed');
+      }
+
+      setBulkImageUrl(data.url);
+      showToast('success', 'Single image uploaded and ready for bulk assignment!');
+    } catch (err: any) {
+      showToast('error', err.message || 'Failed to upload image file.');
     }
   };
+
 
   const handleGenerateBulkAIImage = async () => {
     try {
@@ -1282,11 +1317,10 @@ const compressImageFile = (file: File, maxWidth = 1000, quality = 0.82): Promise
       {/* Toast Notification */}
       {toastMessage && (
         <div
-          className={`fixed bottom-6 right-6 z-50 px-5 py-3 rounded-2xl shadow-2xl border backdrop-blur-md flex items-center gap-3 transition-all animate-bounce ${
-            toastMessage.type === 'success'
+          className={`fixed bottom-6 right-6 z-50 px-5 py-3 rounded-2xl shadow-2xl border backdrop-blur-md flex items-center gap-3 transition-all animate-bounce ${toastMessage.type === 'success'
               ? 'bg-emerald-950/90 border-emerald-500/40 text-emerald-200'
               : 'bg-rose-950/90 border-rose-500/40 text-rose-200'
-          }`}
+            }`}
         >
           {toastMessage.type === 'success' ? (
             <CheckCircle2 className="w-5 h-5 text-emerald-400" />
@@ -1535,15 +1569,14 @@ const compressImageFile = (file: File, maxWidth = 1000, quality = 0.82): Promise
                         setDraggedProductIndex(null);
                         setDragOverProductIndex(null);
                       }}
-                      className={`transition-all duration-200 group ${
-                        isSelected
+                      className={`transition-all duration-200 group ${isSelected
                           ? 'bg-amber-50/70 hover:bg-amber-50'
                           : isBeingDragged
-                          ? 'opacity-30 bg-amber-50/50 border-y-2 border-dashed border-amber-600'
-                          : isOver
-                          ? 'bg-amber-100/60 border-y-2 border-amber-600'
-                          : 'hover:bg-stone-50'
-                      }`}
+                            ? 'opacity-30 bg-amber-50/50 border-y-2 border-dashed border-amber-600'
+                            : isOver
+                              ? 'bg-amber-100/60 border-y-2 border-amber-600'
+                              : 'hover:bg-stone-50'
+                        }`}
                     >
                       {/* Select Checkbox Column */}
                       <td className="py-4 px-3 text-center" onClick={(e) => e.stopPropagation()}>
@@ -1657,22 +1690,20 @@ const compressImageFile = (file: File, maxWidth = 1000, quality = 0.82): Promise
                       <td className="py-4 px-4 space-x-1">
                         <button
                           onClick={() => handleToggleFlag(p, 'is_featured')}
-                          className={`p-1.5 rounded-lg border transition-all ${
-                            p.is_featured
+                          className={`p-1.5 rounded-lg border transition-all ${p.is_featured
                               ? 'bg-amber-100 border-amber-300 text-amber-800'
                               : 'bg-stone-100 border-stone-200 text-stone-400 hover:text-amber-800'
-                          }`}
+                            }`}
                           title="Toggle Featured"
                         >
                           <Star className="w-3.5 h-3.5 fill-current" />
                         </button>
                         <button
                           onClick={() => handleToggleFlag(p, 'is_bestseller')}
-                          className={`p-1.5 rounded-lg border transition-all ${
-                            p.is_bestseller
+                          className={`p-1.5 rounded-lg border transition-all ${p.is_bestseller
                               ? 'bg-amber-100 border-amber-300 text-amber-900'
                               : 'bg-stone-100 border-stone-200 text-stone-400 hover:text-amber-900'
-                          }`}
+                            }`}
                           title="Toggle Bestseller"
                         >
                           <Flame className="w-3.5 h-3.5" />
@@ -1841,11 +1872,10 @@ const compressImageFile = (file: File, maxWidth = 1000, quality = 0.82): Promise
                         type="button"
                         key={cat.id}
                         onClick={() => toggleCategorySelection(cat.id)}
-                        className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
-                          isSelected
+                        className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${isSelected
                             ? 'bg-amber-600 text-white shadow-md'
                             : 'bg-white border border-stone-300 text-stone-700 hover:bg-stone-100'
-                        }`}
+                          }`}
                       >
                         {cat.name}
                       </button>
@@ -1994,11 +2024,10 @@ const compressImageFile = (file: File, maxWidth = 1000, quality = 0.82): Promise
                       processImageFiles(Array.from(e.dataTransfer.files));
                     }
                   }}
-                  className={`border-2 border-dashed rounded-2xl p-4 text-center transition-all ${
-                    isDragging
+                  className={`border-2 border-dashed rounded-2xl p-4 text-center transition-all ${isDragging
                       ? 'border-amber-500 bg-amber-100/50 scale-[1.01]'
                       : 'border-amber-300 bg-white hover:border-amber-500 hover:bg-amber-50/30'
-                  }`}
+                    }`}
                 >
                   <input
                     type="file"
@@ -2408,11 +2437,10 @@ const compressImageFile = (file: File, maxWidth = 1000, quality = 0.82): Promise
                         type="button"
                         key={cat.id}
                         onClick={() => toggleCategorySelection(cat.id)}
-                        className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
-                          isSelected
+                        className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${isSelected
                             ? 'bg-amber-600 text-white shadow-md'
                             : 'bg-white border border-stone-300 text-stone-700 hover:bg-stone-100'
-                        }`}
+                          }`}
                       >
                         {cat.name}
                       </button>
@@ -2458,13 +2486,12 @@ const compressImageFile = (file: File, maxWidth = 1000, quality = 0.82): Promise
                             setDraggedVariantIndex(null);
                             setDragOverVariantIndex(null);
                           }}
-                          className={`flex items-center gap-2 p-2.5 rounded-xl bg-white border transition-all duration-200 ${
-                            isBeingDragged
+                          className={`flex items-center gap-2 p-2.5 rounded-xl bg-white border transition-all duration-200 ${isBeingDragged
                               ? 'opacity-40 border-dashed border-amber-600 scale-[0.98]'
                               : isOver
-                              ? 'border-2 border-amber-600 shadow-md bg-amber-50/40'
-                              : 'border-amber-200/80 shadow-xs hover:border-amber-300'
-                          }`}
+                                ? 'border-2 border-amber-600 shadow-md bg-amber-50/40'
+                                : 'border-amber-200/80 shadow-xs hover:border-amber-300'
+                            }`}
                         >
                           {/* Drag Handle & Reorder Arrows */}
                           <div className="flex items-center gap-1 text-stone-400 select-none">
@@ -2616,11 +2643,10 @@ const compressImageFile = (file: File, maxWidth = 1000, quality = 0.82): Promise
                       processImageFiles(Array.from(e.dataTransfer.files));
                     }
                   }}
-                  className={`border-2 border-dashed rounded-2xl p-4 text-center transition-all ${
-                    isDragging
+                  className={`border-2 border-dashed rounded-2xl p-4 text-center transition-all ${isDragging
                       ? 'border-amber-500 bg-amber-100/50 scale-[1.01]'
                       : 'border-amber-300 bg-white hover:border-amber-500 hover:bg-amber-50/30'
-                  }`}
+                    }`}
                 >
                   <input
                     type="file"
@@ -3226,11 +3252,10 @@ const compressImageFile = (file: File, maxWidth = 1000, quality = 0.82): Promise
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <label
                   onClick={() => setBulkImageTarget('missing_only')}
-                  className={`flex items-start gap-3 p-3.5 rounded-2xl border-2 cursor-pointer transition-all ${
-                    bulkImageTarget === 'missing_only'
+                  className={`flex items-start gap-3 p-3.5 rounded-2xl border-2 cursor-pointer transition-all ${bulkImageTarget === 'missing_only'
                       ? 'border-[#F6A6BB] bg-[#FAE6E7]/50 text-[#1A0510]'
                       : 'border-stone-200 hover:border-stone-300 text-stone-600'
-                  }`}
+                    }`}
                 >
                   <input
                     type="radio"
@@ -3247,11 +3272,10 @@ const compressImageFile = (file: File, maxWidth = 1000, quality = 0.82): Promise
 
                 <label
                   onClick={() => setBulkImageTarget('all')}
-                  className={`flex items-start gap-3 p-3.5 rounded-2xl border-2 cursor-pointer transition-all ${
-                    bulkImageTarget === 'all'
+                  className={`flex items-start gap-3 p-3.5 rounded-2xl border-2 cursor-pointer transition-all ${bulkImageTarget === 'all'
                       ? 'border-[#F6A6BB] bg-[#FAE6E7]/50 text-[#1A0510]'
                       : 'border-stone-200 hover:border-stone-300 text-stone-600'
-                  }`}
+                    }`}
                 >
                   <input
                     type="radio"
@@ -3271,7 +3295,7 @@ const compressImageFile = (file: File, maxWidth = 1000, quality = 0.82): Promise
             {/* Image Input Options */}
             <div className="space-y-3">
               <label className="text-xs font-bold text-stone-700 block">Select or Paste Image</label>
-              
+
               <div className="flex flex-wrap gap-2">
                 <label className="px-3.5 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 border border-stone-300 text-stone-700 text-xs font-bold cursor-pointer flex items-center gap-1.5 transition-all">
                   <Upload className="w-3.5 h-3.5" /> Upload from Computer

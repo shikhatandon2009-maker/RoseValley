@@ -12,18 +12,17 @@ interface ProductDetailPageProps {
 export const revalidate = 60;
 
 export default async function ProductDetailPage({ params }: ProductDetailPageProps) {
-  let product = await fetchProductBySlug(params.slug);
+  const product = await fetchProductBySlug(params.slug);
 
   if (!product) {
     return notFound();
   }
 
   const [variants, reviews, questions] = await Promise.all([
-    fetchProductVariants(product.id),
+    fetchProductVariants(product.id, product.price),
     fetchReviews(product.id),
     fetchQuestions(product.id),
   ]);
-
 
   return (
     <div className="min-h-screen bg-[#F7EEED] text-[#1A0510] flex flex-col justify-between overflow-x-hidden w-full">
@@ -32,10 +31,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
       <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-10 w-full overflow-x-hidden">
         <ProductDetailClient
           product={product}
-          variants={variants.length > 0 ? variants : [
-            { id: 'v1', name: '10ml Pure Extrait', price: product.price, size: '10ml', stock: 25 },
-            { id: 'v2', name: '50ml Royal Flacon', price: product.price * 2, size: '50ml', stock: 20 },
-          ]}
+          variants={variants}
           initialReviews={reviews}
           initialQuestions={questions}
         />

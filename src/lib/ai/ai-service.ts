@@ -92,11 +92,12 @@ Format MUST be strictly valid JSON without markdown formatting:
 {"top": ["Note 1", "Note 2", "Note 3"], "heart": ["Note 4", "Note 5", "Note 6"], "base": ["Note 7", "Note 8", "Note 9"]}`;
 
     case 'seo_metadata':
-      return `Perform market research for luxury perfume "${req.prompt}". Return ONLY a valid JSON object with:
-"meta_title": a high-converting SEO title tag under 60 characters for "${req.prompt}" (e.g. "${req.prompt} | Pure Kannauj Attar | Rose Valley").
-"meta_description": a 155-character market-researched meta description highlighting 100% alcohol-free attar, 400-year Deg-Bhapka copper distillation, and long sillage for "${req.prompt}".
+      return `You are an award-winning luxury SEO strategist for Rose Valley Kannauj (rosevalleykannauj.com). Perform deep market research for the luxury perfume "${req.prompt}". Return ONLY a valid JSON object with these exact fields:
+"meta_title": An award-winning, click-magnetizing SEO title tag under 60 characters — must contain the product name and a luxury power phrase (e.g. "${req.prompt} | Pure Kannauj Attar | Rose Valley").
+"meta_keywords": 12-15 high-value, comma-separated SEO keyword phrases specifically researched for "${req.prompt}" (include long-tail buyer-intent keywords like 'buy ${req.prompt} online', 'pure ${req.prompt} attar', 'alcohol-free ${req.prompt}', 'Kannauj ${req.prompt}', etc.).
+"meta_description": A compelling, highest-quality 155-character meta description with a direct call-to-action — must highlight 100% alcohol-free purity, 400-year Deg-Bhapka copper distillation heritage, 12+ hour sillage, and the unique fragrance profile of "${req.prompt}".
 Format MUST be strictly valid JSON:
-{"meta_title": "...", "meta_description": "..."}`;
+{"meta_title": "...", "meta_keywords": "...", "meta_description": "..."}`;
 
     case 'customer_reviews':
       return `Return ONLY a valid JSON array of 3 authentic, glowing 5-star customer reviews specifically for the perfume "${req.prompt}".
@@ -197,6 +198,7 @@ Finally, ${name} anchors into a deep, mesmerizing drydown foundation of ${baseNo
       return JSON.stringify(
         {
           meta_title: `${name} | Pure 100% Alcohol-Free Kannauj Attar | Rose Valley`,
+          meta_keywords: `${name}, buy ${name} online, pure ${name} attar, alcohol-free ${name}, Kannauj ${name}, ${name} essential oil, luxury attar India, ${notes.top[0].toLowerCase()} perfume, ${notes.heart[0].toLowerCase()} attar, ${notes.base[0].toLowerCase()} oil, Deg-Bhapka distillation, Rose Valley Kannauj, natural attar online, pure botanical perfume`,
           meta_description: `Buy ${name} online. Hand-distilled in 400-year Kannauj copper stills with ${notes.top[0]}, ${notes.heart[0]}, and ${notes.base[0]}. 100% alcohol-free luxury attar with 12+ hour sillage.`,
         },
         null,

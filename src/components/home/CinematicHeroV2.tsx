@@ -36,7 +36,7 @@ const CATALOGUE: HeroProduct[] = [
     story: 'Twelve thousand kilograms of pre-dawn Damask petals captured in a single copper still — living perfumery at its purest.',
     accord: ['Damask Rose', 'Copper Deg-Bhapka', 'Sandalwood'],
     slug: 'gulab-khas-pure-ruh-gulab',
-    image: '/images/hero/champaca-bottle.png',
+    image: '/uploads/products/roseoil_in_common_image_1787115790783.png',
     price: 5500,
     comparePrice: 6200,
     volume: '10ml Pure Ruh Gulab',

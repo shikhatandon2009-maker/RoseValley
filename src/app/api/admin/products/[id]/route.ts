@@ -75,13 +75,13 @@ export async function PUT(
       description,
       price,
       compare_at_price,
-      stock,
       images,
       scent_notes,
       ingredients,
       is_featured,
       is_bestseller,
       meta_title,
+      meta_keywords,
       meta_description,
       category_ids,
       variants,
@@ -101,13 +101,13 @@ export async function PUT(
     if (description !== undefined) updates.description = description.trim();
     if (price !== undefined) updates.price = Number(price);
     if (compare_at_price !== undefined) updates.compare_at_price = compare_at_price ? Number(compare_at_price) : null;
-    if (stock !== undefined) updates.stock = Number(stock);
     if (images !== undefined) updates.images = Array.isArray(images) ? images : [];
     if (scent_notes !== undefined) updates.scent_notes = scent_notes;
     if (ingredients !== undefined) updates.ingredients = Array.isArray(ingredients) ? ingredients : [];
     if (is_featured !== undefined) updates.is_featured = Boolean(is_featured);
     if (is_bestseller !== undefined) updates.is_bestseller = Boolean(is_bestseller);
     if (meta_title !== undefined) updates.meta_title = meta_title.trim();
+    if (meta_keywords !== undefined) updates.meta_keywords = meta_keywords.trim();
     if (meta_description !== undefined) updates.meta_description = meta_description.trim();
 
     const { data: updatedProduct, error } = await supabase
@@ -159,7 +159,6 @@ export async function PUT(
           sku: v.sku ? String(v.sku).trim() : null,
           price: Number(v.price) || Number(price || 0),
           compare_at_price: v.compare_at_price ? Number(v.compare_at_price) : null,
-          stock: Number(v.stock) || 0,
         }));
 
         const { data: insertedVariants } = await supabase

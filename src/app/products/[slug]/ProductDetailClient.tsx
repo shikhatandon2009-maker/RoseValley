@@ -174,7 +174,7 @@ export function ProductDetailClient({ product, variants, initialReviews, initial
                   src={selectedImage || product.images?.[0]}
                   alt="Flying Bottle"
                   fill
-                  className="object-contain mix-blend-multiply"
+                  className="object-contain"
                 />
               </div>
 
@@ -233,7 +233,7 @@ export function ProductDetailClient({ product, variants, initialReviews, initial
                   alt={product.name}
                   fill
                   priority
-                  className="object-contain mix-blend-multiply drop-shadow-[0_20px_50px_rgba(74,13,37,0.18)] transition-transform duration-300 ease-out p-4"
+                  className="object-contain drop-shadow-[0_20px_50px_rgba(74,13,37,0.18)] transition-transform duration-300 ease-out p-4"
                   style={{
                     transformOrigin: `${zoomPos.x}% ${zoomPos.y}%`,
                     transform: isHovered ? 'scale(2.5)' : 'scale(1)',
@@ -276,7 +276,7 @@ export function ProductDetailClient({ product, variants, initialReviews, initial
                     selectedImage === img ? 'ring-2 ring-[#D45A7A] scale-105' : 'opacity-70 hover:opacity-100'
                   }`}
                 >
-                  <Image src={img} alt={`Thumbnail ${idx}`} fill className="object-contain p-1 mix-blend-multiply" />
+                  <Image src={img} alt={`Thumbnail ${idx}`} fill className="object-contain p-1" />
                 </button>
               ))}
             </div>

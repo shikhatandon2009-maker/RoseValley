@@ -7,8 +7,6 @@ import { Heart, ShoppingBag, Star, Sparkles, AlertTriangle } from 'lucide-react'
 import { useCartStore } from '@/store/cart-store';
 import { useWishlistStore } from '@/store/wishlist-store';
 import { useCurrencyStore } from '@/store/currency-store';
-import { getQualitySinglePicture } from '@/lib/supabase/store-scoped-queries';
-
 export interface ProductCardProps {
   product: {
     id: string;
@@ -26,7 +24,7 @@ export interface ProductCardProps {
   priority?: boolean;
 }
 
-const FALLBACK_BOTTLE = '/images/hero/champaca-bottle.png';
+const FALLBACK_BOTTLE = '/uploads/products/roseoil_in_common_image_1787115790783.png';
 
 export function ProductCard({ product, priority = false }: ProductCardProps) {
   const { addItem } = useCartStore();
@@ -37,8 +35,7 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
   const [added, setAdded] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
 
-  // Single quality picture resolution
-  const initialSinglePicture = getQualitySinglePicture(product);
+  const initialSinglePicture = product.images?.[0] || FALLBACK_BOTTLE;
   const [imgSrc, setImgSrc] = useState<string>(initialSinglePicture);
 
   React.useEffect(() => {

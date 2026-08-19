@@ -21,11 +21,11 @@ export async function GET(request: NextRequest) {
     const isFeatured = searchParams.get('is_featured');
     const isBestseller = searchParams.get('is_bestseller');
 
-    const cols = 'id, store_id, name, slug, price, compare_at_price, stock, is_featured, is_bestseller, images, description, scent_notes, ingredients, meta_title, meta_description, created_at, updated_at';
+    const cols = 'id, store_id, name, slug, price, compare_at_price, is_featured, is_bestseller, images, description, scent_notes, ingredients, meta_title, meta_keywords, meta_description, created_at, updated_at';
     let query = supabase
       .from('products')
       .select(cols)
-      .order('id');
+      .order('created_at', { ascending: false });
 
     if (isFeatured === 'true') {
       query = query.eq('is_featured', true);
@@ -35,6 +35,9 @@ export async function GET(request: NextRequest) {
     }
 
     const { data: products, error } = await query;
+    if (error) {
+      console.error('Error querying products:', error);
+    }
 
     let filteredProducts = (products && products.length > 0) ? products : [];
 
@@ -107,8 +110,8 @@ export async function GET(request: NextRequest) {
     const totalProducts = enrichedProducts.length;
     const featuredCount = enrichedProducts.filter((p: any) => p.is_featured).length;
     const bestsellerCount = enrichedProducts.filter((p: any) => p.is_bestseller).length;
-    const lowStockCount = enrichedProducts.filter((p: any) => p.stock < 10).length;
-    const totalStockSum = enrichedProducts.reduce((acc: number, p: any) => acc + (p.stock || 0), 0);
+    const lowStockCount = 0;
+    const totalStockSum = 0;
 
     return NextResponse.json({
       products: enrichedProducts,
@@ -135,13 +138,13 @@ export async function POST(request: NextRequest) {
       description = '',
       price = 0,
       compare_at_price = null,
-      stock = 0,
       images = [],
       scent_notes = { top: [], heart: [], base: [] },
       ingredients = [],
       is_featured = false,
       is_bestseller = false,
       meta_title = '',
+      meta_keywords = '',
       meta_description = '',
       category_ids = [],
       variants = [],
@@ -179,13 +182,13 @@ export async function POST(request: NextRequest) {
           description: description.trim(),
           price: Number(price) || 0,
           compare_at_price: compare_at_price ? Number(compare_at_price) : null,
-          stock: Number(stock) || 0,
           images: Array.isArray(images) ? images : [],
           scent_notes: scent_notes || { top: [], heart: [], base: [] },
           ingredients: Array.isArray(ingredients) ? ingredients : [],
           is_featured: Boolean(is_featured),
           is_bestseller: Boolean(is_bestseller),
           meta_title: meta_title.trim(),
+          meta_keywords: meta_keywords ? meta_keywords.trim() : '',
           meta_description: meta_description.trim(),
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
@@ -220,7 +223,6 @@ export async function POST(request: NextRequest) {
         sku: v.sku ? String(v.sku).trim() : null,
         price: Number(v.price) || Number(price) || 0,
         compare_at_price: v.compare_at_price ? Number(v.compare_at_price) : null,
-        stock: Number(v.stock) || 0,
       }));
 
       const { data: insertedVariants } = await supabase

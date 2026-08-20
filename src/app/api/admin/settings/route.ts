@@ -3,6 +3,61 @@ import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { STORE_ID, STORE_NAME } from '@/lib/constants';
 import { formatImageUrl } from '@/lib/format-image';
 
+async function normalizeAndSaveImageUrl(url: string | undefined | null, defaultName: string): Promise<string> {
+  if (!url || typeof url !== 'string') return '/images/logo/logo.png';
+  const trimmed = url.trim();
+  if (trimmed.startsWith('data:image/')) {
+    try {
+      const commaIdx = trimmed.indexOf(',');
+      if (commaIdx !== -1) {
+        const header = trimmed.slice(0, commaIdx);
+        const base64Data = trimmed.slice(commaIdx + 1).trim();
+        const extMatch = header.match(/data:image\/([a-zA-Z0-9+.-]+)/);
+        let rawExt = extMatch ? extMatch[1].toLowerCase() : 'png';
+        if (rawExt.includes('svg')) rawExt = 'svg';
+        else if (rawExt.includes('jpeg') || rawExt.includes('jpg')) rawExt = 'jpg';
+        else rawExt = 'png';
+
+        const buffer = Buffer.from(base64Data, 'base64');
+        const filename = `${defaultName}_${Date.now()}.${rawExt}`;
+
+        // 1. Try Supabase storage
+        try {
+          const supabase = getSupabaseServerClient();
+          const storagePath = `logos/${filename}`;
+          const { data: uploadData, error: uploadErr } = await supabase.storage
+            .from('images')
+            .upload(storagePath, buffer, {
+              contentType: `image/${rawExt === 'jpg' ? 'jpeg' : rawExt}`,
+              upsert: true,
+            });
+
+          if (!uploadErr && uploadData) {
+            const { data: publicUrlData } = supabase.storage.from('images').getPublicUrl(storagePath);
+            if (publicUrlData && publicUrlData.publicUrl) {
+              return publicUrlData.publicUrl;
+            }
+          }
+        } catch (_) {}
+
+        // 2. Fallback: Save to local filesystem
+        const { writeFile, mkdir } = await import('fs/promises');
+        const path = await import('path');
+        const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'logos');
+        await mkdir(uploadDir, { recursive: true });
+        const filePath = path.join(uploadDir, filename);
+        await writeFile(filePath, buffer);
+        return `/uploads/logos/${filename}`;
+      }
+    } catch (e) {
+      console.warn('Error converting base64 logo/favicon:', e);
+    }
+  }
+  return formatImageUrl(trimmed, '/images/logo/logo.png');
+}
+
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     const supabase = getSupabaseServerClient();
@@ -23,8 +78,8 @@ export async function GET(request: NextRequest) {
       store_id: STORE_ID,
       site_name: STORE_NAME,
       tagline: 'Artisanal Attars & Pure Distillates • Kannauj',
-      logo_url: '/images/rvk-logo.png',
-      favicon_url: '/images/rvk-logo.png',
+      logo_url: '/images/logo/logo.png',
+      favicon_url: '/images/logo/favicon.png',
       use_text_logo: false,
       contact_email: 'shikhatandon2009@gmail.com',
       contact_phone: '+91 96486 78599',
@@ -90,11 +145,32 @@ export async function GET(request: NextRequest) {
     }
     resultSettings.use_text_logo = useTextLogo;
 
-    if (resultSettings.logo_url) {
-      resultSettings.logo_url = formatImageUrl(resultSettings.logo_url, '/images/rvk-logo.png');
+    // Convert base64 URLs to clean files if present
+    let needsDbClean = false;
+    if (resultSettings.logo_url && resultSettings.logo_url.startsWith('data:image/')) {
+      resultSettings.logo_url = await normalizeAndSaveImageUrl(resultSettings.logo_url, 'site_logo');
+      needsDbClean = true;
+    } else if (resultSettings.logo_url) {
+      resultSettings.logo_url = formatImageUrl(resultSettings.logo_url, '/images/logo/logo.png');
     }
-    if (resultSettings.favicon_url) {
-      resultSettings.favicon_url = formatImageUrl(resultSettings.favicon_url, '/images/rvk-logo.png');
+
+    if (resultSettings.favicon_url && resultSettings.favicon_url.startsWith('data:image/')) {
+      resultSettings.favicon_url = await normalizeAndSaveImageUrl(resultSettings.favicon_url, 'site_favicon');
+      needsDbClean = true;
+    } else if (resultSettings.favicon_url) {
+      resultSettings.favicon_url = formatImageUrl(resultSettings.favicon_url, '/images/logo/favicon.png');
+    }
+
+    if (needsDbClean) {
+      try {
+        await supabase
+          .from('site_settings')
+          .update({
+            logo_url: resultSettings.logo_url,
+            favicon_url: resultSettings.favicon_url,
+          })
+          .eq('store_id', STORE_ID);
+      } catch (_) {}
     }
 
     return NextResponse.json({ settings: resultSettings });
@@ -130,8 +206,8 @@ export async function PUT(request: NextRequest) {
       social_links = {},
     } = body;
 
-    const formattedLogoUrl = formatImageUrl(logo_url, '/images/rvk-logo.png');
-    const formattedFaviconUrl = formatImageUrl(favicon_url, '/images/rvk-logo.png');
+    const formattedLogoUrl = await normalizeAndSaveImageUrl(logo_url, 'site_logo');
+    const formattedFaviconUrl = await normalizeAndSaveImageUrl(favicon_url, 'site_favicon');
 
     const supabase = getSupabaseServerClient();
 

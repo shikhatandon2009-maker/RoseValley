@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Star, Heart, ShoppingBag, CheckCircle2, ShieldCheck, Sparkles, MessageSquare, ThumbsUp, Send, Maximize2, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCartStore } from '@/store/cart-store';
@@ -16,8 +17,23 @@ interface ProductDetailClientProps {
 }
 
 export function ProductDetailClient({ product, variants, initialReviews, initialQuestions }: ProductDetailClientProps) {
+  // Extract category info for breadcrumb
+  const categoryName = product.category?.name || product.category_name || (product.categories && product.categories[0]?.name) || 'Collection';
+  const categorySlug = product.category?.slug || product.category_slug || (product.categories && product.categories[0]?.slug) || '';
+
+  // Deduplicate variants by name and price in case multiple duplicate entries exist in DB
+  const uniqueVariants = React.useMemo(() => {
+    const seen = new Set<string>();
+    return (variants || []).filter((v) => {
+      const key = `${(v.name || '').trim().toLowerCase()}_${Number(v.price)}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [variants]);
+
   const [selectedImage, setSelectedImage] = useState(product.images?.[0] || '');
-  const [selectedVariant, setSelectedVariant] = useState(variants[0] || null);
+  const [selectedVariant, setSelectedVariant] = useState(uniqueVariants[0] || null);
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState<'story' | 'notes' | 'ingredients' | 'reviews' | 'qa'>('story');
 
@@ -136,7 +152,25 @@ export function ProductDetailClient({ product, variants, initialReviews, initial
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto space-y-8 sm:space-y-16 relative overflow-x-hidden">
+    <div className="w-full max-w-7xl mx-auto space-y-4 sm:space-y-6 relative overflow-x-hidden">
+
+      {/* Breadcrumb Navigation: Home >> [Category Name] >> Product Name */}
+      <nav aria-label="Breadcrumb" className="w-full flex items-center flex-wrap gap-1.5 text-xs text-[#7A1840]/70 font-medium py-1">
+        <Link href="/" className="hover:text-[#4A0D25] hover:underline transition-colors flex items-center gap-1 font-semibold">
+          <span>Home</span>
+        </Link>
+        <span className="text-[#D45A7A] text-[10px] font-bold">&gt;&gt;</span>
+        <Link
+          href={categorySlug ? `/products?category=${categorySlug}` : '/products'}
+          className="hover:text-[#4A0D25] hover:underline transition-colors capitalize font-semibold"
+        >
+          {categoryName}
+        </Link>
+        <span className="text-[#D45A7A] text-[10px] font-bold">&gt;&gt;</span>
+        <span className="text-[#4A0D25] font-bold truncate max-w-[200px] sm:max-w-md" title={product.name}>
+          {product.name}
+        </span>
+      </nav>
 
       {/* SPECTACULAR LUXURY FLYING BOTTLE ANIMATION TO CART */}
       <AnimatePresence>
@@ -323,16 +357,16 @@ export function ProductDetailClient({ product, variants, initialReviews, initial
           </p>
 
           {/* Variant Selector */}
-          {variants.length > 0 && (
+          {uniqueVariants.length > 0 && (
             <div className="space-y-2">
               <label className="text-xs font-semibold text-[#7A1840]">Select Size / Bottle Format</label>
               <div className="flex flex-wrap gap-3">
-                {variants.map((v) => (
+                {uniqueVariants.map((v) => (
                   <button
-                    key={v.id}
+                    key={v.id || `${v.name}_${v.price}`}
                     onClick={() => setSelectedVariant(v)}
                     className={`px-4 py-2 rounded-full text-xs font-extrabold border transition-all ${
-                      selectedVariant?.id === v.id
+                      selectedVariant?.id === v.id || (selectedVariant?.name === v.name && selectedVariant?.price === v.price)
                         ? 'bg-gradient-to-r from-[#F6A6BB] to-[#F4BBC9] text-[#4A0D25] border-[#F7D1D8] shadow-sm'
                         : 'bg-white text-[#5A1030] border-[#E8B8B8] hover:border-[#F6A6BB]'
                     }`}

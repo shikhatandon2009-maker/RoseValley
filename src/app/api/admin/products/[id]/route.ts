@@ -194,10 +194,54 @@ export async function DELETE(
     const supabase = getSupabaseServerClient();
     const { id } = params;
 
+    if (!id) {
+      return NextResponse.json({ error: 'Product ID is required' }, { status: 400 });
+    }
+
+    // 1. Delete product categories junction
+    try {
+      await supabase.from('product_categories').delete().eq('product_id', id);
+    } catch (e) {
+      console.warn('Error deleting product_categories:', e);
+    }
+
+    // 2. Delete product variants
+    try {
+      await supabase.from('product_variants').delete().eq('product_id', id);
+    } catch (e) {
+      console.warn('Error deleting product_variants:', e);
+    }
+
+    // 3. Delete reviews
+    try {
+      await supabase.from('reviews').delete().eq('product_id', id);
+    } catch (e) {
+      console.warn('Error deleting reviews:', e);
+    }
+
+    // 4. Delete questions
+    try {
+      await supabase.from('product_questions').delete().eq('product_id', id);
+    } catch (e) {
+      console.warn('Error deleting product_questions:', e);
+    }
+
+    // 5. Delete wishlists & cart items
+    try {
+      await supabase.from('wishlists').delete().eq('product_id', id);
+    } catch (e) {
+      console.warn('Error deleting wishlists:', e);
+    }
+    try {
+      await supabase.from('cart_items').delete().eq('product_id', id);
+    } catch (e) {
+      console.warn('Error deleting cart_items:', e);
+    }
+
+    // 6. Delete product itself
     const { error } = await supabase
       .from('products')
       .delete()
-      .eq('store_id', STORE_ID)
       .eq('id', id);
 
     if (error) {
@@ -205,8 +249,9 @@ export async function DELETE(
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ message: 'Product deleted successfully' });
+    return NextResponse.json({ success: true, message: 'Product and all associated data deleted successfully' });
   } catch (err: any) {
+    console.error('Error in DELETE product route:', err);
     return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });
   }
 }

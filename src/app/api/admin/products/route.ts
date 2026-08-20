@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { STORE_ID } from '@/lib/constants';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 function generateSlug(text: string): string {
   return text
     .toLowerCase()
@@ -25,6 +28,7 @@ export async function GET(request: NextRequest) {
     let query = supabase
       .from('products')
       .select(cols)
+      .eq('store_id', STORE_ID)
       .order('created_at', { ascending: false });
 
     if (isFeatured === 'true') {
@@ -100,21 +104,85 @@ export async function GET(request: NextRequest) {
       filteredProducts = filteredProducts.filter((p: any) => productIdsInCategory.has(p.id));
     }
 
-    const enrichedProducts = filteredProducts.map((p: any) => ({
-      ...p,
-      categories: productCategoryLookup.get(p.id) || [],
-      variants: variantsLookup.get(p.id) || [],
-    }));
+    const getStandardVariantsForKiloPrice = (basePrice: number) => {
+      const b = Math.max(100, Number(basePrice) || 1000);
+      return [
+        { name: 'Sample (2ml)', sku: '', price: 250, compare_at_price: 300 },
+        { name: '100 ml', sku: '', price: Math.round(b / 10 + 200), compare_at_price: Math.round((b / 10 + 200) * 1.2) },
+        { name: '250 ml', sku: '', price: Math.round(b / 4 + 200), compare_at_price: Math.round((b / 4 + 200) * 1.2) },
+        { name: '500 ml', sku: '', price: Math.round(b / 2 + 200), compare_at_price: Math.round((b / 2 + 200) * 1.2) },
+        { name: '1 Kg', sku: '', price: b, compare_at_price: Math.round(b * 1.2) },
+        { name: '5 Kg', sku: '', price: Math.round(b * 5 * 0.98), compare_at_price: Math.round(b * 5 * 1.15) },
+        { name: '10 Kg', sku: '', price: Math.round(b * 10 * 0.96), compare_at_price: Math.round(b * 10 * 1.15) },
+        { name: '20 Kg', sku: '', price: Math.round(b * 20 * 0.93), compare_at_price: Math.round(b * 20 * 1.15) },
+      ];
+    }
+
+    const enrichedProducts = filteredProducts.map((p: any) => {
+      const dbVariants = variantsLookup.get(p.id) || [];
+      const finalVariants = dbVariants.length > 1 ? dbVariants : getStandardVariantsForKiloPrice(p.price);
+      return {
+        ...p,
+        categories: productCategoryLookup.get(p.id) || [],
+        variants: finalVariants,
+      };
+    });
+
+    // Deduplicate duplicate products of the same name, removing uncategorized duplicates
+    const productMap = new Map<string, any>();
+    const duplicateIdsToDelete: string[] = [];
+
+    for (const p of enrichedProducts) {
+      const normalizedName = (p.name || '').toLowerCase().trim().replace(/[^a-z0-9]/g, '');
+      const existing = productMap.get(normalizedName);
+
+      if (!existing) {
+        productMap.set(normalizedName, p);
+      } else {
+        const existingHasCat = existing.categories && existing.categories.length > 0;
+        const currentHasCat = p.categories && p.categories.length > 0;
+
+        if (!existingHasCat && currentHasCat) {
+          duplicateIdsToDelete.push(existing.id);
+          productMap.set(normalizedName, p);
+        } else if (existingHasCat && !currentHasCat) {
+          duplicateIdsToDelete.push(p.id);
+        } else {
+          // Both have categories or both don't: prefer hyphenated slug
+          if (p.slug.includes('-') && !existing.slug.includes('-')) {
+            duplicateIdsToDelete.push(existing.id);
+            productMap.set(normalizedName, p);
+          } else {
+            duplicateIdsToDelete.push(p.id);
+          }
+        }
+      }
+    }
+
+    // Clean up duplicate uncategorized entries from Supabase in background
+    if (duplicateIdsToDelete.length > 0) {
+      (async () => {
+        try {
+          await supabase.from('product_categories').delete().in('product_id', duplicateIdsToDelete);
+          await supabase.from('product_variants').delete().in('product_id', duplicateIdsToDelete);
+          await supabase.from('products').delete().in('id', duplicateIdsToDelete);
+        } catch (e) {
+          console.warn('Background cleanup of duplicate products:', e);
+        }
+      })();
+    }
+
+    const deduplicatedList = Array.from(productMap.values());
 
     // Aggregate statistics
-    const totalProducts = enrichedProducts.length;
-    const featuredCount = enrichedProducts.filter((p: any) => p.is_featured).length;
-    const bestsellerCount = enrichedProducts.filter((p: any) => p.is_bestseller).length;
+    const totalProducts = deduplicatedList.length;
+    const featuredCount = deduplicatedList.filter((p: any) => p.is_featured).length;
+    const bestsellerCount = deduplicatedList.filter((p: any) => p.is_bestseller).length;
     const lowStockCount = 0;
     const totalStockSum = 0;
 
     return NextResponse.json({
-      products: enrichedProducts,
+      products: deduplicatedList,
       stats: {
         totalProducts,
         featuredCount,

@@ -77,21 +77,17 @@ interface Stats {
   lowStockCount: number;
 }
 
-function roundToNearest10(n: number): number {
-  return Math.round(n / 10) * 10;
-}
-
-function calculateDefaultVariantPrices(base1Kg: number): ProductVariant[] {
-  const b = Number(base1Kg) || 1000;
+function getStandardVariantsForKiloPrice(basePrice: number | string): ProductVariant[] {
+  const b = Math.max(100, Number(basePrice) || 1000);
   return [
-    { name: 'Sample', sku: '', price: 250, compare_at_price: 300 },
-    { name: '100 ml', sku: '', price: roundToNearest10(b / 10 + 200), compare_at_price: roundToNearest10((b / 10 + 200) * 1.2) },
-    { name: '250 ml', sku: '', price: roundToNearest10(b / 4 + 200), compare_at_price: roundToNearest10((b / 4 + 200) * 1.2) },
-    { name: '500 ml', sku: '', price: roundToNearest10(b / 2 + 200), compare_at_price: roundToNearest10((b / 2 + 200) * 1.2) },
-    { name: '1 Kg',   sku: '', price: roundToNearest10(b), compare_at_price: roundToNearest10(b * 1.2) },
-    { name: '5 Kg',   sku: '', price: roundToNearest10(b * 5 * 0.98), compare_at_price: roundToNearest10(b * 5 * 1.15) },
-    { name: '10 Kg',  sku: '', price: roundToNearest10(b * 10 * 0.96), compare_at_price: roundToNearest10(b * 10 * 1.15) },
-    { name: '20 Kg',  sku: '', price: roundToNearest10(b * 20 * 0.93), compare_at_price: roundToNearest10(b * 20 * 1.15) },
+    { name: 'Sample (2ml)', sku: '', price: 250, compare_at_price: 300 },
+    { name: '100 ml', sku: '', price: Math.round(b / 10 + 200), compare_at_price: Math.round((b / 10 + 200) * 1.2) },
+    { name: '250 ml', sku: '', price: Math.round(b / 4 + 200), compare_at_price: Math.round((b / 4 + 200) * 1.2) },
+    { name: '500 ml', sku: '', price: Math.round(b / 2 + 200), compare_at_price: Math.round((b / 2 + 200) * 1.2) },
+    { name: '1 Kg', sku: '', price: b, compare_at_price: Math.round(b * 1.2) },
+    { name: '5 Kg', sku: '', price: Math.round(b * 5 * 0.98), compare_at_price: Math.round(b * 5 * 1.15) },
+    { name: '10 Kg', sku: '', price: Math.round(b * 10 * 0.96), compare_at_price: Math.round(b * 10 * 1.15) },
+    { name: '20 Kg', sku: '', price: Math.round(b * 20 * 0.93), compare_at_price: Math.round(b * 20 * 1.15) },
   ];
 }
 
@@ -113,6 +109,7 @@ export default function ProductsAdminPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // CSV Import / Export States
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -282,7 +279,7 @@ export default function ProductsAdminPage() {
       compare_at_price: '',
       stock: '25',
       selectedCategoryIds: [],
-      variants: calculateDefaultVariantPrices(1000),
+      variants: [],
       imagesList: [],
       imagesText: '',
       topNotesText: '',
@@ -304,6 +301,10 @@ export default function ProductsAdminPage() {
     const initialCategoryIds = product.categories?.map((c) => c.id) || [];
     const prodImages = Array.isArray(product.images) ? product.images.filter(Boolean) : [];
 
+    const initialVariants = product.variants && product.variants.length > 1
+      ? product.variants
+      : getStandardVariantsForKiloPrice(product.price);
+
     setFormData({
       name: product.name,
       slug: product.slug,
@@ -311,7 +312,7 @@ export default function ProductsAdminPage() {
       compare_at_price: product.compare_at_price || '',
       stock: product.stock !== undefined ? product.stock : 25,
       selectedCategoryIds: initialCategoryIds,
-      variants: product.variants && product.variants.length > 0 ? product.variants : calculateDefaultVariantPrices(product.price),
+      variants: initialVariants,
       imagesList: prodImages,
       imagesText: prodImages.join('\n'),
       topNotesText: (product.scent_notes?.top || []).join(', '),
@@ -346,7 +347,7 @@ export default function ProductsAdminPage() {
       ...prev,
       variants: [
         ...prev.variants,
-        { name: '100 ml', sku: '', price: prev.price || 1000, compare_at_price: '' },
+        { name: '', sku: '', price: prev.price || '', compare_at_price: '' },
       ],
     }));
   };
@@ -364,15 +365,6 @@ export default function ProductsAdminPage() {
       ...prev,
       variants: prev.variants.filter((_, i) => i !== index),
     }));
-  };
-
-  const handleAutoCalculateVariants = () => {
-    const base = Number(formData.price) || 1000;
-    setFormData((prev) => ({
-      ...prev,
-      variants: calculateDefaultVariantPrices(base),
-    }));
-    showToast('success', `Calculated standard sizes based on base price ₹${base}!`);
   };
 
   // Section 3: Image File Upload
@@ -530,15 +522,24 @@ export default function ProductsAdminPage() {
   const handleDeleteProduct = async () => {
     if (!deletingProduct) return;
     const target = deletingProduct;
-    setDeletingProduct(null);
+    setIsDeleting(true);
 
     try {
       const res = await fetch(`/api/admin/products/${target.id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Delete failed');
-      showToast('success', `Product "${target.name}" deleted.`);
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to delete product from Supabase');
+      }
+
+      showToast('success', `Product "${target.name}" deleted successfully.`);
+      setProducts((prev) => prev.filter((p) => p.id !== target.id));
+      setDeletingProduct(null);
       fetchProducts(false);
-    } catch {
-      showToast('error', 'Failed to delete product.');
+    } catch (err: any) {
+      showToast('error', err.message || 'Failed to delete product.');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -954,16 +955,21 @@ export default function ProductsAdminPage() {
 
             <div className="flex items-center justify-end gap-3 pt-4 border-t border-stone-200">
               <button
+                type="button"
+                disabled={isDeleting}
                 onClick={() => setDeletingProduct(null)}
-                className="px-4 py-2 rounded-xl text-stone-600 hover:text-stone-900 font-bold text-xs"
+                className="px-4 py-2 rounded-xl text-stone-600 hover:text-stone-900 font-bold text-xs disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
+                type="button"
+                disabled={isDeleting}
                 onClick={handleDeleteProduct}
-                className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-md transition-all"
+                className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-md transition-all flex items-center gap-2 disabled:opacity-50"
               >
-                Delete Product
+                {isDeleting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                {isDeleting ? 'Deleting Product...' : 'Delete Product'}
               </button>
             </div>
           </div>
@@ -985,7 +991,7 @@ export default function ProductsAdminPage() {
                     {editingProduct ? 'Edit Product & Variants' : 'Add New Fragrance'}
                   </h3>
                   <p className="text-xs text-stone-500 font-medium">
-                    Configure all 6 product sections directly synchronized with Supabase database.
+                    Configure product details and exact bottle sizes directly synchronized with Supabase database.
                   </p>
                 </div>
               </div>
@@ -998,55 +1004,59 @@ export default function ProductsAdminPage() {
             </div>
 
             {/* Modal Body Form with 6 Sections */}
-            <form onSubmit={handleSaveProduct} className="flex-1 overflow-y-auto p-6 space-y-8">
+            <form onSubmit={handleSaveProduct} className="p-6 overflow-y-auto space-y-6 flex-1 text-xs">
               
               {/* SECTION 1: BASIC INFORMATION */}
               <div className="p-5 rounded-2xl bg-stone-50/70 border border-stone-200 space-y-4">
                 <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-900">
-                  <Info className="w-4 h-4 text-amber-700" /> Section 1: Basic Information
+                  <Info className="w-4 h-4 text-amber-700" /> Section 1: Core Details & Base Pricing
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-stone-700 mb-1">Product Name *</label>
+                    <label className="block text-xs font-bold text-stone-700 mb-1">
+                      Product Name <span className="text-rose-600">*</span>
+                    </label>
                     <input
                       type="text"
                       required
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="e.g. Ruh Gulab Pure Damask Rose"
-                      className="w-full px-3.5 py-2 rounded-xl border border-stone-300 bg-white text-xs text-stone-900 font-medium focus:border-amber-700 focus:outline-none"
+                      placeholder="e.g. Royal Rose Oud"
+                      className="w-full px-3.5 py-2 rounded-xl border border-stone-300 bg-white text-xs text-stone-900 font-bold focus:border-amber-700 focus:outline-none"
                     />
                   </div>
 
                   <div>
                     <div className="flex items-center justify-between mb-1">
-                      <label className="block text-xs font-bold text-stone-700">URL Slug</label>
+                      <label className="text-xs font-bold text-stone-700">Slug / URL</label>
                       <button
                         type="button"
                         onClick={handleAutoSlug}
-                        className="text-[10px] text-amber-800 hover:underline font-bold"
+                        className="text-[11px] text-amber-800 hover:underline font-bold"
                       >
-                        Auto-generate from Name
+                        Auto-generate
                       </button>
                     </div>
                     <input
                       type="text"
                       value={formData.slug}
                       onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                      placeholder="e.g. ruh-gulab-pure-damask-rose"
+                      placeholder="royal-rose-oud"
                       className="w-full px-3.5 py-2 rounded-xl border border-stone-300 bg-white text-xs text-stone-900 font-mono focus:border-amber-700 focus:outline-none"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-stone-700 mb-1">Base Price (₹) *</label>
+                    <label className="block text-xs font-bold text-stone-700 mb-1">
+                      Base Price (₹) <span className="text-rose-600">*</span>
+                    </label>
                     <input
                       type="number"
                       required
                       value={formData.price}
                       onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                      placeholder="e.g. 3800"
+                      placeholder="e.g. 3200"
                       className="w-full px-3.5 py-2 rounded-xl border border-stone-300 bg-white text-xs text-stone-900 font-bold focus:border-amber-700 focus:outline-none"
                     />
                   </div>
@@ -1103,84 +1113,94 @@ export default function ProductsAdminPage() {
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={handleAutoCalculateVariants}
-                      className="px-2.5 py-1 rounded-lg bg-amber-100 border border-amber-300 hover:bg-amber-200 text-amber-900 text-[11px] font-bold transition-all flex items-center gap-1"
+                      onClick={() => {
+                        const vars = getStandardVariantsForKiloPrice(formData.price);
+                        setFormData((prev) => ({ ...prev, variants: vars }));
+                        showToast('success', `Updated all sizes based on base price ₹${formData.price || 1000}!`);
+                      }}
+                      className="px-2.5 py-1.5 rounded-lg bg-amber-100 hover:bg-amber-200 border border-amber-300 text-amber-900 text-[11px] font-bold transition-all flex items-center gap-1 shadow-2xs"
                     >
-                      <Sparkles className="w-3 h-3 text-amber-700" /> Auto-Scale Sizes (Sample to 20Kg)
+                      <Sparkles className="w-3.5 h-3.5 text-amber-700" /> Sync Kilo Price Sizes
                     </button>
                     <button
                       type="button"
                       onClick={handleAddVariantRow}
-                      className="px-2.5 py-1 rounded-lg bg-amber-700 hover:bg-amber-800 text-white text-[11px] font-bold transition-all flex items-center gap-1"
+                      className="px-3 py-1.5 rounded-lg bg-amber-700 hover:bg-amber-800 text-white text-xs font-bold transition-all flex items-center gap-1 shadow-xs"
                     >
-                      <Plus className="w-3 h-3" /> Add Size
+                      <Plus className="w-3.5 h-3.5" /> Add Size / Variant
                     </button>
                   </div>
                 </div>
 
-                <div className="border border-amber-200 rounded-xl overflow-hidden bg-white shadow-2xs">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-amber-50/80 text-amber-900 uppercase font-bold text-[10px] border-b border-amber-200">
-                      <tr>
-                        <th className="p-2.5">Size Format / Name</th>
-                        <th className="p-2.5">SKU</th>
-                        <th className="p-2.5">Price (₹)</th>
-                        <th className="p-2.5">Compare (₹)</th>
-                        <th className="p-2.5 text-right w-12">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-amber-100 font-medium">
-                      {formData.variants.map((v, idx) => (
-                        <tr key={idx}>
-                          <td className="p-2">
-                            <input
-                              type="text"
-                              value={v.name}
-                              onChange={(e) => handleUpdateVariantRow(idx, 'name', e.target.value)}
-                              placeholder="e.g. 100 ml"
-                              className="w-full px-2 py-1 rounded-lg border border-stone-200 text-xs font-bold text-stone-900"
-                            />
-                          </td>
-                          <td className="p-2">
-                            <input
-                              type="text"
-                              value={v.sku || ''}
-                              onChange={(e) => handleUpdateVariantRow(idx, 'sku', e.target.value)}
-                              placeholder="e.g. RVK-100ML"
-                              className="w-full px-2 py-1 rounded-lg border border-stone-200 text-xs text-stone-700 font-mono"
-                            />
-                          </td>
-                          <td className="p-2">
-                            <input
-                              type="number"
-                              value={v.price}
-                              onChange={(e) => handleUpdateVariantRow(idx, 'price', e.target.value)}
-                              className="w-full px-2 py-1 rounded-lg border border-stone-200 text-xs font-bold text-stone-900"
-                            />
-                          </td>
-                          <td className="p-2">
-                            <input
-                              type="number"
-                              value={v.compare_at_price || ''}
-                              onChange={(e) => handleUpdateVariantRow(idx, 'compare_at_price', e.target.value)}
-                              placeholder="MRP"
-                              className="w-full px-2 py-1 rounded-lg border border-stone-200 text-xs text-stone-500"
-                            />
-                          </td>
-                          <td className="p-2 text-right">
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveVariantRow(idx)}
-                              className="p-1 rounded text-stone-400 hover:text-rose-600"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </td>
+                {formData.variants.length === 0 ? (
+                  <div className="p-4 rounded-xl bg-white border border-stone-200 text-center text-stone-500 text-xs">
+                    No extra variants. The product will sell at the base price (₹{formData.price || 0}). Click &quot;Add Size / Variant&quot; if you want to offer specific sizes (e.g. 50ml, 100ml, 1Kg).
+                  </div>
+                ) : (
+                  <div className="border border-amber-200 rounded-xl overflow-hidden bg-white shadow-2xs">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-amber-50/80 text-amber-900 uppercase font-bold text-[10px] border-b border-amber-200">
+                        <tr>
+                          <th className="p-2.5">Size Format / Name</th>
+                          <th className="p-2.5">SKU</th>
+                          <th className="p-2.5">Price (₹)</th>
+                          <th className="p-2.5">Compare (₹)</th>
+                          <th className="p-2.5 text-right w-12">Action</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody className="divide-y divide-amber-100 font-medium">
+                        {formData.variants.map((v, idx) => (
+                          <tr key={idx}>
+                            <td className="p-2">
+                              <input
+                                type="text"
+                                value={v.name}
+                                onChange={(e) => handleUpdateVariantRow(idx, 'name', e.target.value)}
+                                placeholder="e.g. 100 ml"
+                                className="w-full px-2 py-1 rounded-lg border border-stone-200 text-xs font-bold text-stone-900"
+                              />
+                            </td>
+                            <td className="p-2">
+                              <input
+                                type="text"
+                                value={v.sku || ''}
+                                onChange={(e) => handleUpdateVariantRow(idx, 'sku', e.target.value)}
+                                placeholder="e.g. RVK-100ML"
+                                className="w-full px-2 py-1 rounded-lg border border-stone-200 text-xs text-stone-700 font-mono"
+                              />
+                            </td>
+                            <td className="p-2">
+                              <input
+                                type="number"
+                                value={v.price}
+                                onChange={(e) => handleUpdateVariantRow(idx, 'price', e.target.value)}
+                                className="w-full px-2 py-1 rounded-lg border border-stone-200 text-xs font-bold text-stone-900"
+                              />
+                            </td>
+                            <td className="p-2">
+                              <input
+                                type="number"
+                                value={v.compare_at_price || ''}
+                                onChange={(e) => handleUpdateVariantRow(idx, 'compare_at_price', e.target.value)}
+                                placeholder="MRP"
+                                className="w-full px-2 py-1 rounded-lg border border-stone-200 text-xs text-stone-500"
+                              />
+                            </td>
+                            <td className="p-2 text-right">
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveVariantRow(idx)}
+                                className="p-1 rounded text-stone-400 hover:text-rose-600"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
 
               {/* SECTION 3: IMAGE GALLERY */}

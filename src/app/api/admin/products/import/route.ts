@@ -137,7 +137,7 @@ export async function POST(request: NextRequest) {
           if (!name) return;
 
           const rawSlug = slugIdx !== -1 ? (row[slugIdx] || '').trim() : '';
-          const slug = rawSlug || generateSlug(name);
+          const slug = rawSlug ? generateSlug(rawSlug) : generateSlug(name);
           const price = Number(row[priceIdx]) || 0;
           const comparePrice = compareIdx !== -1 && row[compareIdx] ? Number(row[compareIdx]) : null;
           const stock = stockIdx !== -1 && row[stockIdx] ? Number(row[stockIdx]) : 10;

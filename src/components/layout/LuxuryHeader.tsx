@@ -330,7 +330,7 @@ export function LuxuryHeader() {
                             className="flex items-center gap-3 p-2.5 rounded-2xl hover:bg-[#FAE6E7] transition-all group border border-transparent hover:border-[#F7D1D8]"
                           >
                             <img
-                              src={formatImageUrl(p.images?.[0], '/images/rvk-logo.png')}
+                              src={formatImageUrl(p.images?.[0], '/images/logo/logo.png')}
                               alt={p.name}
                               className="w-12 h-12 rounded-xl object-cover border border-[#F7D1D8] bg-[#FAE6E7] flex-shrink-0"
                             />
@@ -415,11 +415,11 @@ export function LuxuryHeader() {
               <>
                 <div className="flex items-center justify-center">
                   <img 
-                    src={formatImageUrl(settings.logo_url, '/images/rvk-logo.png')} 
+                    src={formatImageUrl(settings.logo_url, '/images/logo/logo.png')} 
                     alt={settings.site_name || "Rose Valley Kannauj"} 
                     className={`w-auto object-contain transition-all duration-300 group-hover:scale-105 ${scrolled ? 'h-9 sm:h-11' : 'h-12 sm:h-16'}`}
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/images/rvk-logo.png';
+                      (e.target as HTMLImageElement).src = '/images/logo/logo.png';
                     }}
                   />
                 </div>
@@ -934,11 +934,11 @@ export function LuxuryHeader() {
               </div>
             ) : (
               <img
-                src={formatImageUrl(settings.logo_url, '/images/rvk-logo.png')}
+                src={formatImageUrl(settings.logo_url, '/images/logo/logo.png')}
                 alt={settings.site_name || 'Rose Valley Kannauj'}
                 className="h-10 sm:h-12 w-auto object-contain"
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src = '/images/rvk-logo.png';
+                  (e.target as HTMLImageElement).src = '/images/logo/logo.png';
                 }}
               />
             )}

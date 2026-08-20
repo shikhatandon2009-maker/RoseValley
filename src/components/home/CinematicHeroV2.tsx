@@ -595,19 +595,6 @@ export function CinematicHeroV2({ products }: { products?: any[] }) {
             {current.tagline}
           </p>
 
-          {/* Story */}
-          <p
-            key={`story-${activeIdx}`}
-            className="cinematic-v2-story"
-            style={{
-              color: activeTheme.textMuted,
-              animationName: 'cinematicFadeUpV2',
-              animationDelay: '0.22s',
-            }}
-          >
-            {current.story}
-          </p>
-
           {/* Accord Chips */}
           <div
             key={`accords-${activeIdx}`}

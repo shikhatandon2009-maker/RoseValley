@@ -95,11 +95,11 @@ export function AdminPinGate({ children }: { children: React.ReactNode }) {
                 </div>
               ) : (
                 <img 
-                  src={formatImageUrl(settings.logo_url, '/images/rvk-logo.png')} 
+                  src={formatImageUrl(settings.logo_url, '/images/logo/logo.png')} 
                   alt={settings.site_name || "Rose Valley Kannauj"} 
                   className="h-16 sm:h-20 w-auto object-contain"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).src = '/images/rvk-logo.png';
+                    (e.target as HTMLImageElement).src = '/images/logo/logo.png';
                   }}
                 />
               )}

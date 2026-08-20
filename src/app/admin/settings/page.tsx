@@ -27,7 +27,12 @@ import {
   Phone,
   Mail,
   MessageCircle,
-  Building
+  Building,
+  Download,
+  Database,
+  ShieldAlert,
+  AlertTriangle,
+  FileText
 } from 'lucide-react';
 import { formatImageUrl } from '@/lib/format-image';
 import { useSiteSettingsStore } from '@/store/site-settings-store';
@@ -86,8 +91,8 @@ export default function SiteSettingsAdminPage() {
     store_id: 'essential_oils_perfumes_store_01',
     site_name: 'Rose Valley Kannauj',
     tagline: 'Artisanal Attars & Pure Distillates • Kannauj',
-    logo_url: '/images/rvk-logo.png',
-    favicon_url: '/images/rvk-logo.png',
+    logo_url: '/images/logo/logo.png',
+    favicon_url: '/images/logo/favicon.png',
     use_text_logo: false,
     contact_email: 'shikhatandon2009@gmail.com',
     contact_phone: '+91 96486 78599',
@@ -128,6 +133,16 @@ export default function SiteSettingsAdminPage() {
   // Password Reset Modal
   const [isAddResetModalOpen, setIsAddResetModalOpen] = useState(false);
   const [resetEmailInput, setResetEmailInput] = useState('');
+  
+  // Backup & Purge state
+  const [isDownloadingBackup, setIsDownloadingBackup] = useState(false);
+  const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
+  const [backupFilePayload, setBackupFilePayload] = useState<any>(null);
+  const [isRestoring, setIsRestoring] = useState(false);
+  const [isPurgeModalOpen, setIsPurgeModalOpen] = useState(false);
+  const [purgeStep, setPurgeStep] = useState<1 | 2>(1);
+  const [purgeInputText, setPurgeInputText] = useState('');
+  const [isPurging, setIsPurging] = useState(false);
 
   const [toastMessage, setToastMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -155,7 +170,7 @@ export default function SiteSettingsAdminPage() {
 
       const data = await res.json();
       if (res.ok && data.url) {
-        const formattedUrl = formatImageUrl(data.url, '/images/rvk-logo.png');
+        const formattedUrl = formatImageUrl(data.url, '/images/logo/logo.png');
         setSettings((prev) => ({ ...prev, [targetField]: formattedUrl }));
         useSiteSettingsStore.getState().setSettings({ [targetField]: formattedUrl });
         showToast('success', `${targetField === 'logo_url' ? 'Logo' : 'Favicon'} uploaded successfully!`);
@@ -177,8 +192,8 @@ export default function SiteSettingsAdminPage() {
       if (res.ok && data.settings) {
         const formattedSettings = {
           ...data.settings,
-          logo_url: formatImageUrl(data.settings.logo_url, '/images/rvk-logo.png'),
-          favicon_url: formatImageUrl(data.settings.favicon_url, '/images/rvk-logo.png'),
+          logo_url: formatImageUrl(data.settings.logo_url, '/images/logo/logo.png'),
+          favicon_url: formatImageUrl(data.settings.favicon_url, '/images/logo/favicon.png'),
         };
         setSettings(formattedSettings);
         useSiteSettingsStore.getState().setSettings(formattedSettings);
@@ -214,6 +229,116 @@ export default function SiteSettingsAdminPage() {
     }
   };
 
+  const handleDownloadBackup = async () => {
+    try {
+      setIsDownloadingBackup(true);
+      const res = await fetch('/api/admin/settings/backup');
+      if (!res.ok) {
+        throw new Error('Failed to generate backup file');
+      }
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `rose_valley_full_backup_${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      showToast('success', 'Full system backup downloaded successfully!');
+    } catch (e: any) {
+      showToast('error', e.message || 'Error downloading backup');
+    } finally {
+      setIsDownloadingBackup(false);
+    }
+  };
+
+  const handleSelectBackupFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const content = event.target?.result as string;
+        const parsed = JSON.parse(content);
+        if (!parsed || (typeof parsed !== 'object' && !Array.isArray(parsed))) {
+          showToast('error', 'Invalid JSON file format.');
+          return;
+        }
+        setBackupFilePayload(parsed);
+        setIsRestoreModalOpen(true);
+      } catch (err) {
+        showToast('error', 'Failed to parse JSON file.');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
+  const handleExecuteRestore = async () => {
+    if (!backupFilePayload) return;
+    try {
+      setIsRestoring(true);
+      const res = await fetch('/api/admin/settings/restore', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(backupFilePayload),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        const r = data.restored_entities || {};
+        showToast(
+          'success',
+          `Restored: ${r.products || 0} products, ${r.variants || 0} variants, ${r.categories || 0} categories!`
+        );
+        setIsRestoreModalOpen(false);
+        setBackupFilePayload(null);
+        setTimeout(() => {
+          fetchSettings();
+          window.location.reload();
+        }, 1500);
+      } else {
+        showToast('error', data.error || 'Failed to restore backup');
+      }
+    } catch (err: any) {
+      showToast('error', err.message || 'Error restoring backup');
+    } finally {
+      setIsRestoring(false);
+    }
+  };
+
+  const handleExecutePurge = async () => {
+    if (purgeInputText.trim() !== 'PURGE') {
+      showToast('error', 'Please type PURGE in all uppercase letters to confirm.');
+      return;
+    }
+    try {
+      setIsPurging(true);
+      const res = await fetch('/api/admin/settings/purge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirmation: 'PURGE' }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showToast('success', data.message || 'All store data purged successfully.');
+        setIsPurgeModalOpen(false);
+        setPurgeStep(1);
+        setPurgeInputText('');
+        setTimeout(() => {
+          window.location.reload();
+        }, 1200);
+      } else {
+        showToast('error', data.error || 'Failed to purge data');
+      }
+    } catch (e: any) {
+      showToast('error', e.message || 'Error executing purge');
+    } finally {
+      setIsPurging(false);
+    }
+  };
+
   useEffect(() => {
     fetchSettings();
     fetchCurrencies();
@@ -226,8 +351,8 @@ export default function SiteSettingsAdminPage() {
       setIsSaving(true);
       const formattedSettingsPayload = {
         ...settings,
-        logo_url: formatImageUrl(settings.logo_url, '/images/rvk-logo.png'),
-        favicon_url: formatImageUrl(settings.favicon_url, '/images/rvk-logo.png'),
+        logo_url: formatImageUrl(settings.logo_url, '/images/logo/logo.png'),
+        favicon_url: formatImageUrl(settings.favicon_url, '/images/logo/favicon.png'),
       };
 
       const res = await fetch('/api/admin/settings', {
@@ -243,8 +368,8 @@ export default function SiteSettingsAdminPage() {
       if (data.settings) {
         const updated = {
           ...data.settings,
-          logo_url: formatImageUrl(data.settings.logo_url, '/images/rvk-logo.png'),
-          favicon_url: formatImageUrl(data.settings.favicon_url, '/images/rvk-logo.png'),
+          logo_url: formatImageUrl(data.settings.logo_url, '/images/logo/logo.png'),
+          favicon_url: formatImageUrl(data.settings.favicon_url, '/images/logo/favicon.png'),
         };
         setSettings(updated);
         useSiteSettingsStore.getState().setSettings(updated);
@@ -489,7 +614,7 @@ export default function SiteSettingsAdminPage() {
                 <div className="flex-1 space-y-4 w-full">
                   <div>
                     <label className="block text-xs font-bold text-stone-800 mb-1">
-                      Logo Image URL (Supports File Upload, Direct Links, & Google Drive links)
+                      Logo Image URL
                     </label>
                     <div className="flex gap-2">
                       <input
@@ -497,11 +622,11 @@ export default function SiteSettingsAdminPage() {
                         value={settings.logo_url}
                         onChange={(e) => setSettings({ ...settings, logo_url: e.target.value })}
                         onBlur={(e) => {
-                          const formatted = formatImageUrl(e.target.value, '/images/rvk-logo.png');
+                          const formatted = formatImageUrl(e.target.value, '/images/logo/logo.png');
                           setSettings({ ...settings, logo_url: formatted });
                         }}
                         disabled={settings.use_text_logo}
-                        placeholder="/images/rvk-logo.png or https://drive.google.com/file/d/..."
+                        placeholder="https://...supabase.co/storage/... or /uploads/logos/site_logo.png"
                         className="flex-1 px-3.5 py-2.5 rounded-xl bg-white border border-stone-300 text-xs text-stone-900 focus:outline-none focus:border-amber-600 font-mono disabled:opacity-50"
                       />
                       <label className={`px-4 py-2.5 bg-amber-700 hover:bg-amber-800 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors flex-shrink-0 ${settings.use_text_logo ? 'opacity-50 pointer-events-none' : ''}`}>
@@ -520,7 +645,7 @@ export default function SiteSettingsAdminPage() {
 
                   <div>
                     <label className="block text-xs font-bold text-stone-800 mb-1">
-                      Favicon URL (Tab Icon)
+                      Favicon URL
                     </label>
                     <div className="flex gap-2">
                       <input
@@ -528,10 +653,10 @@ export default function SiteSettingsAdminPage() {
                         value={settings.favicon_url}
                         onChange={(e) => setSettings({ ...settings, favicon_url: e.target.value })}
                         onBlur={(e) => {
-                          const formatted = formatImageUrl(e.target.value, '/images/rvk-logo.png');
+                          const formatted = formatImageUrl(e.target.value, '/images/logo/logo.png');
                           setSettings({ ...settings, favicon_url: formatted });
                         }}
-                        placeholder="/images/rvk-logo.png or https://drive.google.com/file/d/..."
+                        placeholder="https://...supabase.co/storage/... or /uploads/logos/site_favicon.png"
                         className="flex-1 px-3.5 py-2.5 rounded-xl bg-white border border-stone-300 text-xs text-stone-900 focus:outline-none focus:border-amber-600 font-mono"
                       />
                       <label className="px-4 py-2.5 bg-stone-700 hover:bg-stone-800 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors flex-shrink-0">
@@ -548,7 +673,7 @@ export default function SiteSettingsAdminPage() {
                     </div>
                   </div>
                   <p className="text-[11px] text-stone-500 font-medium italic">
-                    💡 Tip: Google Drive view links (e.g., <code className="text-amber-700 font-bold">drive.google.com/file/d/...</code>) are automatically converted to direct raw image links!
+                    💡 Supports direct Supabase storage links, CDN URLs, Google Drive links, or direct file uploads.
                   </p>
                 </div>
 
@@ -577,7 +702,7 @@ export default function SiteSettingsAdminPage() {
                           alt="Logo Preview"
                           className="max-h-12 w-auto object-contain"
                           onError={(e) => {
-                            (e.target as HTMLImageElement).src = '/images/rvk-logo.png';
+                            (e.target as HTMLImageElement).src = '/images/logo/logo.png';
                           }}
                         />
                       ) : (
@@ -594,7 +719,7 @@ export default function SiteSettingsAdminPage() {
                           alt="Favicon Preview"
                           className="w-8 h-8 object-contain rounded-md"
                           onError={(e) => {
-                            (e.target as HTMLImageElement).src = '/images/rvk-logo.png';
+                            (e.target as HTMLImageElement).src = '/images/logo/logo.png';
                           }}
                         />
                       ) : (
@@ -1065,11 +1190,108 @@ export default function SiteSettingsAdminPage() {
             </div>
           </div>
 
+          {/* SECTION 6: System Data Management & Safety Operations */}
+          <div className="p-6 rounded-2xl bg-white border border-stone-200 space-y-6 shadow-sm">
+            <div className="flex items-center justify-between border-b border-stone-200 pb-3">
+              <div className="flex items-center gap-2 text-stone-900 font-serif font-bold text-lg">
+                <Database className="w-5 h-5 text-amber-600" /> System Data Backup & Danger Zone
+              </div>
+              <span className="px-3 py-1 rounded-full bg-stone-100 border border-stone-300 text-stone-700 text-[10px] font-black uppercase tracking-wider">
+                Store-Scoped Engine
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Option 1: Backup Data */}
+              <div className="p-5 rounded-2xl bg-stone-50/80 border border-stone-200 flex flex-col justify-between space-y-4">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-stone-900 font-bold text-sm">
+                    <Download className="w-4 h-4 text-emerald-600" /> 1. Export System Backup
+                  </div>
+                  <p className="text-xs text-stone-600 leading-relaxed">
+                    Export a full encrypted JSON backup containing catalog items, bottle sizes, customer profiles, order logs, reviews, and store settings.
+                  </p>
+                  <div className="flex flex-wrap gap-1 pt-1">
+                    <span className="px-2 py-0.5 rounded-md bg-white border border-stone-200 text-[10px] font-bold text-stone-600">Products</span>
+                    <span className="px-2 py-0.5 rounded-md bg-white border border-stone-200 text-[10px] font-bold text-stone-600">Variants</span>
+                    <span className="px-2 py-0.5 rounded-md bg-white border border-stone-200 text-[10px] font-bold text-stone-600">Orders</span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleDownloadBackup}
+                  disabled={isDownloadingBackup}
+                  className="w-full py-2.5 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>{isDownloadingBackup ? 'Generating...' : 'Download Backup (.json)'}</span>
+                </button>
+              </div>
+
+              {/* Option 2: Restore Data */}
+              <div className="p-5 rounded-2xl bg-sky-50/80 border border-sky-200 flex flex-col justify-between space-y-4">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sky-950 font-bold text-sm">
+                    <UploadCloud className="w-4 h-4 text-sky-600" /> 2. Restore from Backup
+                  </div>
+                  <p className="text-xs text-sky-800 leading-relaxed">
+                    Upload any previously downloaded Rose Valley backup JSON file to safely restore catalog, variants, and configurations to Supabase.
+                  </p>
+                  <div className="flex flex-wrap gap-1 pt-1">
+                    <span className="px-2 py-0.5 rounded-md bg-white border border-sky-200 text-[10px] font-bold text-sky-700">Auto Upsert</span>
+                    <span className="px-2 py-0.5 rounded-md bg-white border border-sky-200 text-[10px] font-bold text-sky-700">Pre-check</span>
+                  </div>
+                </div>
+
+                <label className="w-full py-2.5 px-4 rounded-xl bg-sky-700 hover:bg-sky-800 text-white font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer">
+                  <UploadCloud className="w-4 h-4" />
+                  <span>{isRestoring ? 'Restoring...' : 'Restore Backup (.json)'}</span>
+                  <input
+                    type="file"
+                    accept=".json,application/json"
+                    onChange={handleSelectBackupFile}
+                    className="hidden"
+                    disabled={isRestoring}
+                  />
+                </label>
+              </div>
+
+              {/* Option 3: Purge Data (Double Verification) */}
+              <div className="p-5 rounded-2xl bg-rose-50/70 border border-rose-200 flex flex-col justify-between space-y-4">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-rose-900 font-bold text-sm">
+                    <ShieldAlert className="w-4 h-4 text-rose-600" /> 3. Purge Store Data
+                  </div>
+                  <p className="text-xs text-rose-800 leading-relaxed">
+                    Permanently delete all catalog products, bottle sizes, test customer accounts, orders, reviews, and cart records from Supabase.
+                  </p>
+                  <p className="text-[11px] text-rose-700 font-bold">
+                    ⚠️ Irreversible Action (2-step check)
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPurgeStep(1);
+                    setPurgeInputText('');
+                    setIsPurgeModalOpen(true);
+                  }}
+                  className="w-full py-2.5 px-4 rounded-xl bg-rose-700 hover:bg-rose-800 text-white font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>Purge All Store Data</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
           <div className="flex justify-end pt-4">
             <button
               type="submit"
               disabled={isSaving}
-              className="px-8 py-3 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-md transition-all disabled:opacity-50 flex items-center gap-2"
+              className="px-8 py-3 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-md transition-all disabled:opacity-50 flex items-center gap-2 cursor-pointer"
             >
               <Save className="w-4 h-4" /> {isSaving ? 'Saving Changes...' : 'Save All Settings'}
             </button>
@@ -1212,6 +1434,227 @@ export default function SiteSettingsAdminPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* RESTORE BACKUP CONFIRMATION MODAL */}
+      {isRestoreModalOpen && backupFilePayload && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-white border-2 border-sky-300 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl p-6 sm:p-8 space-y-6 animate-in fade-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-stone-200 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-sky-100 border border-sky-300 flex items-center justify-center text-sky-700">
+                  <UploadCloud className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-base font-serif font-bold text-sky-950">
+                    Restore System Data Backup
+                  </h2>
+                  <p className="text-[11px] text-stone-500 font-medium">Verify Backup Archive Contents</p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  if (!isRestoring) {
+                    setIsRestoreModalOpen(false);
+                    setBackupFilePayload(null);
+                  }
+                }}
+                disabled={isRestoring}
+                className="p-1 text-stone-400 hover:text-stone-900 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Archive Summary Inspection */}
+            <div className="space-y-4">
+              <div className="p-4 rounded-2xl bg-sky-50 border border-sky-200 text-xs text-sky-950 space-y-2">
+                <div className="font-extrabold text-sky-900 flex items-center justify-between">
+                  <span>Archive Export Date:</span>
+                  <span className="font-mono text-stone-600 font-normal">
+                    {backupFilePayload.metadata?.export_date
+                      ? new Date(backupFilePayload.metadata.export_date).toLocaleString()
+                      : 'N/A'}
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-2 pt-2 text-center font-bold">
+                  <div className="p-2 rounded-xl bg-white border border-sky-200 shadow-2xs">
+                    <div className="text-base text-sky-700">
+                      {backupFilePayload.data?.products?.length ||
+                        backupFilePayload.products?.length ||
+                        (Array.isArray(backupFilePayload) ? backupFilePayload.length : 0) ||
+                        backupFilePayload.metadata?.summary?.total_products ||
+                        0}
+                    </div>
+                    <div className="text-[10px] text-stone-500 font-semibold">Products</div>
+                  </div>
+                  <div className="p-2 rounded-xl bg-white border border-sky-200 shadow-2xs">
+                    <div className="text-base text-sky-700">
+                      {backupFilePayload.data?.variants?.length ||
+                        backupFilePayload.data?.product_variants?.length ||
+                        backupFilePayload.variants?.length ||
+                        backupFilePayload.product_variants?.length ||
+                        backupFilePayload.metadata?.summary?.total_variants ||
+                        0}
+                    </div>
+                    <div className="text-[10px] text-stone-500 font-semibold">Bottle Sizes</div>
+                  </div>
+                  <div className="p-2 rounded-xl bg-white border border-sky-200 shadow-2xs">
+                    <div className="text-base text-sky-700">
+                      {backupFilePayload.data?.categories?.length ||
+                        backupFilePayload.categories?.length ||
+                        backupFilePayload.metadata?.summary?.total_categories ||
+                        0}
+                    </div>
+                    <div className="text-[10px] text-stone-500 font-semibold">Categories</div>
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-xs text-stone-600 leading-relaxed bg-stone-50 p-3 rounded-xl border border-stone-200">
+                Restoring this backup will safely update or upsert all product records, sizes, prices, images, and parameters into the Supabase database.
+              </p>
+
+              <div className="pt-2 flex justify-end gap-3 border-t border-stone-200">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsRestoreModalOpen(false);
+                    setBackupFilePayload(null);
+                  }}
+                  disabled={isRestoring}
+                  className="px-4 py-2.5 rounded-xl text-xs font-semibold text-stone-600 hover:text-stone-900 bg-stone-100 hover:bg-stone-200 transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleExecuteRestore}
+                  disabled={isRestoring}
+                  className="px-6 py-2.5 rounded-xl bg-sky-700 hover:bg-sky-800 text-white font-bold text-xs shadow-md transition-all disabled:opacity-50 flex items-center gap-2 cursor-pointer"
+                >
+                  <UploadCloud className="w-4 h-4" />
+                  <span>{isRestoring ? 'Restoring System Data...' : 'Confirm & Restore Backup'}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PURGE ALL DATA DOUBLE-MESSAGE CHECK MODAL */}
+      {isPurgeModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-white border-2 border-rose-300 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl p-6 sm:p-8 space-y-6 animate-in fade-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-stone-200 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-rose-100 border border-rose-300 flex items-center justify-center text-rose-700">
+                  <ShieldAlert className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-base font-serif font-bold text-rose-950">
+                    {purgeStep === 1 ? 'Step 1 of 2: Danger Zone Warning' : 'Step 2 of 2: Final Verification'}
+                  </h2>
+                  <p className="text-[11px] text-stone-500 font-medium">Double-Message Confirmation Guard</p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  if (!isPurging) setIsPurgeModalOpen(false);
+                }}
+                disabled={isPurging}
+                className="p-1 text-stone-400 hover:text-stone-900 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* STEP 1: INITIAL WARNING */}
+            {purgeStep === 1 && (
+              <div className="space-y-4">
+                <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-rose-900 space-y-2">
+                  <div className="font-extrabold flex items-center gap-2 text-rose-800 text-sm">
+                    <AlertTriangle className="w-4 h-4 text-rose-600" />
+                    <span>Are you absolutely sure you want to purge all data?</span>
+                  </div>
+                  <p className="text-stone-700 leading-relaxed">
+                    This action will permanently erase:
+                  </p>
+                  <ul className="list-disc list-inside space-y-1 text-stone-800 font-medium pl-1">
+                    <li>All catalog products and bottle sizes/variants</li>
+                    <li>All order histories and cart entries</li>
+                    <li>All customer reviews & question threads</li>
+                    <li>All registered non-admin customer profiles</li>
+                  </ul>
+                  <p className="font-black text-rose-700 pt-1">
+                    ⚠️ This operation is irreversible and cannot be undone.
+                  </p>
+                </div>
+
+                <div className="pt-2 flex justify-end gap-3 border-t border-stone-200">
+                  <button
+                    type="button"
+                    onClick={() => setIsPurgeModalOpen(false)}
+                    className="px-4 py-2.5 rounded-xl text-xs font-semibold text-stone-600 hover:text-stone-900 bg-stone-100 hover:bg-stone-200 transition-all cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPurgeStep(2)}
+                    className="px-5 py-2.5 rounded-xl bg-rose-700 hover:bg-rose-800 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <span>I Understand the Risks — Continue to Step 2</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 2: TYPED VERIFICATION CHECK */}
+            {purgeStep === 2 && (
+              <div className="space-y-4">
+                <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-950 space-y-2">
+                  <p className="font-extrabold text-amber-900">
+                    Please type <span className="font-mono bg-white px-2 py-0.5 rounded border border-amber-300 font-black text-rose-700">PURGE</span> below to authorize the deletion:
+                  </p>
+                </div>
+
+                <div>
+                  <input
+                    type="text"
+                    value={purgeInputText}
+                    onChange={(e) => setPurgeInputText(e.target.value)}
+                    placeholder="Type PURGE in capital letters"
+                    autoFocus
+                    className="w-full px-4 py-3 rounded-xl bg-stone-50 border-2 border-stone-300 text-sm font-mono font-bold text-stone-900 focus:outline-none focus:border-rose-600 tracking-wider"
+                  />
+                </div>
+
+                <div className="pt-2 flex justify-end gap-3 border-t border-stone-200">
+                  <button
+                    type="button"
+                    onClick={() => setPurgeStep(1)}
+                    disabled={isPurging}
+                    className="px-4 py-2.5 rounded-xl text-xs font-semibold text-stone-600 hover:text-stone-900 bg-stone-100 hover:bg-stone-200 transition-all cursor-pointer"
+                  >
+                    Back to Step 1
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleExecutePurge}
+                    disabled={isPurging || purgeInputText.trim() !== 'PURGE'}
+                    className="px-6 py-2.5 rounded-xl bg-rose-700 hover:bg-rose-800 text-white font-black text-xs shadow-md transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span>{isPurging ? 'Purging All Store Data...' : 'Permanently Delete All Store Data'}</span>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

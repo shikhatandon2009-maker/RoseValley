@@ -32,6 +32,8 @@ export interface CatalogProduct {
   is_bestseller?: boolean;
   created_at?: string;
   categories?: any[];
+  category?: any;
+  category_name?: string;
   variants?: any[];
 }
 
@@ -104,6 +106,19 @@ export async function fetchProducts(options?: ProductQueryOptions): Promise<Cata
       created_at: p.created_at || new Date().toISOString(),
     }));
 
+    // Deduplicate duplicate products of the same name (prefer cleaner hyphenated slug)
+    const dedupMap = new Map<string, CatalogProduct>();
+    for (const p of productList) {
+      const norm = (p.name || '').toLowerCase().trim().replace(/[^a-z0-9]/g, '');
+      const existing = dedupMap.get(norm);
+      if (!existing) {
+        dedupMap.set(norm, p);
+      } else if (p.slug.includes('-') && !existing.slug.includes('-')) {
+        dedupMap.set(norm, p);
+      }
+    }
+    productList = Array.from(dedupMap.values());
+
     if (options?.search) {
       const q = options.search.toLowerCase().trim();
       productList = productList.filter(
@@ -173,6 +188,21 @@ export async function fetchProductBySlug(slug: string): Promise<CatalogProduct |
       return null;
     }
 
+    // Fetch assigned category for breadcrumb navigation
+    let category: { id: string; name: string; slug: string } | null = null;
+    try {
+      const { data: junction } = await supabase
+        .from('product_categories')
+        .select('category_id, categories(id, name, slug)')
+        .eq('product_id', data.id)
+        .limit(1)
+        .maybeSingle();
+
+      if (junction && (junction as any).categories) {
+        category = (junction as any).categories;
+      }
+    } catch (_) {}
+
     const product: CatalogProduct = {
       id: String(data.id),
       store_id: data.store_id || STORE_ID,
@@ -187,6 +217,9 @@ export async function fetchProductBySlug(slug: string): Promise<CatalogProduct |
       is_featured: Boolean(data.is_featured),
       is_bestseller: Boolean(data.is_bestseller),
       created_at: data.created_at || new Date().toISOString(),
+      category,
+      category_name: category?.name,
+      category_slug: category?.slug,
     };
 
     MEMORY_CACHE.set(cacheKey, { data: product, timestamp: now });
@@ -195,6 +228,20 @@ export async function fetchProductBySlug(slug: string): Promise<CatalogProduct |
     console.error('Database connection error in fetchProductBySlug:', err);
     return cached ? cached.data : null;
   }
+}
+
+export function getStandardVariantsForKiloPrice(basePrice?: number) {
+  const b = Math.max(100, Number(basePrice) || 1000);
+  return [
+    { id: 'sample', name: 'Sample (2ml)', price: 250, compare_at_price: 300 },
+    { id: '100ml', name: '100 ml', price: Math.round(b / 10 + 200), compare_at_price: Math.round((b / 10 + 200) * 1.2) },
+    { id: '250ml', name: '250 ml', price: Math.round(b / 4 + 200), compare_at_price: Math.round((b / 4 + 200) * 1.2) },
+    { id: '500ml', name: '500 ml', price: Math.round(b / 2 + 200), compare_at_price: Math.round((b / 2 + 200) * 1.2) },
+    { id: '1kg', name: '1 Kg', price: b, compare_at_price: Math.round(b * 1.2) },
+    { id: '5kg', name: '5 Kg', price: Math.round(b * 5 * 0.98), compare_at_price: Math.round(b * 5 * 1.15) },
+    { id: '10kg', name: '10 Kg', price: Math.round(b * 10 * 0.96), compare_at_price: Math.round(b * 10 * 1.15) },
+    { id: '20kg', name: '20 Kg', price: Math.round(b * 20 * 0.93), compare_at_price: Math.round(b * 20 * 1.15) },
+  ];
 }
 
 /**
@@ -218,15 +265,29 @@ export async function fetchProductVariants(productId: string, basePrice?: number
       .eq('product_id', productId)
       .order('price', { ascending: true });
 
-    if (!error && data && data.length > 0) {
-      MEMORY_CACHE.set(cacheKey, { data, timestamp: now });
-      return data;
+    if (!error && data && data.length > 1) {
+      // Deduplicate variants by name and price
+      const seen = new Set<string>();
+      const uniqueVariants: any[] = [];
+      for (const v of data) {
+        const key = `${(v.name || '').trim().toLowerCase()}_${Number(v.price)}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          uniqueVariants.push(v);
+        }
+      }
+      if (uniqueVariants.length > 1) {
+        MEMORY_CACHE.set(cacheKey, { data: uniqueVariants, timestamp: now });
+        return uniqueVariants;
+      }
     }
   } catch (err) {
     console.error('Error fetching product variants:', err);
   }
 
-  return [];
+  const standard = getStandardVariantsForKiloPrice(basePrice);
+  MEMORY_CACHE.set(cacheKey, { data: standard, timestamp: now });
+  return standard;
 }
 
 /**

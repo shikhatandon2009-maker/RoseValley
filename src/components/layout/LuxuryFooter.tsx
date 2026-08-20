@@ -27,11 +27,11 @@ export function LuxuryFooter() {
                 </div>
               ) : (
                 <img
-                  src={formatImageUrl(settings.logo_url, '/images/rvk-logo.png')}
+                  src={formatImageUrl(settings.logo_url, '/images/logo/logo.png')}
                   alt={settings.site_name || "Rose Valley Kannauj"}
                   className="h-14 sm:h-16 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).src = '/images/rvk-logo.png';
+                    (e.target as HTMLImageElement).src = '/images/logo/logo.png';
                   }}
                 />
               )}

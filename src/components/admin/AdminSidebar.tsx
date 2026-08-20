@@ -217,11 +217,11 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
               {!settings.use_text_logo && (
                 <div className="p-0.5 rounded-lg bg-white border border-[#F7D1D8] shadow-xs">
                   <img 
-                    src={formatImageUrl(settings.logo_url, '/images/rvk-logo.png')} 
+                    src={formatImageUrl(settings.logo_url, '/images/logo/logo.png')} 
                     alt={settings.site_name || "Rose Valley Kannauj"} 
                     className="h-8 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/images/rvk-logo.png';
+                      (e.target as HTMLImageElement).src = '/images/logo/logo.png';
                     }}
                   />
                 </div>

@@ -24,8 +24,8 @@ const DEFAULT_SETTINGS: SiteSettings = {
   store_id: 'essential_oils_perfumes_store_01',
   site_name: 'Rose Valley Kannauj',
   tagline: 'Artisanal Attars & Pure Distillates • Kannauj',
-  logo_url: '/images/rvk-logo.png',
-  favicon_url: '/images/rvk-logo.png',
+  logo_url: '/images/logo/logo.png',
+  favicon_url: '/images/logo/favicon.png',
   use_text_logo: false,
   contact_email: 'support@rosevalleykannauj.com',
   contact_phone: '+91 98765 43210',
@@ -40,7 +40,7 @@ const DEFAULT_SETTINGS: SiteSettings = {
 
 export function updateFaviconInDOM(faviconUrl: string) {
   if (typeof window === 'undefined') return;
-  const formattedFavicon = formatImageUrl(faviconUrl, '/images/rvk-logo.png');
+  const formattedFavicon = formatImageUrl(faviconUrl, '/images/logo/favicon.png');
 
   // Find or create rel="icon" and rel="shortcut icon"
   const rels = ['icon', 'shortcut icon', 'apple-touch-icon'];
@@ -95,8 +95,8 @@ export const useSiteSettingsStore = create<SiteSettingsState>((set, get) => ({
         if (res.ok) {
           const data = await res.json();
           if (data.settings) {
-            const formattedLogo = formatImageUrl(data.settings.logo_url, '/images/rvk-logo.png');
-            const formattedFavicon = formatImageUrl(data.settings.favicon_url, '/images/rvk-logo.png');
+            const formattedLogo = formatImageUrl(data.settings.logo_url, '/images/logo/logo.png');
+            const formattedFavicon = formatImageUrl(data.settings.favicon_url, '/images/logo/favicon.png');
 
             const updated: SiteSettings = {
               ...DEFAULT_SETTINGS,

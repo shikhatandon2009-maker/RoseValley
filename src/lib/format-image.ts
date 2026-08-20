@@ -3,7 +3,7 @@
  * are converted into direct raw image URLs usable in <img> and <link rel="icon"> tags.
  */
 
-export function formatImageUrl(url?: string | null, fallback: string = '/images/rvk-logo.png'): string {
+export function formatImageUrl(url?: string | null, fallback: string = '/images/logo/logo.png'): string {
   if (!url || typeof url !== 'string') return fallback;
   const trimmed = url.trim();
   if (!trimmed) return fallback;

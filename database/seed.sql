@@ -120,7 +120,7 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Site Settings
 INSERT INTO site_settings (store_id, site_name, tagline, logo_url, favicon_url, contact_email, contact_phone) VALUES
-('essential_oils_perfumes_store_01', 'Rose Valley Kannauj', 'Artisanal Attars & Pure Distillates • Kannauj', '/images/rvk-logo.png', '/images/rvk-logo.png', 'support@rosevalleykannauj.com', '+91 98765 43210')
+('essential_oils_perfumes_store_01', 'Rose Valley Kannauj', 'Artisanal Attars & Pure Distillates • Kannauj', '/images/logo/logo.png', '/images/logo/logo.png', 'support@rosevalleykannauj.com', '+91 98765 43210')
 ON CONFLICT (store_id) DO NOTHING;
 
 -- Coupons

@@ -34,15 +34,15 @@ export const metadata: Metadata = {
   title: "Rose Valley Kannauj | Artisanal Attars & Pure Essential Oils",
   description: 'Hand-crafted traditional Kannauj attars and 100% pure botanical essential oils distilled using centuries-old Deg-Bhapka copper stills.',
   icons: {
-    icon: '/images/rvk-logo.png',
-    shortcut: '/images/rvk-logo.png',
-    apple: '/images/rvk-logo.png',
+    icon: '/images/logo/favicon.png',
+    shortcut: '/images/logo/favicon.png',
+    apple: '/images/logo/favicon.png',
   },
   openGraph: {
     title: "Rose Valley Kannauj | Artisanal Perfumes & Attars",
     description: 'Explore rare rose distillations, hydro-distilled attars, and pure essential oils from Kannauj.',
     type: 'website',
-    images: [{ url: '/images/rvk-logo.png', width: 800, height: 600, alt: 'Rose Valley Kannauj Logo' }],
+    images: [{ url: '/images/logo/logo.png', width: 800, height: 600, alt: 'Rose Valley Kannauj Logo' }],
   },
   other: {
     'theme-color': '#F7EEED',

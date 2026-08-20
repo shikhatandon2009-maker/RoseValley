@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import {
   Package,
@@ -27,8 +27,9 @@ import {
   Download,
   FileSpreadsheet,
   Droplets,
+  FolderPlus,
+  ChevronDown,
 } from 'lucide-react';
-import { STORE_ID } from '@/lib/constants';
 
 interface ProductVariant {
   id?: string;
@@ -74,6 +75,7 @@ interface Stats {
   totalProducts: number;
   featuredCount: number;
   bestsellerCount: number;
+  uncategorizedCount: number;
   lowStockCount: number;
 }
 
@@ -98,12 +100,28 @@ export default function ProductsAdminPage() {
     totalProducts: 0,
     featuredCount: 0,
     bestsellerCount: 0,
+    uncategorizedCount: 0,
     lowStockCount: 0,
   });
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [featuredFilter, setFeaturedFilter] = useState('all');
+
+  // Multi-select & Shift-click
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(null);
+
+  // Bulk Category Assign Modal
+  const [isBulkAssignModalOpen, setIsBulkAssignModalOpen] = useState(false);
+  const [bulkSelectedCategoryIds, setBulkSelectedCategoryIds] = useState<string[]>([]);
+  const [bulkAssignMode, setBulkAssignMode] = useState<'append' | 'replace'>('append');
+  const [isBulkAssigning, setIsBulkAssigning] = useState(false);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+
+  // Quick inline category popover per product
+  const [quickAssignProductId, setQuickAssignProductId] = useState<string | null>(null);
+  const quickAssignRef = useRef<HTMLDivElement | null>(null);
 
   // Modals
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -157,6 +175,17 @@ export default function ProductsAdminPage() {
     fetchCategories();
   }, []);
 
+  // Close quick category popover when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (quickAssignRef.current && !quickAssignRef.current.contains(event.target as Node)) {
+        setQuickAssignProductId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const fetchProducts = async (showLoadingState = true) => {
     try {
       if (showLoadingState) setLoading(true);
@@ -169,6 +198,7 @@ export default function ProductsAdminPage() {
         totalProducts: list.length,
         featuredCount: list.filter((p) => p.is_featured).length,
         bestsellerCount: list.filter((p) => p.is_bestseller).length,
+        uncategorizedCount: list.filter((p) => !p.categories || p.categories.length === 0).length,
         lowStockCount: 0,
       });
     } catch (err: any) {
@@ -240,8 +270,6 @@ export default function ProductsAdminPage() {
 
       setImportResult({ message: data.message, stats: data.stats });
       showToast('success', 'CSV imported successfully!');
-      
-      // Instant background refresh
       fetchProducts(false);
     } catch (err: any) {
       showToast('error', err.message || 'CSV Import error');
@@ -258,9 +286,13 @@ export default function ProductsAdminPage() {
         product.slug.toLowerCase().includes(search.toLowerCase()) ||
         (product.description && product.description.toLowerCase().includes(search.toLowerCase()));
 
+      const isUncategorized = !product.categories || product.categories.length === 0;
+
       const matchesCategory =
         categoryFilter === 'all' ||
-        (product.categories && product.categories.some((c) => c.id === categoryFilter || c.slug === categoryFilter));
+        (categoryFilter === 'uncategorized'
+          ? isUncategorized
+          : product.categories && product.categories.some((c) => c.id === categoryFilter || c.slug === categoryFilter));
 
       const matchesFeatured =
         featuredFilter === 'all' ||
@@ -270,6 +302,237 @@ export default function ProductsAdminPage() {
       return matchesSearch && matchesCategory && matchesFeatured;
     });
   }, [products, search, categoryFilter, featuredFilter]);
+
+  // Checkbox Selection with Shift + Click support
+  const handleToggleSelect = (productId: string, index: number, e: React.MouseEvent) => {
+    const isShift = e.shiftKey;
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+
+      if (isShift && lastSelectedIndex !== null) {
+        const start = Math.min(lastSelectedIndex, index);
+        const end = Math.max(lastSelectedIndex, index);
+        const rangeProducts = filteredProducts.slice(start, end + 1);
+        const shouldSelect = !prev.has(productId) || prev.size === 0;
+
+        rangeProducts.forEach((p) => {
+          if (shouldSelect) {
+            next.add(p.id);
+          } else {
+            next.delete(p.id);
+          }
+        });
+      } else {
+        if (next.has(productId)) {
+          next.delete(productId);
+        } else {
+          next.add(productId);
+        }
+      }
+      return next;
+    });
+
+    setLastSelectedIndex(index);
+  };
+
+  const handleSelectAll = () => {
+    const allFilteredIds = filteredProducts.map((p) => p.id);
+    const allSelected = allFilteredIds.length > 0 && allFilteredIds.every((id) => selectedIds.has(id));
+
+    if (allSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(allFilteredIds));
+    }
+  };
+
+  // Immediate Single Product Delete with Optimistic UI
+  const handleImmediateDelete = async (product: Product) => {
+    const previousProducts = [...products];
+    const previousStats = { ...stats };
+
+    // Optimistically remove immediately from UI
+    setProducts((prev) => prev.filter((p) => p.id !== product.id));
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.delete(product.id);
+      return next;
+    });
+    setStats((prev) => ({
+      ...prev,
+      totalProducts: Math.max(0, prev.totalProducts - 1),
+      featuredCount: product.is_featured ? Math.max(0, prev.featuredCount - 1) : prev.featuredCount,
+      bestsellerCount: product.is_bestseller ? Math.max(0, prev.bestsellerCount - 1) : prev.bestsellerCount,
+      uncategorizedCount: (!product.categories || product.categories.length === 0)
+        ? Math.max(0, prev.uncategorizedCount - 1)
+        : prev.uncategorizedCount,
+    }));
+    setDeletingProduct(null);
+    showToast('success', `Deleted "${product.name}"`);
+
+    try {
+      const res = await fetch(`/api/admin/products/${product.id}`, { method: 'DELETE' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to delete product from database');
+      }
+    } catch (err: any) {
+      // Revert optimistic update if API failed
+      setProducts(previousProducts);
+      setStats(previousStats);
+      showToast('error', err.message || 'Failed to delete product. Restored.');
+    }
+  };
+
+  // Batch Delete Selected Products
+  const handleBulkDelete = async () => {
+    const idsToDelete = Array.from(selectedIds);
+    if (idsToDelete.length === 0) return;
+
+    const count = idsToDelete.length;
+    const previousProducts = [...products];
+    const previousStats = { ...stats };
+    const idSet = new Set(idsToDelete);
+
+    // Optimistically remove all from UI
+    setProducts((prev) => prev.filter((p) => !idSet.has(p.id)));
+    setSelectedIds(new Set());
+    setStats((prev) => ({
+      ...prev,
+      totalProducts: Math.max(0, prev.totalProducts - count),
+    }));
+    showToast('success', `Deleted ${count} selected product(s)`);
+
+    try {
+      setIsBulkDeleting(true);
+      const res = await fetch('/api/admin/products', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: idsToDelete }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || 'Batch deletion failed');
+      }
+      fetchProducts(false);
+    } catch (err: any) {
+      setProducts(previousProducts);
+      setStats(previousStats);
+      showToast('error', err.message || 'Batch delete failed. Restored.');
+    } finally {
+      setIsBulkDeleting(false);
+    }
+  };
+
+  // Batch Category Assignment
+  const handleBulkAssignCategory = async () => {
+    const targetProductIds = Array.from(selectedIds);
+    if (targetProductIds.length === 0 || bulkSelectedCategoryIds.length === 0) {
+      showToast('error', 'Please select at least one category.');
+      return;
+    }
+
+    try {
+      setIsBulkAssigning(true);
+
+      const res = await fetch('/api/admin/products', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'assign_category',
+          product_ids: targetProductIds,
+          category_ids: bulkSelectedCategoryIds,
+          mode: bulkAssignMode,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to assign categories');
+
+      // Optimistically update categories in state
+      const newlyAssignedCategories = categoriesList.filter((c) => bulkSelectedCategoryIds.includes(c.id));
+      setProducts((prev) =>
+        prev.map((p) => {
+          if (!targetProductIds.includes(p.id)) return p;
+          if (bulkAssignMode === 'replace') {
+            return { ...p, categories: newlyAssignedCategories };
+          } else {
+            const existingCatMap = new Map((p.categories || []).map((c) => [c.id, c]));
+            newlyAssignedCategories.forEach((c) => existingCatMap.set(c.id, c));
+            return { ...p, categories: Array.from(existingCatMap.values()) };
+          }
+        })
+      );
+
+      showToast('success', `Assigned category to ${targetProductIds.length} product(s)!`);
+      setIsBulkAssignModalOpen(false);
+      setBulkSelectedCategoryIds([]);
+      setSelectedIds(new Set());
+      fetchProducts(false);
+    } catch (err: any) {
+      showToast('error', err.message || 'Failed to assign category.');
+    } finally {
+      setIsBulkAssigning(false);
+    }
+  };
+
+  // Quick 1-Click Inline Category Assignment
+  const handleQuickAssignCategory = async (product: Product, category: CategoryOption) => {
+    // Optimistic UI update
+    const alreadyHas = product.categories?.some((c) => c.id === category.id);
+    if (alreadyHas) {
+      setQuickAssignProductId(null);
+      return;
+    }
+
+    const updatedCategories = [...(product.categories || []), category];
+    setProducts((prev) =>
+      prev.map((p) => (p.id === product.id ? { ...p, categories: updatedCategories } : p))
+    );
+    setQuickAssignProductId(null);
+    showToast('success', `Added "${category.name}" to ${product.name}`);
+
+    try {
+      const res = await fetch('/api/admin/products', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'assign_category',
+          product_ids: [product.id],
+          category_ids: [category.id],
+          mode: 'append',
+        }),
+      });
+      if (!res.ok) throw new Error('Failed to update category in database');
+    } catch (err: any) {
+      showToast('error', 'Error syncing category with Supabase.');
+      fetchProducts(false);
+    }
+  };
+
+  const handleQuickRemoveCategory = async (product: Product, categoryId: string) => {
+    const updatedCategories = (product.categories || []).filter((c) => c.id !== categoryId);
+    setProducts((prev) =>
+      prev.map((p) => (p.id === product.id ? { ...p, categories: updatedCategories } : p))
+    );
+    showToast('success', `Removed category tag`);
+
+    try {
+      const res = await fetch('/api/admin/products', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'remove_category',
+          product_ids: [product.id],
+          category_id: categoryId,
+        }),
+      });
+      if (!res.ok) throw new Error('Failed to remove category tag');
+    } catch (err: any) {
+      showToast('error', 'Error syncing category removal.');
+      fetchProducts(false);
+    }
+  };
 
   const handleOpenAddModal = () => {
     setFormData({
@@ -501,9 +764,31 @@ export default function ProductsAdminPage() {
 
   const handleToggleFlag = async (product: Product, field: 'is_featured' | 'is_bestseller') => {
     const newValue = !product[field];
+
+    // Limit featured products to max 5 for CinematicHeroV2 Carousel
+    if (field === 'is_featured' && newValue) {
+      const currentFeaturedCount = products.filter((p) => p.is_featured).length;
+      if (currentFeaturedCount >= 5) {
+        showToast(
+          'error',
+          '⚠️ Maximum 5 featured products allowed for the Hero Carousel. Please unfeature another product first.'
+        );
+        return;
+      }
+    }
+
     setProducts((prev) =>
       prev.map((p) => (p.id === product.id ? { ...p, [field]: newValue } : p))
     );
+    setStats((prev) => ({
+      ...prev,
+      featuredCount: field === 'is_featured'
+        ? (newValue ? prev.featuredCount + 1 : Math.max(0, prev.featuredCount - 1))
+        : prev.featuredCount,
+      bestsellerCount: field === 'is_bestseller'
+        ? (newValue ? prev.bestsellerCount + 1 : Math.max(0, prev.bestsellerCount - 1))
+        : prev.bestsellerCount,
+    }));
 
     try {
       const res = await fetch(`/api/admin/products/${product.id}`, {
@@ -512,34 +797,15 @@ export default function ProductsAdminPage() {
         body: JSON.stringify({ [field]: newValue }),
       });
       if (!res.ok) throw new Error('Update failed');
-      showToast('success', `Updated ${product.name}`);
+      showToast(
+        'success',
+        `${newValue ? 'Marked' : 'Unmarked'} ${product.name} as ${
+          field === 'is_featured' ? 'Hero Featured (5 Max)' : 'Bestseller'
+        }`
+      );
     } catch {
       fetchProducts(false);
       showToast('error', 'Failed to update status.');
-    }
-  };
-
-  const handleDeleteProduct = async () => {
-    if (!deletingProduct) return;
-    const target = deletingProduct;
-    setIsDeleting(true);
-
-    try {
-      const res = await fetch(`/api/admin/products/${target.id}`, { method: 'DELETE' });
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to delete product from Supabase');
-      }
-
-      showToast('success', `Product "${target.name}" deleted successfully.`);
-      setProducts((prev) => prev.filter((p) => p.id !== target.id));
-      setDeletingProduct(null);
-      fetchProducts(false);
-    } catch (err: any) {
-      showToast('error', err.message || 'Failed to delete product.');
-    } finally {
-      setIsDeleting(false);
     }
   };
 
@@ -573,7 +839,7 @@ export default function ProductsAdminPage() {
             <Package className="w-4 h-4" /> Products & Variants Manager
           </div>
           <h1 className="text-2xl font-serif font-bold text-stone-900 mt-1">Products Catalog (Supabase)</h1>
-          <p className="text-xs text-stone-500 font-medium">Manage product details, bottle variants, notes pyramid, images, and CSV import/export.</p>
+          <p className="text-xs text-stone-500 font-medium">Manage product details, bottle variants, notes pyramid, category assignments, and CSV batch processing.</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
@@ -619,7 +885,7 @@ export default function ProductsAdminPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200">
           <div className="flex items-center justify-between text-stone-500">
             <span className="text-xs font-bold uppercase tracking-wider">Total Products</span>
@@ -628,12 +894,33 @@ export default function ProductsAdminPage() {
           <p className="text-2xl font-serif font-bold text-stone-900 mt-2">{stats.totalProducts}</p>
         </div>
 
+        <button
+          onClick={() => setCategoryFilter(categoryFilter === 'uncategorized' ? 'all' : 'uncategorized')}
+          className={`p-4 rounded-2xl border text-left transition-all ${
+            categoryFilter === 'uncategorized'
+              ? 'bg-amber-100/80 border-amber-400 ring-2 ring-amber-500/20'
+              : 'bg-amber-50/50 border-amber-200 hover:bg-amber-50'
+          }`}
+        >
+          <div className="flex items-center justify-between text-amber-900">
+            <span className="text-xs font-bold uppercase tracking-wider">Uncategorized</span>
+            <Tag className="w-4 h-4 text-amber-700" />
+          </div>
+          <div className="flex items-baseline gap-2 mt-2">
+            <p className="text-2xl font-serif font-bold text-amber-950">{stats.uncategorizedCount}</p>
+            <span className="text-[10px] text-amber-700 font-bold">Click to filter</span>
+          </div>
+        </button>
+
         <div className="p-4 rounded-2xl bg-amber-50/60 border border-amber-200">
           <div className="flex items-center justify-between text-amber-800">
-            <span className="text-xs font-bold uppercase tracking-wider">Featured</span>
+            <span className="text-xs font-bold uppercase tracking-wider">Featured (Hero)</span>
             <Star className="w-4 h-4 text-amber-600 fill-amber-500" />
           </div>
-          <p className="text-2xl font-serif font-bold text-stone-900 mt-2">{stats.featuredCount}</p>
+          <div className="flex items-baseline gap-2 mt-2">
+            <p className="text-2xl font-serif font-bold text-stone-900">{stats.featuredCount} / 5</p>
+            <span className="text-[10px] text-amber-700 font-bold">Max 5 Carousel</span>
+          </div>
         </div>
 
         <div className="p-4 rounded-2xl bg-rose-50/60 border border-rose-200">
@@ -641,9 +928,54 @@ export default function ProductsAdminPage() {
             <span className="text-xs font-bold uppercase tracking-wider">Bestsellers</span>
             <Flame className="w-4 h-4 text-rose-600 fill-rose-500" />
           </div>
-          <p className="text-2xl font-serif font-bold text-stone-900 mt-2">{stats.bestsellerCount}</p>
+          <div className="flex items-baseline gap-2 mt-2">
+            <p className="text-2xl font-serif font-bold text-stone-900">{stats.bestsellerCount}</p>
+            <span className="text-[10px] text-rose-700 font-bold">Top 6 on Home</span>
+          </div>
         </div>
       </div>
+
+      {/* Floating Bulk Action Bar (When items are selected) */}
+      {selectedIds.size > 0 && (
+        <div className="p-3.5 rounded-2xl bg-stone-900 text-white shadow-2xl border border-stone-800 flex flex-wrap items-center justify-between gap-3 sticky top-4 z-40 animate-fade-in">
+          <div className="flex items-center gap-3">
+            <span className="px-3 py-1 rounded-xl bg-amber-500/20 text-amber-300 font-mono font-bold text-xs border border-amber-500/30">
+              {selectedIds.size} product{selectedIds.size > 1 ? 's' : ''} selected
+            </span>
+            <span className="text-xs text-stone-400 hidden sm:inline">
+              (Tip: Hold <kbd className="px-1.5 py-0.5 rounded bg-stone-800 border border-stone-700 text-[10px] font-mono text-stone-200">SHIFT</kbd> to select range)
+            </span>
+            <button
+              onClick={() => setSelectedIds(new Set())}
+              className="text-xs text-stone-400 hover:text-white font-semibold underline underline-offset-2 transition-colors ml-1"
+            >
+              Deselect all
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2.5">
+            <button
+              onClick={() => {
+                setBulkSelectedCategoryIds([]);
+                setBulkAssignMode('append');
+                setIsBulkAssignModalOpen(true);
+              }}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold transition-all shadow-md active:scale-95"
+            >
+              <FolderPlus className="w-3.5 h-3.5" /> Assign Category ({selectedIds.size})
+            </button>
+
+            <button
+              onClick={handleBulkDelete}
+              disabled={isBulkDeleting}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition-all shadow-md active:scale-95 disabled:opacity-50"
+            >
+              {isBulkDeleting ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+              Delete Selected ({selectedIds.size})
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Search and Filters */}
       <div className="p-4 rounded-2xl bg-white border border-stone-200 flex flex-col md:flex-row items-center justify-between gap-4 shadow-xs">
@@ -665,6 +997,7 @@ export default function ProductsAdminPage() {
             className="px-3 py-2 rounded-xl bg-stone-50 border border-stone-200 text-xs text-stone-800 font-bold focus:outline-none focus:border-amber-700"
           >
             <option value="all">All Categories</option>
+            <option value="uncategorized">⚠️ Uncategorized ({stats.uncategorizedCount})</option>
             {categoriesList.map((cat) => (
               <option key={cat.id} value={cat.id}>
                 {cat.name}
@@ -690,6 +1023,15 @@ export default function ProductsAdminPage() {
           <table className="w-full text-left text-xs">
             <thead className="bg-stone-50 border-b border-stone-200 text-stone-600 uppercase font-bold text-[10px] tracking-wider">
               <tr>
+                <th className="p-4 w-10">
+                  <input
+                    type="checkbox"
+                    checked={filteredProducts.length > 0 && filteredProducts.every((p) => selectedIds.has(p.id))}
+                    onChange={handleSelectAll}
+                    title="Select All / Deselect All"
+                    className="w-4 h-4 rounded text-amber-700 focus:ring-amber-500 cursor-pointer"
+                  />
+                </th>
                 <th className="p-4">Product Details</th>
                 <th className="p-4">Category</th>
                 <th className="p-4">Base Price</th>
@@ -701,22 +1043,40 @@ export default function ProductsAdminPage() {
             <tbody className="divide-y divide-stone-100 font-medium text-stone-800">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="p-12 text-center text-stone-400">
+                  <td colSpan={7} className="p-12 text-center text-stone-400">
                     <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-amber-700" />
                     Loading products from Supabase...
                   </td>
                 </tr>
               ) : filteredProducts.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="p-12 text-center text-stone-400">
+                  <td colSpan={7} className="p-12 text-center text-stone-400">
                     No products found matching filters.
                   </td>
                 </tr>
               ) : (
-                filteredProducts.map((product) => {
+                filteredProducts.map((product, idx) => {
+                  const isSelected = selectedIds.has(product.id);
                   const hasImage = product.images && product.images.length > 0 && product.images[0];
+                  const hasCategories = product.categories && product.categories.length > 0;
+
                   return (
-                    <tr key={product.id} className="hover:bg-amber-50/30 transition-colors">
+                    <tr
+                      key={product.id}
+                      className={`transition-colors ${
+                        isSelected ? 'bg-amber-50/60' : 'hover:bg-amber-50/20'
+                      }`}
+                    >
+                      <td className="p-4 w-10">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => {}}
+                          onClick={(e) => handleToggleSelect(product.id, idx, e)}
+                          className="w-4 h-4 rounded text-amber-700 focus:ring-amber-500 cursor-pointer"
+                        />
+                      </td>
+
                       <td className="p-4">
                         <div className="flex items-center gap-3">
                           <div className="w-12 h-12 rounded-xl bg-stone-100 border border-stone-200 overflow-hidden flex items-center justify-center flex-shrink-0">
@@ -738,19 +1098,82 @@ export default function ProductsAdminPage() {
                       </td>
 
                       <td className="p-4">
-                        <div className="flex flex-wrap gap-1">
-                          {product.categories && product.categories.length > 0 ? (
-                            product.categories.map((c) => (
+                        <div className="flex flex-wrap items-center gap-1.5 relative">
+                          {hasCategories ? (
+                            product.categories!.map((c) => (
                               <span
                                 key={c.id}
-                                className="px-2 py-0.5 rounded-md bg-stone-100 text-stone-700 text-[10px] font-bold border border-stone-200"
+                                className="group/pill inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-stone-100 text-stone-700 text-[10px] font-bold border border-stone-200"
                               >
                                 {c.name}
+                                <button
+                                  type="button"
+                                  onClick={() => handleQuickRemoveCategory(product, c.id)}
+                                  className="text-stone-400 hover:text-rose-600 transition-colors"
+                                  title="Remove category"
+                                >
+                                  ×
+                                </button>
                               </span>
                             ))
-                          ) : (
-                            <span className="text-[11px] text-stone-400 italic">Uncategorized</span>
-                          )}
+                          ) : null}
+
+                          {/* Quick Inline Add/Assign Category Button */}
+                          <div className="relative inline-block">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setQuickAssignProductId(
+                                  quickAssignProductId === product.id ? null : product.id
+                                )
+                              }
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold border transition-all ${
+                                !hasCategories
+                                  ? 'bg-amber-100 border-amber-300 text-amber-900 hover:bg-amber-200 animate-pulse'
+                                  : 'bg-white border-dashed border-stone-300 text-stone-500 hover:border-amber-600 hover:text-amber-800'
+                              }`}
+                              title="Quick Assign Category"
+                            >
+                              <FolderPlus className="w-3 h-3 text-amber-700" />
+                              {!hasCategories ? 'Assign Category' : '+ Add'}
+                            </button>
+
+                            {/* Inline Quick Category Selector Popover */}
+                            {quickAssignProductId === product.id && (
+                              <div
+                                ref={quickAssignRef}
+                                className="absolute left-0 top-full mt-1 z-50 w-52 bg-white border border-stone-200 rounded-2xl shadow-xl p-2 space-y-1 animate-fade-in"
+                              >
+                                <div className="text-[10px] font-bold uppercase tracking-wider text-stone-400 px-2 py-1 border-b border-stone-100">
+                                  Assign Category
+                                </div>
+                                <div className="max-h-48 overflow-y-auto space-y-0.5">
+                                  {categoriesList.length === 0 ? (
+                                    <div className="text-[11px] text-stone-400 p-2 text-center">No categories found</div>
+                                  ) : (
+                                    categoriesList.map((cat) => {
+                                      const isAssigned = product.categories?.some((c) => c.id === cat.id);
+                                      return (
+                                        <button
+                                          key={cat.id}
+                                          type="button"
+                                          onClick={() => handleQuickAssignCategory(product, cat)}
+                                          className={`w-full text-left px-2 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-between transition-colors ${
+                                            isAssigned
+                                              ? 'bg-amber-50 text-amber-900 font-bold'
+                                              : 'text-stone-700 hover:bg-stone-100'
+                                          }`}
+                                        >
+                                          <span>{cat.name}</span>
+                                          {isAssigned && <Check className="w-3.5 h-3.5 text-amber-700" />}
+                                        </button>
+                                      );
+                                    })
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </td>
 
@@ -768,9 +1191,9 @@ export default function ProductsAdminPage() {
                       <td className="p-4">
                         <div className="flex flex-wrap gap-1 max-w-xs">
                           {product.variants && product.variants.length > 0 ? (
-                            product.variants.slice(0, 3).map((v, idx) => (
+                            product.variants.slice(0, 3).map((v, vIdx) => (
                               <span
-                                key={idx}
+                                key={vIdx}
                                 className="px-1.5 py-0.5 rounded bg-amber-50 text-amber-900 border border-amber-200 text-[10px] font-bold"
                               >
                                 {v.name}: ₹{v.price}
@@ -796,7 +1219,11 @@ export default function ProductsAdminPage() {
                                 ? 'bg-amber-100 border-amber-300 text-amber-800'
                                 : 'bg-stone-50 border-stone-200 text-stone-400 hover:text-stone-700'
                             }`}
-                            title="Toggle Featured"
+                            title={
+                              product.is_featured
+                                ? 'Featured on Hero Carousel (Click to unfeature)'
+                                : 'Feature on Hero Carousel (Max 5)'
+                            }
                           >
                             <Star className={`w-3.5 h-3.5 ${product.is_featured ? 'fill-amber-600' : ''}`} />
                           </button>
@@ -808,7 +1235,11 @@ export default function ProductsAdminPage() {
                                 ? 'bg-rose-100 border-rose-300 text-rose-800'
                                 : 'bg-stone-50 border-stone-200 text-stone-400 hover:text-stone-700'
                             }`}
-                            title="Toggle Bestseller"
+                            title={
+                              product.is_bestseller
+                                ? 'Bestseller (Click to remove badge)'
+                                : 'Mark as Bestseller (Top 6 on Home Page)'
+                            }
                           >
                             <Flame className={`w-3.5 h-3.5 ${product.is_bestseller ? 'fill-rose-600' : ''}`} />
                           </button>
@@ -835,9 +1266,9 @@ export default function ProductsAdminPage() {
                           </button>
 
                           <button
-                            onClick={() => setDeletingProduct(product)}
+                            onClick={() => handleImmediateDelete(product)}
                             className="p-1.5 rounded-lg text-stone-400 hover:text-rose-600 hover:bg-rose-50"
-                            title="Delete Product"
+                            title="Delete Product Immediately"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -851,6 +1282,111 @@ export default function ProductsAdminPage() {
           </table>
         </div>
       </div>
+
+      {/* BULK ASSIGN CATEGORY MODAL */}
+      {isBulkAssignModalOpen && (
+        <div className="fixed inset-0 z-50 bg-stone-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white border border-stone-200 rounded-3xl w-full max-w-md p-6 space-y-6 shadow-2xl animate-fade-in text-stone-900">
+            <div className="flex items-center justify-between border-b border-stone-200 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-amber-100 border border-amber-300 flex items-center justify-center text-amber-800">
+                  <FolderPlus className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-serif font-bold text-stone-900">Assign Categories</h3>
+                  <p className="text-xs text-stone-500 font-medium">Apply category tags to {selectedIds.size} selected product(s).</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsBulkAssignModalOpen(false)}
+                className="p-2 rounded-xl text-stone-400 hover:text-stone-700 hover:bg-stone-100"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-stone-700 mb-2">Select Categories to Apply:</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-56 overflow-y-auto p-1">
+                  {categoriesList.map((cat) => {
+                    const isChecked = bulkSelectedCategoryIds.includes(cat.id);
+                    return (
+                      <button
+                        type="button"
+                        key={cat.id}
+                        onClick={() => {
+                          setBulkSelectedCategoryIds((prev) =>
+                            isChecked ? prev.filter((id) => id !== cat.id) : [...prev, cat.id]
+                          );
+                        }}
+                        className={`p-2.5 rounded-xl border text-left text-xs font-bold transition-all flex items-center justify-between ${
+                          isChecked
+                            ? 'bg-amber-100 border-amber-400 text-amber-950 shadow-2xs'
+                            : 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100'
+                        }`}
+                      >
+                        <span className="truncate">{cat.name}</span>
+                        {isChecked && <Check className="w-4 h-4 text-amber-700 flex-shrink-0" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-stone-700 mb-2">Assignment Mode:</label>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setBulkAssignMode('append')}
+                    className={`p-2.5 rounded-xl border text-left font-bold transition-all ${
+                      bulkAssignMode === 'append'
+                        ? 'bg-amber-100 border-amber-400 text-amber-900'
+                        : 'bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100'
+                    }`}
+                  >
+                    <div>+ Add to existing</div>
+                    <div className="text-[10px] text-stone-500 font-normal">Keep current categories</div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setBulkAssignMode('replace')}
+                    className={`p-2.5 rounded-xl border text-left font-bold transition-all ${
+                      bulkAssignMode === 'replace'
+                        ? 'bg-amber-100 border-amber-400 text-amber-900'
+                        : 'bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100'
+                    }`}
+                  >
+                    <div>↺ Replace all</div>
+                    <div className="text-[10px] text-stone-500 font-normal">Overwrite categories</div>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-stone-200">
+              <button
+                type="button"
+                onClick={() => setIsBulkAssignModalOpen(false)}
+                className="px-4 py-2 rounded-xl text-stone-600 hover:text-stone-900 font-bold text-xs"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isBulkAssigning || bulkSelectedCategoryIds.length === 0}
+                onClick={handleBulkAssignCategory}
+                className="px-5 py-2.5 rounded-xl bg-amber-700 hover:bg-amber-800 text-white font-bold text-xs shadow-md transition-all flex items-center gap-2 disabled:opacity-50"
+              >
+                {isBulkAssigning ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                {isBulkAssigning ? 'Applying Categories...' : `Assign to ${selectedIds.size} Products`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* CSV IMPORT MODAL */}
       {isImportModalOpen && (
@@ -950,7 +1486,7 @@ export default function ProductsAdminPage() {
             </div>
 
             <p className="text-xs text-stone-600 leading-relaxed">
-              Are you sure you want to delete this product from Supabase? All associated variants and categories will be removed.
+              Are you sure you want to delete this product from Supabase? All associated variants and categories will be removed immediately.
             </p>
 
             <div className="flex items-center justify-end gap-3 pt-4 border-t border-stone-200">
@@ -965,11 +1501,11 @@ export default function ProductsAdminPage() {
               <button
                 type="button"
                 disabled={isDeleting}
-                onClick={handleDeleteProduct}
+                onClick={() => handleImmediateDelete(deletingProduct)}
                 className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-md transition-all flex items-center gap-2 disabled:opacity-50"
               >
                 {isDeleting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-                {isDeleting ? 'Deleting Product...' : 'Delete Product'}
+                Delete Product
               </button>
             </div>
           </div>
@@ -1344,10 +1880,25 @@ export default function ProductsAdminPage() {
                     <input
                       type="checkbox"
                       checked={formData.is_featured}
-                      onChange={(e) => setFormData({ ...formData, is_featured: e.target.checked })}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        if (checked) {
+                          const currentFeaturedCount = products.filter(
+                            (p) => p.is_featured && p.id !== editingProduct?.id
+                          ).length;
+                          if (currentFeaturedCount >= 5) {
+                            showToast(
+                              'error',
+                              '⚠️ Maximum 5 featured products allowed for the Hero Carousel. Please uncheck another featured product first.'
+                            );
+                            return;
+                          }
+                        }
+                        setFormData({ ...formData, is_featured: checked });
+                      }}
                       className="rounded text-amber-700 w-4 h-4"
                     />
-                    <span className="text-xs font-bold text-stone-800">Featured Product</span>
+                    <span className="text-xs font-bold text-stone-800">Featured (Hero Carousel - Max 5)</span>
                   </label>
 
                   <label className="flex items-center gap-2 cursor-pointer">

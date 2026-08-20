@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, Sparkles, ShieldCheck, Star, ChevronLeft, ChevronRight, Droplets, Palette, Check } from 'lucide-react';
+import { ArrowRight, Sparkles, ShieldCheck, Star, ChevronLeft, ChevronRight, Droplets } from 'lucide-react';
 import { useCurrencyStore } from '@/store/currency-store';
 
 /* ──────────────────────────────────────────
@@ -381,54 +381,6 @@ export function CinematicHeroV2({ products }: { products?: any[] }) {
             background: `linear-gradient(to top, ${activeTheme.vignetteBottom} 0%, transparent 100%)`,
           }}
         />
-      </div>
-
-      {/* ════ FLOATING LUXURY COLOR SWATCH SELECTOR ════ */}
-      <div
-        className="cinematic-v2-swatch-control"
-        style={{
-          opacity: entered ? 1 : 0,
-          transform: entered ? 'translateY(0)' : 'translateY(-14px)',
-          transition: 'all 0.8s cubic-bezier(0.16,1,0.3,1) 0.3s',
-        }}
-      >
-        <div className="cinematic-v2-swatch-panel">
-          <div className="cinematic-v2-swatch-header">
-            <Palette className="w-3.5 h-3.5 text-[#4A0D25]" />
-            <span className="cinematic-v2-swatch-title">HERO BACKGROUND SWATCH</span>
-          </div>
-
-          <div className="cinematic-v2-swatch-buttons">
-            {BG_COLOR_OPTIONS.map((opt) => {
-              const isSelected = opt.id === currentBgTheme;
-              return (
-                <button
-                  key={opt.id}
-                  onClick={() => setCurrentBgTheme(opt.id)}
-                  className={`cinematic-v2-swatch-btn ${isSelected ? 'is-active' : ''}`}
-                  title={`${opt.label} (${opt.subtitle})`}
-                  style={{
-                    borderColor: isSelected ? opt.borderHex : 'rgba(0, 0, 0, 0.12)',
-                    boxShadow: isSelected
-                      ? `0 4px 16px ${opt.glowAura}, 0 0 0 2px ${opt.borderHex}`
-                      : '0 2px 6px rgba(0, 0, 0, 0.04)',
-                  }}
-                >
-                  <span
-                    className="cinematic-v2-swatch-bubble"
-                    style={{
-                      backgroundColor: opt.swatchHex,
-                      border: `1.5px solid ${opt.borderHex}`,
-                    }}
-                  >
-                    {isSelected && <Check className="w-2.5 h-2.5 text-[#1A0510] stroke-[3]" />}
-                  </span>
-                  <span className="cinematic-v2-swatch-name">{opt.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
       </div>
 
       {/* ════ MAIN CONTENT ════ */}

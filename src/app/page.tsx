@@ -8,7 +8,7 @@ import { CinematicHeroV2 } from '@/components/home/CinematicHeroV2';
 import { AnimatedCounter } from '@/components/common/AnimatedCounter';
 import { ProductCard } from '@/components/product/ProductCard';
 import { fetchProducts } from '@/lib/supabase/store-scoped-queries';
-import { Award, Sparkles, ArrowRight, CheckCircle2, ShieldCheck, Clock, Truck, RotateCcw, Lock, CreditCard, Star } from 'lucide-react';
+import { Award, Sparkles, ArrowRight, CheckCircle2, ShieldCheck, Clock, Truck, RotateCcw, Lock, CreditCard, Star, Flame } from 'lucide-react';
 import { NewsletterSignup } from '@/components/home/NewsletterSignup';
 import { LuxuryHeader } from '@/components/layout/LuxuryHeader';
 import { LuxuryFooter } from '@/components/layout/LuxuryFooter';
@@ -18,8 +18,18 @@ export const revalidate = 60;
 
 export default async function Home() {
   const liveProducts = await fetchProducts();
-  const featuredProducts = liveProducts.slice(0, 6);
-  const heroProducts = liveProducts.slice(0, 5);
+  
+  // 1. Hero Carousel: exactly the 5 Featured products (or fallback if < 5)
+  const featured = liveProducts.filter((p: any) => p.is_featured);
+  const heroProducts = featured.length >= 5
+    ? featured.slice(0, 5)
+    : [...featured, ...liveProducts.filter((p: any) => !p.is_featured)].slice(0, 5);
+
+  // 2. Below Hero: Bestsellers 6 products as selected in /admin/products (or fallback if < 6)
+  const bestsellers = liveProducts.filter((p: any) => p.is_bestseller);
+  const bestsellerProducts = bestsellers.length >= 6
+    ? bestsellers.slice(0, 6)
+    : [...bestsellers, ...liveProducts.filter((p: any) => !p.is_bestseller)].slice(0, 6);
 
   return (
     <div className="min-h-screen bg-[#F7EEED] text-[#1A0510] font-sans selection:bg-[#F6A6BB] selection:text-[#4A0D25] flex flex-col justify-between">
@@ -103,14 +113,14 @@ export default async function Home() {
         </SectionWrapper>
 
         {/* 3. DYNAMIC PRODUCTS GRID (LIVE FROM SUPABASE DATABASE) */}
-        <SectionWrapper id="featured" className="bg-[#F7EEED] border-b border-[#F7D1D8]">
+        <SectionWrapper id="bestsellers" className="bg-[#F7EEED] border-b border-[#F7D1D8]">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#F7D1D8] pb-4 mb-8">
             <div>
               <div className="flex items-center gap-2 text-xs font-bold text-[#4A0D25] uppercase tracking-widest">
-                <Sparkles className="w-4 h-4 text-[#F6A6BB]" /> Master Perfumer Reserve
+                <Flame className="w-4 h-4 text-[#F6A6BB] fill-[#F6A6BB]" /> Most Loved · Bestsellers
               </div>
               <h2 className="font-serif font-bold text-3xl sm:text-4xl text-[#1A0510] mt-1">
-                Featured Pure Rose Oil Elixirs & Attars
+                Bestseller Pure Rose Oil Elixirs & Attars
               </h2>
             </div>
 
@@ -123,7 +133,7 @@ export default async function Home() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {featuredProducts.map((product: any) => (
+            {bestsellerProducts.map((product: any) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { STORE_ID } from '@/lib/constants';
+import { invalidateStoreCache } from '@/lib/supabase/store-scoped-queries';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -44,7 +45,6 @@ export async function GET(request: NextRequest) {
     }
 
     let filteredProducts = (products && products.length > 0) ? products : [];
-
 
     if (search) {
       const searchLower = search.toLowerCase();
@@ -96,12 +96,19 @@ export async function GET(request: NextRequest) {
     });
 
     if (categoryId && categoryId !== 'all') {
-      const productIdsInCategory = new Set(
-        (junctions || [])
-          .filter((j: any) => j.category_id === categoryId)
-          .map((j: any) => j.product_id)
-      );
-      filteredProducts = filteredProducts.filter((p: any) => productIdsInCategory.has(p.id));
+      if (categoryId === 'uncategorized') {
+        const productIdsWithCategory = new Set(
+          (junctions || []).map((j: any) => j.product_id)
+        );
+        filteredProducts = filteredProducts.filter((p: any) => !productIdsWithCategory.has(p.id));
+      } else {
+        const productIdsInCategory = new Set(
+          (junctions || [])
+            .filter((j: any) => j.category_id === categoryId)
+            .map((j: any) => j.product_id)
+        );
+        filteredProducts = filteredProducts.filter((p: any) => productIdsInCategory.has(p.id));
+      }
     }
 
     const getStandardVariantsForKiloPrice = (basePrice: number) => {
@@ -116,7 +123,7 @@ export async function GET(request: NextRequest) {
         { name: '10 Kg', sku: '', price: Math.round(b * 10 * 0.96), compare_at_price: Math.round(b * 10 * 1.15) },
         { name: '20 Kg', sku: '', price: Math.round(b * 20 * 0.93), compare_at_price: Math.round(b * 20 * 1.15) },
       ];
-    }
+    };
 
     const enrichedProducts = filteredProducts.map((p: any) => {
       const dbVariants = variantsLookup.get(p.id) || [];
@@ -178,6 +185,7 @@ export async function GET(request: NextRequest) {
     const totalProducts = deduplicatedList.length;
     const featuredCount = deduplicatedList.filter((p: any) => p.is_featured).length;
     const bestsellerCount = deduplicatedList.filter((p: any) => p.is_bestseller).length;
+    const uncategorizedCount = deduplicatedList.filter((p: any) => !p.categories || p.categories.length === 0).length;
     const lowStockCount = 0;
     const totalStockSum = 0;
 
@@ -187,6 +195,7 @@ export async function GET(request: NextRequest) {
         totalProducts,
         featuredCount,
         bestsellerCount,
+        uncategorizedCount,
         lowStockCount,
         totalStockSum,
       },
@@ -301,12 +310,222 @@ export async function POST(request: NextRequest) {
       createdVariants = insertedVariants || [];
     }
 
+    invalidateStoreCache();
+
     return NextResponse.json(
       { message: 'Product created successfully', product: { ...newProduct, variants: createdVariants } },
       { status: 201 }
     );
   } catch (err: any) {
     console.error('API Error in POST /api/admin/products:', err);
+    return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const supabase = getSupabaseServerClient();
+    const body = await request.json().catch(() => ({}));
+    const { ids } = body;
+
+    const idList: string[] = Array.isArray(ids) ? ids.filter(Boolean) : (body.id ? [body.id] : []);
+
+    if (idList.length === 0) {
+      return NextResponse.json({ error: 'Product IDs are required for batch deletion' }, { status: 400 });
+    }
+
+    // 1. Nullify foreign key references in order_items
+    try {
+      await supabase
+        .from('order_items')
+        .update({ product_id: null, variant_id: null })
+        .in('product_id', idList);
+    } catch (e) {
+      console.warn('Error nullifying order_items references in batch delete:', e);
+    }
+
+    // 2. Delete review votes & reviews
+    try {
+      const { data: prodReviews } = await supabase
+        .from('reviews')
+        .select('id')
+        .in('product_id', idList);
+      
+      if (prodReviews && prodReviews.length > 0) {
+        const reviewIds = prodReviews.map((r: any) => r.id);
+        await supabase.from('review_votes').delete().in('review_id', reviewIds);
+      }
+      await supabase.from('reviews').delete().in('product_id', idList);
+    } catch (e) {
+      console.warn('Error deleting reviews in batch delete:', e);
+    }
+
+    // 3. Delete questions & answers
+    try {
+      const { data: prodQuestions } = await supabase
+        .from('product_questions')
+        .select('id')
+        .in('product_id', idList);
+      
+      if (prodQuestions && prodQuestions.length > 0) {
+        const questionIds = prodQuestions.map((q: any) => q.id);
+        await supabase.from('product_answers').delete().in('question_id', questionIds);
+      }
+      await supabase.from('product_questions').delete().in('product_id', idList);
+    } catch (e) {
+      console.warn('Error deleting product questions in batch delete:', e);
+    }
+
+    // 4. Delete wishlists & cart items
+    try {
+      await supabase.from('wishlists').delete().in('product_id', idList);
+    } catch (e) {
+      console.warn('Error deleting wishlists in batch delete:', e);
+    }
+    try {
+      await supabase.from('cart_items').delete().in('product_id', idList);
+    } catch (e) {
+      console.warn('Error deleting cart_items in batch delete:', e);
+    }
+
+    // 5. Delete product categories junction
+    try {
+      await supabase.from('product_categories').delete().in('product_id', idList);
+    } catch (e) {
+      console.warn('Error deleting product_categories in batch delete:', e);
+    }
+
+    // 6. Delete product variants
+    try {
+      await supabase.from('product_variants').delete().in('product_id', idList);
+    } catch (e) {
+      console.warn('Error deleting product_variants in batch delete:', e);
+    }
+
+    // 7. Delete products
+    const { error } = await supabase
+      .from('products')
+      .delete()
+      .in('id', idList);
+
+    if (error) {
+      console.error('Error batch deleting products:', error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    invalidateStoreCache();
+
+    return NextResponse.json({
+      success: true,
+      message: `Successfully deleted ${idList.length} product(s)`,
+      deletedCount: idList.length,
+    });
+  } catch (err: any) {
+    console.error('API Error in batch DELETE /api/admin/products:', err);
+    return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });
+  }
+}
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const supabase = getSupabaseServerClient();
+    const body = await request.json();
+    const { action, product_ids, category_ids, category_id, mode = 'append' } = body;
+
+    const prodIds: string[] = Array.isArray(product_ids) ? product_ids.filter(Boolean) : [];
+
+    if (prodIds.length === 0) {
+      return NextResponse.json({ error: 'product_ids array is required' }, { status: 400 });
+    }
+
+    if (action === 'assign_category') {
+      const catIds: string[] = Array.isArray(category_ids)
+        ? category_ids.filter(Boolean)
+        : (category_id ? [category_id] : []);
+
+      if (catIds.length === 0) {
+        return NextResponse.json({ error: 'category_ids array is required' }, { status: 400 });
+      }
+
+      if (mode === 'replace') {
+        // Remove existing category mappings for these products
+        await supabase
+          .from('product_categories')
+          .delete()
+          .in('product_id', prodIds);
+      }
+
+      // Fetch existing mappings to prevent duplicate primary key errors
+      const { data: existingMappings } = await supabase
+        .from('product_categories')
+        .select('product_id, category_id')
+        .in('product_id', prodIds);
+
+      const existingSet = new Set<string>();
+      (existingMappings || []).forEach((m: any) => existingSet.add(`${m.product_id}_${m.category_id}`));
+
+      const rowsToInsert: any[] = [];
+      for (const pId of prodIds) {
+        for (const cId of catIds) {
+          const key = `${pId}_${cId}`;
+          if (!existingSet.has(key)) {
+            rowsToInsert.push({
+              store_id: STORE_ID,
+              product_id: pId,
+              category_id: cId,
+            });
+            existingSet.add(key);
+          }
+        }
+      }
+
+      if (rowsToInsert.length > 0) {
+        const { error: insertError } = await supabase
+          .from('product_categories')
+          .insert(rowsToInsert);
+
+        if (insertError) {
+          console.error('Error batch inserting product categories:', insertError);
+          return NextResponse.json({ error: insertError.message }, { status: 500 });
+        }
+      }
+
+      invalidateStoreCache();
+
+      return NextResponse.json({
+        success: true,
+        message: `Assigned categories to ${prodIds.length} product(s)`,
+        updatedCount: prodIds.length,
+      });
+    }
+
+    if (action === 'remove_category') {
+      const targetCatId = category_id || (Array.isArray(category_ids) ? category_ids[0] : null);
+      if (!targetCatId) {
+        return NextResponse.json({ error: 'category_id is required' }, { status: 400 });
+      }
+
+      const { error } = await supabase
+        .from('product_categories')
+        .delete()
+        .in('product_id', prodIds)
+        .eq('category_id', targetCatId);
+
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+
+      invalidateStoreCache();
+
+      return NextResponse.json({
+        success: true,
+        message: `Removed category from ${prodIds.length} product(s)`,
+      });
+    }
+
+    return NextResponse.json({ error: `Unknown action: ${action}` }, { status: 400 });
+  } catch (err: any) {
+    console.error('API Error in PATCH /api/admin/products:', err);
     return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });
   }
 }

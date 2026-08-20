@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { STORE_ID } from '@/lib/constants';
+import { invalidateStoreCache } from '@/lib/supabase/store-scoped-queries';
 
 export const dynamic = 'force-dynamic';
 
@@ -177,6 +178,8 @@ export async function PUT(
       updatedVariants = existingVariants || [];
     }
 
+    invalidateStoreCache();
+
     return NextResponse.json({
       message: 'Product updated successfully',
       product: { ...updatedProduct, variants: updatedVariants },
@@ -198,18 +201,29 @@ export async function DELETE(
       return NextResponse.json({ error: 'Product ID is required' }, { status: 400 });
     }
 
-    // 1. Delete product categories junction
+    // 1. Nullify foreign key references in order_items so historical orders remain valid
     try {
-      await supabase.from('product_categories').delete().eq('product_id', id);
+      await supabase
+        .from('order_items')
+        .update({ product_id: null, variant_id: null })
+        .eq('product_id', id);
     } catch (e) {
-      console.warn('Error deleting product_categories:', e);
+      console.warn('Error nullifying order_items references:', e);
     }
 
-    // 2. Delete product variants
+    // 2. Delete review votes for this product's reviews
     try {
-      await supabase.from('product_variants').delete().eq('product_id', id);
+      const { data: prodReviews } = await supabase
+        .from('reviews')
+        .select('id')
+        .eq('product_id', id);
+      
+      if (prodReviews && prodReviews.length > 0) {
+        const reviewIds = prodReviews.map((r: any) => r.id);
+        await supabase.from('review_votes').delete().in('review_id', reviewIds);
+      }
     } catch (e) {
-      console.warn('Error deleting product_variants:', e);
+      console.warn('Error deleting review_votes:', e);
     }
 
     // 3. Delete reviews
@@ -219,8 +233,17 @@ export async function DELETE(
       console.warn('Error deleting reviews:', e);
     }
 
-    // 4. Delete questions
+    // 4. Delete product answers & questions
     try {
+      const { data: prodQuestions } = await supabase
+        .from('product_questions')
+        .select('id')
+        .eq('product_id', id);
+      
+      if (prodQuestions && prodQuestions.length > 0) {
+        const questionIds = prodQuestions.map((q: any) => q.id);
+        await supabase.from('product_answers').delete().in('question_id', questionIds);
+      }
       await supabase.from('product_questions').delete().eq('product_id', id);
     } catch (e) {
       console.warn('Error deleting product_questions:', e);
@@ -238,16 +261,33 @@ export async function DELETE(
       console.warn('Error deleting cart_items:', e);
     }
 
-    // 6. Delete product itself
+    // 6. Delete product categories junction
+    try {
+      await supabase.from('product_categories').delete().eq('product_id', id);
+    } catch (e) {
+      console.warn('Error deleting product_categories:', e);
+    }
+
+    // 7. Delete product variants
+    try {
+      await supabase.from('product_variants').delete().eq('product_id', id);
+    } catch (e) {
+      console.warn('Error deleting product_variants:', e);
+    }
+
+    // 8. Delete product itself
     const { error } = await supabase
       .from('products')
       .delete()
       .eq('id', id);
 
     if (error) {
-      console.error('Error deleting product:', error);
+      console.error('Error deleting product from Supabase:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
+
+    // Clear store cache
+    invalidateStoreCache();
 
     return NextResponse.json({ success: true, message: 'Product and all associated data deleted successfully' });
   } catch (err: any) {

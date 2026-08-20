@@ -8,8 +8,7 @@
 .cinematic-v2-hero {
   position: relative;
   width: 100%;
-  min-height: 100vh;
-  min-height: 100dvh;
+  min-height: auto;
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -52,7 +51,7 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 140px;
+  height: 60px;
   pointer-events: none;
   z-index: 1;
   transition: background 0.8s ease;
@@ -63,7 +62,7 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 100px;
+  height: 80px;
   pointer-events: none;
   z-index: 1;
   transition: background 0.8s ease;
@@ -101,90 +100,6 @@
   will-change: transform, opacity;
 }
 
-/* ─── FLOATING LUXURY COLOR SWATCH SELECTOR ─── */
-.cinematic-v2-swatch-control {
-  position: absolute;
-  top: 20px;
-  right: 24px;
-  z-index: 30;
-}
-
-.cinematic-v2-swatch-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 8px 12px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(74, 13, 37, 0.15);
-  box-shadow: 0 10px 30px rgba(74, 13, 37, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
-}
-
-.cinematic-v2-swatch-header {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0 4px;
-}
-
-.cinematic-v2-swatch-title {
-  font-size: 8.5px;
-  font-weight: 800;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: #4A0D25;
-}
-
-.cinematic-v2-swatch-buttons {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.cinematic-v2-swatch-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 10px;
-  border-radius: 9999px;
-  background: #FFFFFF;
-  border: 1.5px solid transparent;
-  cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  font-family: inherit;
-}
-
-.cinematic-v2-swatch-btn:hover {
-  transform: translateY(-2px);
-  background: #FAF7F5;
-}
-
-.cinematic-v2-swatch-btn.is-active {
-  transform: translateY(-1px);
-  background: #FFFFFF;
-}
-
-.cinematic-v2-swatch-bubble {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
-}
-
-.cinematic-v2-swatch-name {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  color: #1A0510;
-  white-space: nowrap;
-}
-
 /* ─── MAIN CONTENT LAYOUT ─── */
 .cinematic-v2-content {
   position: relative;
@@ -192,14 +107,13 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   width: 100%;
   max-width: 1400px;
   margin: 0 auto;
-  padding: 85px 24px 40px;
-  gap: 16px;
-  min-height: 100vh;
-  min-height: 100dvh;
+  padding: 16px 24px 36px;
+  gap: 14px;
+  min-height: auto;
 }
 
 /* ─── BRAND BAR ─── */
@@ -681,13 +595,8 @@
    ═══════════════════════════════════════════ */
 @media (max-width: 1024px) {
   .cinematic-v2-content {
-    padding: 75px 20px 36px;
-    gap: 14px;
-  }
-
-  .cinematic-v2-swatch-control {
-    top: 14px;
-    right: 16px;
+    padding: 14px 20px 32px;
+    gap: 12px;
   }
 
   .cinematic-v2-carousel-zone {
@@ -722,46 +631,14 @@
    ═══════════════════════════════════════════ */
 @media (max-width: 640px) {
   .cinematic-v2-hero {
-    min-height: 100vh;
-    min-height: 100dvh;
-  }
-
-  .cinematic-v2-swatch-control {
-    top: 10px;
-    left: 50%;
-    right: auto;
-    transform: translateX(-50%);
-    width: calc(100% - 24px);
-    max-width: 360px;
-  }
-
-  .cinematic-v2-swatch-panel {
-    padding: 6px 10px;
-    gap: 4px;
-    align-items: center;
-  }
-
-  .cinematic-v2-swatch-buttons {
-    width: 100%;
-    justify-content: space-between;
-    gap: 4px;
-  }
-
-  .cinematic-v2-swatch-btn {
-    padding: 4px 8px;
-    gap: 4px;
-    flex: 1;
-    justify-content: center;
-  }
-
-  .cinematic-v2-swatch-name {
-    font-size: 9px;
+    min-height: auto;
   }
 
   .cinematic-v2-content {
-    padding: 95px 16px 28px;
+    padding: 10px 16px 24px;
     gap: 10px;
-    justify-content: center;
+    justify-content: flex-start;
+    min-height: auto;
   }
 
   .cinematic-v2-brand-line {

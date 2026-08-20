@@ -106,6 +106,12 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
           href: '/admin/products',
           icon: Package,
         },
+        {
+          label: 'SEO & Content Studio',
+          href: '#seo-drawer',
+          icon: Sparkles,
+          badge: 'Live',
+        },
       ],
     },
     {
@@ -317,6 +323,31 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                           </div>
                         )}
                       </div>
+                    );
+                  }
+
+                  if (item.href === '#seo-drawer') {
+                    return (
+                      <button
+                        key={item.href}
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          window.dispatchEvent(new Event('open_seo_drawer'));
+                          if (onClose) onClose();
+                        }}
+                        className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-extrabold transition-all duration-200 text-[#1A0510] hover:text-[#4A0D25] hover:bg-[#FAE6E7]/70 cursor-pointer text-left"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Icon className="w-3.5 h-3.5 text-[#D45A7A]" />
+                          <span>{item.label}</span>
+                        </div>
+                        {item.badge && (
+                          <span className="px-1.5 py-0.5 text-[9px] font-black rounded-full bg-[#D45A7A] text-white">
+                            {item.badge}
+                          </span>
+                        )}
+                      </button>
                     );
                   }
 

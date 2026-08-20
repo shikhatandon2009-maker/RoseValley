@@ -130,8 +130,28 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
 
       {/* Hero Banner */}
       <section className="relative py-8 sm:py-20 overflow-hidden bg-gradient-to-b from-[#FAE6E7] via-[#F7EEED] to-[#F7EEED] border-b border-[#F7D1D8]">
+
         {/* Soft radial glow */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[300px] sm:w-[600px] h-[220px] sm:h-[400px] rounded-full opacity-20 pointer-events-none" style={{ background: 'radial-gradient(circle, #F6A6BB, transparent 70%)' }} />
+        <div
+          className="absolute top-0 left-1/2 -translate-x-1/2 w-[300px] sm:w-[600px] h-[220px] sm:h-[400px] rounded-full opacity-20 pointer-events-none"
+          style={{ background: 'radial-gradient(circle, #F6A6BB, transparent 70%)' }}
+        />
+
+        {/* Left floral accent */}
+        <img
+          src="/Hero/CollectionHero/floral-corner.png"
+          alt="Floral corner decoration"
+          className="absolute left-0 bottom-0 w-40 sm:w-64 md:w-80 opacity-40 pointer-events-none select-none 
+               -translate-x-[15%] translate-y-[10%] rotate-[-6deg]"
+        />
+
+        {/* Right floral accent (flipped) */}
+        <img
+          src="/Hero/CollectionHero/floral-corner.png"
+          alt="Floral corner decoration"
+          className="absolute right-0 bottom-0 w-40 sm:w-64 md:w-80 opacity-40 pointer-events-none select-none 
+               translate-x-[15%] translate-y-[10%] rotate-[6deg] scale-x-[-1]"
+        />
 
         <div className="text-center max-w-3xl mx-auto px-4 relative z-10 space-y-2 sm:space-y-4">
           <h1 className="font-serif text-2xl sm:text-5xl md:text-6xl font-bold text-[#1A0510] tracking-tight">
@@ -142,11 +162,12 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
           </p>
           <div className="flex items-center justify-center gap-1.5 text-[10px] sm:text-[11px] text-[#4A0D25]/70 font-semibold uppercase tracking-widest pt-0.5">
             <Grid3X3 className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
-            <span suppressHydrationWarning>Showing {products.length} {products.length === 1 ? 'fragrance' : 'fragrances'}</span>
+            <span suppressHydrationWarning>
+              Showing {products.length} {products.length === 1 ? 'fragrance' : 'fragrances'}
+            </span>
           </div>
         </div>
       </section>
-
       <main className="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-4 sm:space-y-6">
 
         {/* Filter & Sort Bar */}
@@ -156,11 +177,10 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
             <Link
               href={buildCategoryUrl()}
               scroll={false}
-              className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap cursor-pointer shrink-0 ${
-                !searchParams.category
-                  ? 'bg-[#4A0D25] text-white shadow-md'
-                  : 'bg-[#F7EEED] text-[#1A0510] hover:bg-[#F7D1D8] border border-[#F7D1D8]'
-              }`}
+              className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap cursor-pointer shrink-0 ${!searchParams.category
+                ? 'bg-[#4A0D25] text-white shadow-md'
+                : 'bg-[#F7EEED] text-[#1A0510] hover:bg-[#F7D1D8] border border-[#F7D1D8]'
+                }`}
             >
               All Scents
             </Link>
@@ -169,11 +189,10 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                 key={cat.id}
                 href={buildCategoryUrl(cat.slug)}
                 scroll={false}
-                className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap cursor-pointer shrink-0 ${
-                  searchParams.category === cat.slug
-                    ? 'bg-[#4A0D25] text-white shadow-md'
-                    : 'bg-[#F7EEED] text-[#1A0510] hover:bg-[#F7D1D8] border border-[#F7D1D8]'
-                }`}
+                className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap cursor-pointer shrink-0 ${searchParams.category === cat.slug
+                  ? 'bg-[#4A0D25] text-white shadow-md'
+                  : 'bg-[#F7EEED] text-[#1A0510] hover:bg-[#F7D1D8] border border-[#F7D1D8]'
+                  }`}
               >
                 {cat.name}
               </Link>

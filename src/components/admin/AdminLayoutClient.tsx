@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AdminSidebar from '@/components/admin/AdminSidebar';
-import { Bell, Search, ShieldCheck, Menu } from 'lucide-react';
+import AdminSeoDrawer from '@/components/admin/AdminSeoDrawer';
+import { Bell, Search, ShieldCheck, Menu, Sparkles } from 'lucide-react';
 
 export default function AdminLayoutClient({
   children,
@@ -10,11 +11,42 @@ export default function AdminLayoutClient({
   children: React.ReactNode;
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [seoDrawerOpen, setSeoDrawerOpen] = useState(false);
+  const [targetProductId, setTargetProductId] = useState<string | null>(null);
+  const [targetPageId, setTargetPageId] = useState<string | null>(null);
+
+  // Listen to global event 'open_seo_drawer' from any admin table/button
+  useEffect(() => {
+    const handleOpenDrawer = (e: any) => {
+      const detail = e.detail || {};
+      if (detail.productId) setTargetProductId(detail.productId);
+      if (detail.pageId) setTargetPageId(detail.pageId);
+      setSeoDrawerOpen(true);
+    };
+
+    window.addEventListener('open_seo_drawer', handleOpenDrawer);
+    return () => window.removeEventListener('open_seo_drawer', handleOpenDrawer);
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#F7EEED] text-[#1A0510] flex font-sans antialiased selection:bg-[#F6A6BB] selection:text-neutral-950">
       {/* Sidebar */}
       <AdminSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
+      {/* Dedicated SEO & Content Studio Sidebar Drawer */}
+      <AdminSeoDrawer
+        isOpen={seoDrawerOpen}
+        onClose={() => {
+          setSeoDrawerOpen(false);
+          setTargetProductId(null);
+          setTargetPageId(null);
+        }}
+        initialProductId={targetProductId}
+        initialPageId={targetPageId}
+        onSuccess={() => {
+          window.dispatchEvent(new Event('refresh_admin_data'));
+        }}
+      />
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 bg-[#F7EEED]">
@@ -25,7 +57,7 @@ export default function AdminLayoutClient({
             {/* Mobile hamburger */}
             <button
               onClick={() => setSidebarOpen(true)}
-              className="lg:hidden p-2 rounded-xl bg-[#FAE6E7] border border-[#F7D1D8] text-[#4A0D25] hover:bg-[#F7D1D8] transition-all flex-shrink-0"
+              className="lg:hidden p-2 rounded-xl bg-[#FAE6E7] border border-[#F7D1D8] text-[#4A0D25] hover:bg-[#F7D1D8] transition-all flex-shrink-0 cursor-pointer"
               aria-label="Open menu"
             >
               <Menu className="w-5 h-5" />
@@ -42,7 +74,22 @@ export default function AdminLayoutClient({
           </div>
 
           {/* Right: Actions & Profile */}
-          <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
+          <div className="flex items-center gap-2.5 sm:gap-3 flex-shrink-0">
+            {/* ⚡ Quick SEO & Content Studio Drawer Button */}
+            <button
+              type="button"
+              onClick={() => {
+                setTargetProductId(null);
+                setTargetPageId(null);
+                setSeoDrawerOpen(true);
+              }}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 sm:py-2 rounded-full bg-gradient-to-r from-[#4A0D25] to-[#7A1840] hover:from-[#7A1840] hover:to-[#4A0D25] text-white text-[11px] sm:text-xs font-bold uppercase tracking-wider shadow-sm hover:shadow-md transition-all active:scale-95 cursor-pointer"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-[#F6A6BB] animate-pulse" />
+              <span className="hidden xs:inline">SEO & Content Studio</span>
+              <span className="xs:hidden">SEO</span>
+            </button>
+
             {/* Mobile search button */}
             <button className="sm:hidden p-2 rounded-xl bg-[#FAE6E7] border border-[#F7D1D8] text-[#4A0D25]">
               <Search className="w-4 h-4" />

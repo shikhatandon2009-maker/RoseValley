@@ -30,6 +30,9 @@ export interface CatalogProduct {
   ingredients?: string[];
   is_featured?: boolean;
   is_bestseller?: boolean;
+  meta_title?: string;
+  meta_keywords?: string;
+  meta_description?: string;
   created_at?: string;
   categories?: any[];
   category?: any;
@@ -65,7 +68,7 @@ export async function fetchProducts(options?: ProductQueryOptions): Promise<Cata
 
   try {
     const supabase = getSupabaseServerClient();
-    const cols = 'id, store_id, name, slug, price, compare_at_price, images, description, scent_notes, ingredients, is_featured, is_bestseller, created_at, updated_at';
+    const cols = 'id, store_id, name, slug, price, compare_at_price, images, description, scent_notes, ingredients, is_featured, is_bestseller, meta_title, meta_keywords, meta_description, created_at, updated_at';
     
     let query = supabase
       .from('products')
@@ -103,6 +106,9 @@ export async function fetchProducts(options?: ProductQueryOptions): Promise<Cata
       ingredients: Array.isArray(p.ingredients) ? p.ingredients : [],
       is_featured: Boolean(p.is_featured),
       is_bestseller: Boolean(p.is_bestseller),
+      meta_title: p.meta_title || '',
+      meta_keywords: p.meta_keywords || '',
+      meta_description: p.meta_description || '',
       created_at: p.created_at || new Date().toISOString(),
     }));
 
@@ -175,7 +181,7 @@ export async function fetchProductBySlug(slug: string): Promise<CatalogProduct |
 
   try {
     const supabase = getSupabaseServerClient();
-    const cols = 'id, store_id, name, slug, price, compare_at_price, images, description, scent_notes, ingredients, is_featured, is_bestseller, created_at, updated_at';
+    const cols = 'id, store_id, name, slug, price, compare_at_price, images, description, scent_notes, ingredients, is_featured, is_bestseller, meta_title, meta_keywords, meta_description, created_at, updated_at';
     
     const { data, error } = await supabase
       .from('products')
@@ -216,6 +222,9 @@ export async function fetchProductBySlug(slug: string): Promise<CatalogProduct |
       ingredients: Array.isArray(data.ingredients) ? data.ingredients : [],
       is_featured: Boolean(data.is_featured),
       is_bestseller: Boolean(data.is_bestseller),
+      meta_title: data.meta_title || '',
+      meta_keywords: data.meta_keywords || '',
+      meta_description: data.meta_description || '',
       created_at: data.created_at || new Date().toISOString(),
       category,
       category_name: category?.name,

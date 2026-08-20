@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Star, Heart, ShoppingBag, CheckCircle2, ShieldCheck, Sparkles, MessageSquare, ThumbsUp, Send, Maximize2, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Star, Heart, ShoppingBag, CheckCircle2, ShieldCheck, Sparkles, MessageSquare, ThumbsUp, Send, Maximize2, X, ChevronLeft, ChevronRight, Flame, Crown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCartStore } from '@/store/cart-store';
 import { useWishlistStore } from '@/store/wishlist-store';
@@ -31,6 +31,37 @@ export function ProductDetailClient({ product, variants, initialReviews, initial
       return true;
     });
   }, [variants]);
+
+  // Minimum variant price for luxury "From ₹..." starting presentation
+  const minPrice = React.useMemo(() => {
+    if (!uniqueVariants.length) return Number(product.price) || 0;
+    return Math.min(...uniqueVariants.map((v) => Number(v.price) || 0));
+  }, [uniqueVariants, product.price]);
+
+  // Group variants into Sample, Retail / Standard, and Bulk / Reserve
+  const groupedVariants = React.useMemo(() => {
+    if (uniqueVariants.length <= 3) return null;
+
+    const groups: { [key: string]: typeof uniqueVariants } = {
+      'Discovery & Samples': [],
+      'Artisanal Flacons': [],
+      'Reserve & Bulk': [],
+    };
+
+    uniqueVariants.forEach((v) => {
+      const n = (v.name || '').toLowerCase();
+      if (n.includes('sample') || n.includes('tester') || n.includes('2ml') || n.includes('3ml') || n.includes('5ml')) {
+        groups['Discovery & Samples'].push(v);
+      } else if (n.includes('250ml') || n.includes('500ml') || n.includes('1kg') || n.includes('5kg') || n.includes('bulk') || n.includes('deg') || n.includes('tin') || n.includes('liter') || n.includes('litre')) {
+        groups['Reserve & Bulk'].push(v);
+      } else {
+        groups['Artisanal Flacons'].push(v);
+      }
+    });
+
+    const hasAnyGrouping = Object.values(groups).filter((list) => list.length > 0).length > 1;
+    return hasAnyGrouping ? groups : null;
+  }, [uniqueVariants]);
 
   const [selectedImage, setSelectedImage] = useState(product.images?.[0] || '');
   const [selectedVariant, setSelectedVariant] = useState(uniqueVariants[0] || null);
@@ -154,8 +185,20 @@ export function ProductDetailClient({ product, variants, initialReviews, initial
   return (
     <div className="w-full max-w-7xl mx-auto space-y-4 sm:space-y-6 relative overflow-x-hidden">
 
+      {/* Soft Luxury Floral Ambiance Accents */}
+      <img
+        src="/Hero/CollectionHero/floral-corner.png"
+        alt=""
+        className="absolute top-0 left-0 w-44 sm:w-72 md:w-88 opacity-20 pointer-events-none select-none -translate-x-[20%] -translate-y-[15%] rotate-[-8deg] filter blur-[0.2px] z-0"
+      />
+      <img
+        src="/Hero/CollectionHero/floral-corner.png"
+        alt=""
+        className="absolute top-1/3 right-0 w-44 sm:w-80 md:w-96 opacity-15 pointer-events-none select-none translate-x-[20%] rotate-[165deg] scale-x-[-1] filter blur-[0.2px] z-0"
+      />
+
       {/* Breadcrumb Navigation: Home >> [Category Name] >> Product Name */}
-      <nav aria-label="Breadcrumb" className="w-full flex items-center flex-wrap gap-1.5 text-xs text-[#7A1840]/70 font-medium py-1">
+      <nav aria-label="Breadcrumb" className="w-full flex items-center flex-wrap gap-1.5 text-xs text-[#7A1840]/70 font-medium py-1 relative z-10">
         <Link href="/" className="hover:text-[#4A0D25] hover:underline transition-colors flex items-center gap-1 font-semibold">
           <span>Home</span>
         </Link>
@@ -226,7 +269,7 @@ export function ProductDetailClient({ product, variants, initialReviews, initial
       </AnimatePresence>
       
       {/* Product Hero Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start w-full">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-14 items-start w-full relative z-10">
         
         {/* Left: Gallery with Hero-Style Aura Glow & No Borders */}
         <div className="space-y-4 w-full overflow-hidden">
@@ -296,6 +339,20 @@ export function ProductDetailClient({ product, variants, initialReviews, initial
               <span className="absolute bottom-3 right-3 bg-white/90 backdrop-blur-md border border-[#F7D1D8] text-[#4A0D25] text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-full shadow-md opacity-80 group-hover:opacity-100 transition-opacity flex items-center gap-1.5 z-40">
                 <Maximize2 className="w-3.5 h-3.5 text-[#F6A6BB]" /> Click for 4K View
               </span>
+
+              {/* Dynamic Store Badges (Admin Section 6) */}
+              <div className="absolute top-3 left-3 z-40 flex flex-col gap-1.5 pointer-events-none">
+                {product.is_bestseller && (
+                  <span className="bg-[#4A0D25] text-white text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full shadow-md flex items-center gap-1.5">
+                    <Flame className="w-3.5 h-3.5 text-[#F6A6BB] fill-[#F6A6BB]" /> Bestseller
+                  </span>
+                )}
+                {product.is_featured && (
+                  <span className="bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full shadow-md flex items-center gap-1.5">
+                    <Crown className="w-3.5 h-3.5 text-amber-700" /> Featured Heritage
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
@@ -318,26 +375,51 @@ export function ProductDetailClient({ product, variants, initialReviews, initial
         </div>
 
         {/* Right: Product Details & Purchase Form */}
-        <div className="space-y-6">
+        <div className="space-y-6 sm:space-y-7">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="bg-[#B03060] text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full">
-                Artisanal Parfum
+            {/* Trust & Heritage Subheading Row with Dynamic Store Badges */}
+            <div className="flex items-center flex-wrap gap-2 text-[11px] sm:text-xs text-[#7A1840]/80 font-medium tracking-wide">
+              <span className="flex items-center gap-1 text-[#9A2048] font-semibold">
+                <Star className="w-3.5 h-3.5 fill-[#D45A7A] text-[#D45A7A]" /> 4.9 (28 Reviews)
               </span>
-              <span className="text-xs text-[#9A2048] flex items-center gap-1 font-medium">
-                <Star className="w-3.5 h-3.5 fill-current text-[#D45A7A]" /> 4.9 (28 Reviews)
+              <span className="text-[#D45A7A]/40 font-serif">·</span>
+              {product.is_bestseller ? (
+                <span className="bg-[#4A0D25] text-white text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                  <Flame className="w-3 h-3 text-[#F6A6BB] fill-[#F6A6BB]" /> Bestseller
+                </span>
+              ) : product.is_featured ? (
+                <span className="bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                  <Crown className="w-3 h-3 text-amber-700" /> Imperial Selection
+                </span>
+              ) : (
+                <span className="text-[#4A0D25] uppercase tracking-wider font-bold text-[10px] sm:text-[11px]">
+                  Artisanal Parfum
+                </span>
+              )}
+              <span className="text-[#D45A7A]/40 font-serif">·</span>
+              <span className="text-[#7A1840]/90">
+                Hydro-distilled in Kannauj
               </span>
             </div>
 
-            <h1 className="font-serif text-3xl sm:text-4xl font-bold text-[#7A1840] mt-2">{product.name}</h1>
+            {/* Thin Executive Title */}
+            <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl font-light tracking-tight text-[#1A0510] leading-[1.05] sm:leading-[0.95] mt-2">
+              {product.name}
+            </h1>
 
-            <div className="flex items-center gap-3 mt-3">
-              <span className="font-serif font-bold text-2xl text-[#5A1030]" suppressHydrationWarning>
+            {/* Price Presentation */}
+            <div className="flex items-baseline flex-wrap gap-3 mt-3.5">
+              <span className="font-serif text-3xl sm:text-4xl font-normal text-[#1A0510]" suppressHydrationWarning>
                 {formatPrice(currentPrice)}
               </span>
-              {product.compare_at_price && (
-                <span className="text-sm text-[#9A2048]/60 line-through" suppressHydrationWarning>
+              {product.compare_at_price && Number(product.compare_at_price) > Number(currentPrice) && (
+                <span className="text-sm sm:text-base text-[#9A2048]/50 line-through font-light" suppressHydrationWarning>
                   {formatPrice(product.compare_at_price)}
+                </span>
+              )}
+              {uniqueVariants.length > 1 && (
+                <span className="text-xs text-[#7A1840]/75 font-medium ml-1">
+                  · From {formatPrice(minPrice)} (Sample)
                 </span>
               )}
             </div>
@@ -356,26 +438,79 @@ export function ProductDetailClient({ product, variants, initialReviews, initial
             })()}
           </p>
 
-          {/* Variant Selector */}
+          {/* Variant / Size Selector */}
           {uniqueVariants.length > 0 && (
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-[#7A1840]">Select Size / Bottle Format</label>
-              <div className="flex flex-wrap gap-3">
-                {uniqueVariants.map((v) => (
-                  <button
-                    key={v.id || `${v.name}_${v.price}`}
-                    onClick={() => setSelectedVariant(v)}
-                    className={`px-4 py-2 rounded-full text-xs font-extrabold border transition-all ${
-                      selectedVariant?.id === v.id || (selectedVariant?.name === v.name && selectedVariant?.price === v.price)
-                        ? 'bg-gradient-to-r from-[#F6A6BB] to-[#F4BBC9] text-[#4A0D25] border-[#F7D1D8] shadow-sm'
-                        : 'bg-white text-[#5A1030] border-[#E8B8B8] hover:border-[#F6A6BB]'
-                    }`}
-                    suppressHydrationWarning
-                  >
-                    {v.name} — {formatPrice(v.price)}
-                  </button>
-                ))}
+            <div className="space-y-3 pt-1">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-semibold uppercase tracking-wider text-[#7A1840]">
+                  Select Size / Bottle Format
+                </label>
+                {selectedVariant && (
+                  <span className="text-[11px] text-[#4A0D25]/75 font-medium">
+                    Selected: <strong className="text-[#1A0510] font-semibold">{selectedVariant.name}</strong>
+                  </span>
+                )}
               </div>
+
+              {groupedVariants ? (
+                <div className="space-y-3.5">
+                  {Object.entries(groupedVariants).map(([groupTitle, groupItems]) => {
+                    if (!groupItems.length) return null;
+                    return (
+                      <div key={groupTitle} className="space-y-1.5">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-[#9A2048]/80 block">
+                          {groupTitle}
+                        </span>
+                        <div className="flex flex-wrap gap-2 sm:gap-2.5">
+                          {groupItems.map((v) => {
+                            const isSelected = selectedVariant?.id === v.id || (selectedVariant?.name === v.name && selectedVariant?.price === v.price);
+                            return (
+                              <button
+                                key={v.id || `${v.name}_${v.price}`}
+                                onClick={() => setSelectedVariant(v)}
+                                className={`px-3.5 py-2 rounded-xl text-xs font-medium border transition-all duration-200 cursor-pointer flex items-center gap-2 ${
+                                  isSelected
+                                    ? 'bg-[#4A0D25] text-white border-[#4A0D25] shadow-sm ring-2 ring-[#F6A6BB]/50 scale-[1.02]'
+                                    : 'bg-white/90 hover:bg-white text-[#1A0510] border-[#F7D1D8] hover:border-[#D45A7A]'
+                                }`}
+                                suppressHydrationWarning
+                              >
+                                <span className="font-semibold">{v.name}</span>
+                                <span className={`text-[11px] ${isSelected ? 'text-[#F6A6BB]' : 'text-[#7A1840]/75'}`}>
+                                  {formatPrice(v.price)}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2.5">
+                  {uniqueVariants.map((v) => {
+                    const isSelected = selectedVariant?.id === v.id || (selectedVariant?.name === v.name && selectedVariant?.price === v.price);
+                    return (
+                      <button
+                        key={v.id || `${v.name}_${v.price}`}
+                        onClick={() => setSelectedVariant(v)}
+                        className={`px-4 py-2.5 rounded-xl text-xs font-medium border transition-all duration-200 cursor-pointer flex items-center gap-2.5 ${
+                          isSelected
+                            ? 'bg-[#4A0D25] text-white border-[#4A0D25] shadow-sm ring-2 ring-[#F6A6BB]/50 scale-[1.02]'
+                            : 'bg-white/90 hover:bg-white text-[#1A0510] border-[#F7D1D8] hover:border-[#D45A7A]'
+                        }`}
+                        suppressHydrationWarning
+                      >
+                        <span className="font-semibold">{v.name}</span>
+                        <span className={`text-[11px] ${isSelected ? 'text-[#F6A6BB]' : 'text-[#7A1840]/75'}`}>
+                          {formatPrice(v.price)}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
 

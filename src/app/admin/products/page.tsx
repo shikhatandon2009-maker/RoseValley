@@ -227,7 +227,7 @@ export default function ProductsAdminPage() {
       showToast('success', 'Preparing CSV export file...');
       const res = await fetch('/api/admin/products/export');
       if (!res.ok) throw new Error('Failed to export CSV');
-      
+
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -604,6 +604,72 @@ export default function ProductsAdminPage() {
     setFormData((prev) => ({ ...prev, slug: generated }));
   };
 
+  // 1-Click Master AI Generator (1200 Token Capacity) for SEO & Description
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+
+  const handleGenerateProductAI = async () => {
+    if (!formData.name.trim()) {
+      showToast('error', 'Please enter a Product Name first in Section 1.');
+      return;
+    }
+
+    setIsGeneratingAI(true);
+    showToast('success', '🧠 AI Deep Thinking: Analyzing 400-year Kannauj botanicals & SEO...');
+
+    try {
+      const res = await fetch('/api/ai/generate-content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'all_in_one_seo_and_description',
+          prompt: formData.name.trim(),
+          context: {
+            currentDescription: formData.description,
+          },
+        }),
+      });
+
+      if (!res.ok) throw new Error('AI Generation service failed.');
+      const data = await res.json();
+      let draft = data.draft;
+      if (typeof draft === 'string') {
+        try {
+          draft = JSON.parse(draft);
+        } catch (_) {
+          try {
+            const firstBrace = draft.indexOf('{');
+            const lastBrace = draft.lastIndexOf('}');
+            if (firstBrace !== -1 && lastBrace > firstBrace) {
+              draft = JSON.parse(draft.substring(firstBrace, lastBrace + 1));
+            }
+          } catch (e2) {
+            console.warn('Fallback JSON slice parsing error in modal:', e2);
+          }
+        }
+      }
+
+      if (typeof draft === 'object' && draft !== null) {
+        setFormData((prev) => ({
+          ...prev,
+          meta_title: draft.meta_title ? draft.meta_title.trim() : prev.meta_title,
+          meta_description: draft.meta_description ? draft.meta_description.trim() : prev.meta_description,
+          meta_keywords: draft.meta_keywords ? draft.meta_keywords.trim() : prev.meta_keywords,
+          description: draft.description ? draft.description.trim() : prev.description,
+          topNotesText: draft.scent_notes?.top ? draft.scent_notes.top.join(', ') : prev.topNotesText,
+          heartNotesText: draft.scent_notes?.heart ? draft.scent_notes.heart.join(', ') : prev.heartNotesText,
+          baseNotesText: draft.scent_notes?.base ? draft.scent_notes.base.join(', ') : prev.baseNotesText,
+        }));
+        showToast('success', '✨ AI generated bespoke, world-class SEO metadata & luxury story!');
+      } else {
+        throw new Error('AI generation returned an unexpected response. Please try again.');
+      }
+    } catch (err: any) {
+      showToast('error', err.message || 'Failed to generate with AI.');
+    } finally {
+      setIsGeneratingAI(false);
+    }
+  };
+
   // Section 2: Variant Row Actions
   const handleAddVariantRow = () => {
     setFormData((prev) => ({
@@ -799,8 +865,7 @@ export default function ProductsAdminPage() {
       if (!res.ok) throw new Error('Update failed');
       showToast(
         'success',
-        `${newValue ? 'Marked' : 'Unmarked'} ${product.name} as ${
-          field === 'is_featured' ? 'Hero Featured (5 Max)' : 'Bestseller'
+        `${newValue ? 'Marked' : 'Unmarked'} ${product.name} as ${field === 'is_featured' ? 'Hero Featured (5 Max)' : 'Bestseller'
         }`
       );
     } catch {
@@ -814,11 +879,10 @@ export default function ProductsAdminPage() {
       {/* Toast Notification */}
       {toastMessage && (
         <div
-          className={`fixed bottom-6 right-6 z-50 px-5 py-3 rounded-2xl shadow-2xl border backdrop-blur-md flex items-center gap-3 transition-all animate-bounce ${
-            toastMessage.type === 'success'
-              ? 'bg-emerald-950/90 border-emerald-500/40 text-emerald-200'
-              : 'bg-rose-950/90 border-rose-500/40 text-rose-200'
-          }`}
+          className={`fixed bottom-6 right-6 z-50 px-5 py-3 rounded-2xl shadow-2xl border backdrop-blur-md flex items-center gap-3 transition-all animate-bounce ${toastMessage.type === 'success'
+            ? 'bg-emerald-950/90 border-emerald-500/40 text-emerald-200'
+            : 'bg-rose-950/90 border-rose-500/40 text-rose-200'
+            }`}
         >
           {toastMessage.type === 'success' ? (
             <CheckCircle2 className="w-5 h-5 text-emerald-400" />
@@ -896,11 +960,10 @@ export default function ProductsAdminPage() {
 
         <button
           onClick={() => setCategoryFilter(categoryFilter === 'uncategorized' ? 'all' : 'uncategorized')}
-          className={`p-4 rounded-2xl border text-left transition-all ${
-            categoryFilter === 'uncategorized'
-              ? 'bg-amber-100/80 border-amber-400 ring-2 ring-amber-500/20'
-              : 'bg-amber-50/50 border-amber-200 hover:bg-amber-50'
-          }`}
+          className={`p-4 rounded-2xl border text-left transition-all ${categoryFilter === 'uncategorized'
+            ? 'bg-amber-100/80 border-amber-400 ring-2 ring-amber-500/20'
+            : 'bg-amber-50/50 border-amber-200 hover:bg-amber-50'
+            }`}
         >
           <div className="flex items-center justify-between text-amber-900">
             <span className="text-xs font-bold uppercase tracking-wider">Uncategorized</span>
@@ -1063,15 +1126,14 @@ export default function ProductsAdminPage() {
                   return (
                     <tr
                       key={product.id}
-                      className={`transition-colors ${
-                        isSelected ? 'bg-amber-50/60' : 'hover:bg-amber-50/20'
-                      }`}
+                      className={`transition-colors ${isSelected ? 'bg-amber-50/60' : 'hover:bg-amber-50/20'
+                        }`}
                     >
                       <td className="p-4 w-10">
                         <input
                           type="checkbox"
                           checked={isSelected}
-                          onChange={() => {}}
+                          onChange={() => { }}
                           onClick={(e) => handleToggleSelect(product.id, idx, e)}
                           className="w-4 h-4 rounded text-amber-700 focus:ring-amber-500 cursor-pointer"
                         />
@@ -1127,11 +1189,10 @@ export default function ProductsAdminPage() {
                                   quickAssignProductId === product.id ? null : product.id
                                 )
                               }
-                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold border transition-all ${
-                                !hasCategories
-                                  ? 'bg-amber-100 border-amber-300 text-amber-900 hover:bg-amber-200 animate-pulse'
-                                  : 'bg-white border-dashed border-stone-300 text-stone-500 hover:border-amber-600 hover:text-amber-800'
-                              }`}
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold border transition-all ${!hasCategories
+                                ? 'bg-amber-100 border-amber-300 text-amber-900 hover:bg-amber-200 animate-pulse'
+                                : 'bg-white border-dashed border-stone-300 text-stone-500 hover:border-amber-600 hover:text-amber-800'
+                                }`}
                               title="Quick Assign Category"
                             >
                               <FolderPlus className="w-3 h-3 text-amber-700" />
@@ -1158,11 +1219,10 @@ export default function ProductsAdminPage() {
                                           key={cat.id}
                                           type="button"
                                           onClick={() => handleQuickAssignCategory(product, cat)}
-                                          className={`w-full text-left px-2 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-between transition-colors ${
-                                            isAssigned
-                                              ? 'bg-amber-50 text-amber-900 font-bold'
-                                              : 'text-stone-700 hover:bg-stone-100'
-                                          }`}
+                                          className={`w-full text-left px-2 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-between transition-colors ${isAssigned
+                                            ? 'bg-amber-50 text-amber-900 font-bold'
+                                            : 'text-stone-700 hover:bg-stone-100'
+                                            }`}
                                         >
                                           <span>{cat.name}</span>
                                           {isAssigned && <Check className="w-3.5 h-3.5 text-amber-700" />}
@@ -1214,11 +1274,10 @@ export default function ProductsAdminPage() {
                         <div className="flex items-center gap-1.5">
                           <button
                             onClick={() => handleToggleFlag(product, 'is_featured')}
-                            className={`p-1.5 rounded-lg border transition-all ${
-                              product.is_featured
-                                ? 'bg-amber-100 border-amber-300 text-amber-800'
-                                : 'bg-stone-50 border-stone-200 text-stone-400 hover:text-stone-700'
-                            }`}
+                            className={`p-1.5 rounded-lg border transition-all ${product.is_featured
+                              ? 'bg-amber-100 border-amber-300 text-amber-800'
+                              : 'bg-stone-50 border-stone-200 text-stone-400 hover:text-stone-700'
+                              }`}
                             title={
                               product.is_featured
                                 ? 'Featured on Hero Carousel (Click to unfeature)'
@@ -1230,11 +1289,10 @@ export default function ProductsAdminPage() {
 
                           <button
                             onClick={() => handleToggleFlag(product, 'is_bestseller')}
-                            className={`p-1.5 rounded-lg border transition-all ${
-                              product.is_bestseller
-                                ? 'bg-rose-100 border-rose-300 text-rose-800'
-                                : 'bg-stone-50 border-stone-200 text-stone-400 hover:text-stone-700'
-                            }`}
+                            className={`p-1.5 rounded-lg border transition-all ${product.is_bestseller
+                              ? 'bg-rose-100 border-rose-300 text-rose-800'
+                              : 'bg-stone-50 border-stone-200 text-stone-400 hover:text-stone-700'
+                              }`}
                             title={
                               product.is_bestseller
                                 ? 'Bestseller (Click to remove badge)'
@@ -1256,6 +1314,20 @@ export default function ProductsAdminPage() {
                           >
                             <ExternalLink className="w-4 h-4" />
                           </Link>
+
+                          <button
+                            onClick={() => {
+                              window.dispatchEvent(
+                                new CustomEvent('open_seo_drawer', {
+                                  detail: { productId: product.id },
+                                })
+                              );
+                            }}
+                            className="p-1.5 rounded-lg text-[#7A1840] hover:text-[#4A0D25] hover:bg-[#FAE6E7] border border-[#F7D1D8]/60 transition-all shadow-2xs"
+                            title="Quick SEO & Media Studio"
+                          >
+                            <Sparkles className="w-4 h-4 text-[#D45A7A]" />
+                          </button>
 
                           <button
                             onClick={() => handleOpenEditModal(product)}
@@ -1320,11 +1392,10 @@ export default function ProductsAdminPage() {
                             isChecked ? prev.filter((id) => id !== cat.id) : [...prev, cat.id]
                           );
                         }}
-                        className={`p-2.5 rounded-xl border text-left text-xs font-bold transition-all flex items-center justify-between ${
-                          isChecked
-                            ? 'bg-amber-100 border-amber-400 text-amber-950 shadow-2xs'
-                            : 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100'
-                        }`}
+                        className={`p-2.5 rounded-xl border text-left text-xs font-bold transition-all flex items-center justify-between ${isChecked
+                          ? 'bg-amber-100 border-amber-400 text-amber-950 shadow-2xs'
+                          : 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100'
+                          }`}
                       >
                         <span className="truncate">{cat.name}</span>
                         {isChecked && <Check className="w-4 h-4 text-amber-700 flex-shrink-0" />}
@@ -1340,11 +1411,10 @@ export default function ProductsAdminPage() {
                   <button
                     type="button"
                     onClick={() => setBulkAssignMode('append')}
-                    className={`p-2.5 rounded-xl border text-left font-bold transition-all ${
-                      bulkAssignMode === 'append'
-                        ? 'bg-amber-100 border-amber-400 text-amber-900'
-                        : 'bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100'
-                    }`}
+                    className={`p-2.5 rounded-xl border text-left font-bold transition-all ${bulkAssignMode === 'append'
+                      ? 'bg-amber-100 border-amber-400 text-amber-900'
+                      : 'bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100'
+                      }`}
                   >
                     <div>+ Add to existing</div>
                     <div className="text-[10px] text-stone-500 font-normal">Keep current categories</div>
@@ -1353,11 +1423,10 @@ export default function ProductsAdminPage() {
                   <button
                     type="button"
                     onClick={() => setBulkAssignMode('replace')}
-                    className={`p-2.5 rounded-xl border text-left font-bold transition-all ${
-                      bulkAssignMode === 'replace'
-                        ? 'bg-amber-100 border-amber-400 text-amber-900'
-                        : 'bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100'
-                    }`}
+                    className={`p-2.5 rounded-xl border text-left font-bold transition-all ${bulkAssignMode === 'replace'
+                      ? 'bg-amber-100 border-amber-400 text-amber-900'
+                      : 'bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100'
+                      }`}
                   >
                     <div>↺ Replace all</div>
                     <div className="text-[10px] text-stone-500 font-normal">Overwrite categories</div>
@@ -1541,7 +1610,7 @@ export default function ProductsAdminPage() {
 
             {/* Modal Body Form with 6 Sections */}
             <form onSubmit={handleSaveProduct} className="p-6 overflow-y-auto space-y-6 flex-1 text-xs">
-              
+
               {/* SECTION 1: BASIC INFORMATION */}
               <div className="p-5 rounded-2xl bg-stone-50/70 border border-stone-200 space-y-4">
                 <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-900">
@@ -1625,11 +1694,10 @@ export default function ProductsAdminPage() {
                                   : [...prev.selectedCategoryIds, cat.id],
                               }));
                             }}
-                            className={`px-3 py-1 rounded-xl text-xs font-bold border transition-all ${
-                              isChecked
-                                ? 'bg-amber-100 border-amber-400 text-amber-900'
-                                : 'bg-white border-stone-200 text-stone-600 hover:border-stone-300'
-                            }`}
+                            className={`px-3 py-1 rounded-xl text-xs font-bold border transition-all ${isChecked
+                              ? 'bg-amber-100 border-amber-400 text-amber-900'
+                              : 'bg-white border-stone-200 text-stone-600 hover:border-stone-300'
+                              }`}
                           >
                             {isChecked ? '✓ ' : '+ '} {cat.name}
                           </button>
@@ -1871,8 +1939,28 @@ export default function ProductsAdminPage() {
 
               {/* SECTION 6: SEO & BADGES */}
               <div className="p-5 rounded-2xl bg-amber-50/40 border border-amber-200 space-y-4">
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-900">
-                  <Tag className="w-4 h-4 text-amber-700" /> Section 6: SEO & Store Badges
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-amber-200/60 pb-3">
+                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-900">
+                    <Tag className="w-4 h-4 text-amber-700" /> Section 6: SEO & Store Badges
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleGenerateProductAI}
+                    disabled={isGeneratingAI}
+                    className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-700 to-rose-800 hover:from-amber-800 hover:to-rose-900 text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs hover:shadow-md disabled:opacity-50 cursor-pointer self-start sm:self-auto"
+                  >
+                    {isGeneratingAI ? (
+                      <>
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                        <span>Deep Thinking AI...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                        <span>1-Click AI: Generate SEO & Story</span>
+                      </>
+                    )}
+                  </button>
                 </div>
 
                 <div className="flex items-center gap-6">

@@ -112,27 +112,45 @@ export default async function Home() {
           </div>
         </SectionWrapper>
 
-        {/* 3. DYNAMIC PRODUCTS GRID (LIVE FROM SUPABASE DATABASE) */}
-        <SectionWrapper id="bestsellers" className="bg-[#F7EEED] border-b border-[#F7D1D8]">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#F7D1D8] pb-4 mb-8">
-            <div>
-              <div className="flex items-center gap-2 text-xs font-bold text-[#4A0D25] uppercase tracking-widest">
-                <Flame className="w-4 h-4 text-[#F6A6BB] fill-[#F6A6BB]" /> Most Loved · Bestsellers
+        {/* 3. DYNAMIC PRODUCTS GRID — BESTSELLERS WITH SOFT FLORAL ACCENTS */}
+        <SectionWrapper id="bestsellers" className="bg-[#F7EEED] border-b border-[#F7D1D8] relative overflow-hidden">
+          
+          {/* Subtle Watercolor Floral Background Accents */}
+          <img
+            src="/Hero/CollectionHero/floral-corner.png"
+            alt=""
+            className="absolute top-0 right-0 w-44 sm:w-72 md:w-88 opacity-20 pointer-events-none select-none translate-x-[15%] -translate-y-[10%] rotate-[10deg] scale-x-[-1] filter blur-[0.2px] z-0"
+          />
+          <img
+            src="/Hero/CollectionHero/floral-corner.png"
+            alt=""
+            className="absolute bottom-0 left-0 w-40 sm:w-64 md:w-80 opacity-15 pointer-events-none select-none -translate-x-[15%] translate-y-[10%] rotate-[-10deg] filter blur-[0.2px] z-0"
+          />
+
+          <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[#F7D1D8] pb-6 mb-8 sm:mb-10">
+            <div className="space-y-2 max-w-2xl">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAE6E7] border border-[#F7D1D8] text-[#4A0D25] text-[10px] sm:text-xs font-bold uppercase tracking-widest">
+                <Flame className="w-3.5 h-3.5 text-[#D45A7A] fill-[#D45A7A]" /> Most Loved · Imperial Reserve
               </div>
-              <h2 className="font-serif font-bold text-3xl sm:text-4xl text-[#1A0510] mt-1">
-                Bestseller Pure Rose Oil Elixirs & Attars
+              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-light tracking-tight text-[#1A0510] leading-[1.05]">
+                Bestseller Pure Rose Oil
+                <span className="block font-normal text-[#4A0D25] mt-1">Elixirs & Artisanal Attars</span>
               </h2>
+              <p className="text-xs sm:text-sm text-[#4A0D25]/85 leading-relaxed font-normal pt-1">
+                Hand-harvested Damask rose distillates and aged sandalwood attars — formulated according to 400-year royal recipes.
+              </p>
             </div>
 
             <Link
               href="/products"
-              className="text-xs font-bold text-[#4A0D25] hover:text-[#F6A6BB] hover:underline flex items-center gap-1.5"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/90 hover:bg-white border border-[#F7D1D8] hover:border-[#D45A7A] text-xs font-bold uppercase tracking-wider text-[#4A0D25] hover:text-[#1A0510] transition-all shadow-xs shrink-0 self-start md:self-end"
             >
-              Explore All Collections <ArrowRight className="w-4 h-4 text-[#F6A6BB]" />
+              <span>Explore All Fragrances</span>
+              <ArrowRight className="w-3.5 h-3.5 text-[#D45A7A]" />
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 relative z-10">
             {bestsellerProducts.map((product: any) => (
               <ProductCard key={product.id} product={product} />
             ))}
@@ -140,17 +158,22 @@ export default async function Home() {
         </SectionWrapper>
 
         {/* 4. TESTIMONIALS SECTION */}
-        <SectionWrapper className="bg-[#F7EEED] border-b border-[#F7D1D8]">
-          <div className="text-center space-y-3 mb-8">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#FAE6E7] border border-[#F7D1D8] text-[#4A0D25] text-xs font-extrabold uppercase tracking-widest">
-              <Star className="w-3.5 h-3.5 text-[#F6A6BB]" /> What Our Patrons Say
+        <SectionWrapper className="bg-[#F7EEED] border-b border-[#F7D1D8] relative overflow-hidden">
+          
+          {/* Subtle Ambient Radial Glow */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] rounded-full opacity-15 pointer-events-none" style={{ background: 'radial-gradient(circle, #F6A6BB, transparent 70%)' }} />
+
+          <div className="text-center space-y-3 mb-10 sm:mb-12 relative z-10 max-w-2xl mx-auto">
+            <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#FAE6E7] border border-[#F7D1D8] text-[#4A0D25] text-xs font-bold uppercase tracking-widest">
+              <Star className="w-3.5 h-3.5 text-[#D45A7A] fill-[#D45A7A]" /> Verified Customer Experiences
             </div>
-            <h2 className="font-serif font-bold text-3xl sm:text-4xl text-[#1A0510]">
-              Loved by Fragrance Connoisseurs Worldwide
+            <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-light tracking-tight text-[#1A0510] leading-[1.05]">
+              Loved by Fragrance Connoisseurs
+              <span className="block font-normal text-[#4A0D25]">Across the Globe</span>
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
             {[
               {
                 name: 'Priya Sharma',
@@ -171,26 +194,26 @@ export default async function Home() {
                 text: 'I\'ve been ordering from Rose Valley for 3 years. The Saffron Crocus Attar receives compliments every single time. Absolute perfection.',
               },
             ].map((testimonial, idx) => (
-              <div key={idx} className="p-6 rounded-2xl bg-white border border-[#F7D1D8] shadow-sm space-y-4 hover:shadow-md transition-shadow">
+              <div key={idx} className="p-6 rounded-2xl bg-white/95 border border-[#F7D1D8] shadow-xs space-y-4 hover:shadow-md hover:border-[#D45A7A] transition-all duration-300">
                 {/* Stars */}
-                <div className="flex items-center gap-0.5">
+                <div className="flex items-center gap-1 text-[#D45A7A]">
                   {Array.from({ length: testimonial.rating }).map((_, i) => (
-                    <Star key={i} className="w-4 h-4 fill-[#F6A6BB] text-[#F6A6BB]" />
+                    <Star key={i} className="w-4 h-4 fill-current" />
                   ))}
                 </div>
-                <p className="text-sm text-[#1A0510] leading-relaxed font-medium italic">
+                <p className="text-sm text-[#1A0510] leading-relaxed font-serif italic">
                   &ldquo;{testimonial.text}&rdquo;
                 </p>
-                <div className="flex items-center gap-3 pt-2 border-t border-[#F7D1D8]">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#F6A6BB] to-[#F4BBC9] flex items-center justify-center text-[#4A0D25] font-black text-sm">
+                <div className="flex items-center gap-3 pt-3 border-t border-[#F7D1D8]">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#F6A6BB] to-[#F7D1D8] flex items-center justify-center text-[#4A0D25] font-bold text-xs shadow-xs">
                     {testimonial.name.charAt(0)}
                   </div>
                   <div>
-                    <div className="text-sm font-bold text-[#1A0510]">{testimonial.name}</div>
-                    <div className="text-[11px] text-[#4A0D25] font-semibold">{testimonial.location}</div>
+                    <div className="text-xs font-bold text-[#1A0510]">{testimonial.name}</div>
+                    <div className="text-[10px] text-[#4A0D25]/75 font-medium">{testimonial.location}</div>
                   </div>
-                  <span className="ml-auto px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3" /> Verified
+                  <span className="ml-auto px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-900 border border-emerald-200 text-[10px] font-bold flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Verified
                   </span>
                 </div>
               </div>
@@ -199,45 +222,47 @@ export default async function Home() {
         </SectionWrapper>
 
         {/* 5. KANNAUJ HERITAGE TIMELINE (1620 → TODAY) */}
-        <SectionWrapper className="bg-[#F7EEED] border-b border-[#F7D1D8] content-auto">
-          <div className="text-center space-y-2 mb-10">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#FAE6E7] border border-[#F7D1D8] text-[#4A0D25] text-xs font-extrabold uppercase tracking-widest">
-              <Clock className="w-3.5 h-3.5 text-[#F6A6BB]" /> Historic Legacy
+        <SectionWrapper className="bg-[#F7EEED] border-b border-[#F7D1D8] content-auto relative overflow-hidden">
+          
+          <div className="text-center space-y-3 mb-12 max-w-2xl mx-auto relative z-10">
+            <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#FAE6E7] border border-[#F7D1D8] text-[#4A0D25] text-xs font-bold uppercase tracking-widest">
+              <Clock className="w-3.5 h-3.5 text-[#D45A7A]" /> 400-Year Historic Legacy
             </div>
-            <h2 className="font-serif font-bold text-3xl sm:text-5xl text-[#1A0510]">
-              400-Year Kannauj Distillation Timeline
+            <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-light tracking-tight text-[#1A0510] leading-[1.05]">
+              Kannauj Distillation
+              <span className="block font-normal text-[#4A0D25]">Through the Centuries</span>
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-left relative">
-            <div className="p-5 rounded-2xl bg-[#FAE6E7]/80 border border-[#F7D1D8] space-y-2 shadow-xs">
-              <span className="font-mono text-xl font-bold text-[#4A0D25]">1620 AD</span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-left relative z-10">
+            <div className="p-5 rounded-2xl bg-white/80 border border-[#F7D1D8] space-y-2 shadow-xs hover:border-[#D45A7A] hover:bg-white transition-all">
+              <span className="font-mono text-xs font-black uppercase tracking-wider text-[#D45A7A]">1620 AD</span>
               <h3 className="font-serif font-bold text-[#1A0510] text-base">Imperial Commission</h3>
-              <p className="text-xs text-[#4A0D25] leading-relaxed font-semibold">
+              <p className="text-xs text-[#4A0D25]/85 leading-relaxed font-normal">
                 Mughal royal court commissions Kannauj copper still artisans to craft alcohol-free Ruh Gulab.
               </p>
             </div>
 
-            <div className="p-5 rounded-2xl bg-[#FAE6E7]/80 border border-[#F7D1D8] space-y-2 shadow-xs">
-              <span className="font-mono text-xl font-bold text-[#4A0D25]">1880 AD</span>
+            <div className="p-5 rounded-2xl bg-white/80 border border-[#F7D1D8] space-y-2 shadow-xs hover:border-[#D45A7A] hover:bg-white transition-all">
+              <span className="font-mono text-xs font-black uppercase tracking-wider text-[#D45A7A]">1880 AD</span>
               <h3 className="font-serif font-bold text-[#1A0510] text-base">Bhapka Condensation</h3>
-              <p className="text-xs text-[#4A0D25] leading-relaxed font-semibold">
+              <p className="text-xs text-[#4A0D25]/85 leading-relaxed font-normal">
                 Pioneered double-distillation in bamboo receivers immersed in cold water baths for rose oil purity.
               </p>
             </div>
 
-            <div className="p-5 rounded-2xl bg-[#FAE6E7]/80 border border-[#F7D1D8] space-y-2 shadow-xs">
-              <span className="font-mono text-xl font-bold text-[#4A0D25]">1960 AD</span>
+            <div className="p-5 rounded-2xl bg-white/80 border border-[#F7D1D8] space-y-2 shadow-xs hover:border-[#D45A7A] hover:bg-white transition-all">
+              <span className="font-mono text-xs font-black uppercase tracking-wider text-[#D45A7A]">1960 AD</span>
               <h3 className="font-serif font-bold text-[#1A0510] text-base">Mysore Sandalwood Base</h3>
-              <p className="text-xs text-[#4A0D25] leading-relaxed font-semibold">
+              <p className="text-xs text-[#4A0D25]/85 leading-relaxed font-normal">
                 Standardized aging in pure Mysore sandalwood oil base for 12+ hour skin longevity without synthetic fixatives.
               </p>
             </div>
 
-            <div className="p-5 rounded-2xl bg-[#FAE6E7] border-2 border-[#F6A6BB] space-y-2 shadow-md">
-              <span className="font-mono text-xl font-bold text-[#4A0D25]">TODAY</span>
-              <h3 className="font-serif font-bold text-[#1A0510] text-base">World's Largest Producer</h3>
-              <p className="text-xs text-[#4A0D25] leading-relaxed font-semibold">
+            <div className="p-5 rounded-2xl bg-[#4A0D25] text-white border border-[#4A0D25] space-y-2 shadow-md ring-2 ring-[#F6A6BB]/30">
+              <span className="font-mono text-xs font-black uppercase tracking-wider text-[#F6A6BB]">TODAY</span>
+              <h3 className="font-serif font-bold text-[#FFF5F7] text-base">World's Largest Producer</h3>
+              <p className="text-xs text-white/80 leading-relaxed font-light">
                 Rose Valley Kannauj operates the world's largest certified copper deg distillation network.
               </p>
             </div>

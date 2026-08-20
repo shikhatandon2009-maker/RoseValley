@@ -502,6 +502,20 @@ export default function PagesAdminPage() {
                         </Link>
 
                         <button
+                          onClick={() => {
+                            window.dispatchEvent(
+                              new CustomEvent('open_seo_drawer', {
+                                detail: { pageId: p.id },
+                              })
+                            );
+                          }}
+                          className="p-2.5 rounded-xl bg-[#FAE6E7] border border-[#F7D1D8] text-[#7A1840] hover:bg-[#F6A6BB] transition-colors"
+                          title="Quick SEO & OG Studio"
+                        >
+                          <Sparkles className="w-4 h-4 text-[#D45A7A]" />
+                        </button>
+
+                        <button
                           onClick={() => handleOpenEditModal(p)}
                           className="p-2.5 rounded-xl bg-[#4A0D25] text-[#F6A6BB] hover:bg-[#1A0510] transition-colors"
                           title="Edit"

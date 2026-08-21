@@ -36,7 +36,7 @@ ON CONFLICT (store_id, slug) DO NOTHING;
 -- Products
 INSERT INTO products (id, store_id, name, slug, description, price, compare_at_price, stock, images, scent_notes, ingredients, is_featured, is_bestseller, meta_title, meta_description) VALUES
 (
-    'p1111111-1111-1111-1111-111111111111',
+    '11111111-1111-1111-1111-111111111111',
     'essential_oils_perfumes_store_01',
     'Rose Royale Eau de Parfum',
     'rose-royale-eau-de-parfum',
@@ -53,7 +53,7 @@ INSERT INTO products (id, store_id, name, slug, description, price, compare_at_p
     'Shop Rose Royale Eau de Parfum featuring Damask Rose, Velvet Oud, and Golden Amber.'
 ),
 (
-    'p2222222-2222-2222-2222-222222222222',
+    '22222222-2222-2222-2222-222222222222',
     'essential_oils_perfumes_store_01',
     'Velvet Amber & Vanilla Oil Blend',
     'velvet-amber-vanilla-oil-blend',
@@ -70,7 +70,7 @@ INSERT INTO products (id, store_id, name, slug, description, price, compare_at_p
     'Discover Velvet Amber & Vanilla essential oil elixir for relaxation.'
 ),
 (
-    'p3333333-3333-3333-3333-333333333333',
+    '33333333-3333-3333-3333-333333333333',
     'essential_oils_perfumes_store_01',
     'Midnight Jasmine & Bergamot Cologne',
     'midnight-jasmine-bergamot-cologne',
@@ -90,22 +90,22 @@ ON CONFLICT (store_id, slug) DO NOTHING;
 
 -- Product Variants
 INSERT INTO product_variants (id, store_id, product_id, name, sku, price, stock, size) VALUES
-('v1111111-1111-1111-1111-111111111111', 'essential_oils_perfumes_store_01', 'p1111111-1111-1111-1111-111111111111', '50ml Eau de Parfum', 'RR-50ML', 4800.00, 25, '50ml'),
-('v1111111-1111-1111-1111-222222222222', 'essential_oils_perfumes_store_01', 'p1111111-1111-1111-1111-111111111111', '100ml Eau de Parfum', 'RR-100ML', 7200.00, 20, '100ml'),
-('v2222222-2222-2222-2222-111111111111', 'essential_oils_perfumes_store_01', 'p2222222-2222-2222-2222-222222222222', '15ml Roll-On Bottle', 'VA-15ML', 3200.00, 30, '15ml'),
-('v3333333-3333-3333-3333-111111111111', 'essential_oils_perfumes_store_01', 'p3333333-3333-3333-3333-333333333333', '50ml Cologne Spray', 'MJ-50ML', 4200.00, 25, '50ml')
+('41111111-1111-1111-1111-111111111111', 'essential_oils_perfumes_store_01', '11111111-1111-1111-1111-111111111111', '50ml Eau de Parfum', 'RR-50ML', 4800.00, 25, '50ml'),
+('41111111-1111-1111-1111-222222222222', 'essential_oils_perfumes_store_01', '11111111-1111-1111-1111-111111111111', '100ml Eau de Parfum', 'RR-100ML', 7200.00, 20, '100ml'),
+('42222222-2222-2222-2222-111111111111', 'essential_oils_perfumes_store_01', '22222222-2222-2222-2222-222222222222', '15ml Roll-On Bottle', 'VA-15ML', 3200.00, 30, '15ml'),
+('43333333-3333-3333-3333-111111111111', 'essential_oils_perfumes_store_01', '33333333-3333-3333-3333-333333333333', '50ml Cologne Spray', 'MJ-50ML', 4200.00, 25, '50ml')
 ON CONFLICT (id) DO NOTHING;
 
 -- Product Category Links
 INSERT INTO product_categories (store_id, product_id, category_id) VALUES
-('essential_oils_perfumes_store_01', 'p1111111-1111-1111-1111-111111111111', 'c1111111-1111-1111-1111-111111111111'),
-('essential_oils_perfumes_store_01', 'p2222222-2222-2222-2222-222222222222', 'c2222222-2222-2222-2222-222222222222'),
-('essential_oils_perfumes_store_01', 'p3333333-3333-3333-3333-333333333333', 'c1111111-1111-1111-1111-111111111111')
-ON CONFLICT DO NOTHING;
+('essential_oils_perfumes_store_01', '11111111-1111-1111-1111-111111111111', 'c1111111-1111-1111-1111-111111111111'),
+('essential_oils_perfumes_store_01', '22222222-2222-2222-2222-222222222222', 'c2222222-2222-2222-2222-222222222222'),
+('essential_oils_perfumes_store_01', '33333333-3333-3333-3333-333333333333', 'c1111111-1111-1111-1111-111111111111')
+ON CONFLICT (store_id, product_id, category_id) DO NOTHING;
 
 -- Reviews
 INSERT INTO reviews (id, store_id, product_id, user_id, rating, title, comment, status, is_verified_purchase) VALUES
-('r1111111-1111-1111-1111-111111111111', 'essential_oils_perfumes_store_01', 'p1111111-1111-1111-1111-111111111111', 'b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a22', 5, 'Exquisite scent that lasts all day!', 'The Damask Rose is divine. People kept asking me what perfume I was wearing at dinner.', 'approved', true)
+('r1111111-1111-1111-1111-111111111111', 'essential_oils_perfumes_store_01', '11111111-1111-1111-1111-111111111111', 'b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a22', 5, 'Exquisite scent that lasts all day!', 'The Damask Rose is divine. People kept asking me what perfume I was wearing at dinner.', 'approved', true)
 ON CONFLICT (id) DO NOTHING;
 
 -- Product Questions

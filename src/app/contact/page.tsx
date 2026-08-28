@@ -216,46 +216,6 @@ export default function ContactUsPage() {
                 </div>
               </div>
 
-              {/* Email Card (Dynamically populated from Admin) */}
-              <div className="p-5 rounded-2xl bg-[#FAE6E7]/60 border border-[#F7D1D8] flex items-start gap-4 shadow-xs">
-                <div className="p-3 rounded-xl bg-[#F6A6BB] text-[#4A0D25] flex-shrink-0">
-                  <Mail className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-serif font-extrabold text-[#1A0510] text-base">Direct Store Email</h3>
-                  <p className="text-xs text-[#4A0D25] font-bold mt-1">
-                    <a
-                      href={`mailto:${storeInfo.contact_email || 'shikhatandon2009@gmail.com'}`}
-                      className="hover:underline font-mono text-sm text-[#4A0D25] font-black"
-                    >
-                      {storeInfo.contact_email || 'shikhatandon2009@gmail.com'}
-                    </a><br />
-                    <span className="text-[11px] text-stone-600 font-medium">Inquiries & Export Desk (24/7 Monitored)</span>
-                  </p>
-                </div>
-              </div>
-
-              {/* Phone Card (Dynamically populated from Admin) */}
-              <div className="p-5 rounded-2xl bg-[#FAE6E7]/60 border border-[#F7D1D8] flex items-start gap-4 shadow-xs">
-                <div className="p-3 rounded-xl bg-[#F6A6BB] text-[#4A0D25] flex-shrink-0">
-                  <Phone className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-serif font-extrabold text-[#1A0510] text-base">Customer Care & Support</h3>
-                  <p className="text-xs text-[#4A0D25] font-bold mt-1">
-                    <a
-                      href={`tel:${cleanPhone}`}
-                      className="hover:underline font-mono text-sm text-[#4A0D25] font-black"
-                    >
-                      {storeInfo.contact_phone || '+91 96486 78599'}
-                    </a><br />
-                    <span className="text-[11px] text-stone-600 font-medium">
-                      {storeInfo.support_hours || 'Mon - Sat: 9:00 AM - 8:00 PM IST'}
-                    </span>
-                  </p>
-                </div>
-              </div>
-
               {/* 1-Click WhatsApp Support Card (Dynamically populated from Admin) */}
               <div className="p-5 rounded-2xl bg-emerald-50 border border-emerald-300 flex items-center justify-between gap-4 shadow-xs">
                 <div className="flex items-center gap-3">
@@ -270,7 +230,7 @@ export default function ContactUsPage() {
                   </div>
                 </div>
                 <a
-                  href={`https://wa.me/${cleanWhatsApp}?text=Hello%20Rose%20Valley%20Kannauj%20Concierge`}
+                  href={`https://wa.me/${cleanWhatsApp}?text=Hello.%20The%20Rose%20Oil%20Company`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs uppercase tracking-wider shadow-sm transition-all flex-shrink-0"

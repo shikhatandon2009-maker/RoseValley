@@ -1,0 +1,19 @@
+# Google & Search Engine Robots Configuration for RoseOil.in
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /account/
+Disallow: /checkout
+Disallow: /order-success
+
+User-agent: Googlebot
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /account/
+Disallow: /checkout
+Disallow: /order-success
+
+Sitemap: https://roseoil.in/sitemap.xml
+Host: https://roseoil.in

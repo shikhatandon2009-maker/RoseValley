@@ -5,6 +5,7 @@ import { CartDrawer } from '@/components/cart/CartDrawer';
 import { ThemeProvider } from '@/components/layout/ThemeProvider';
 import { FontProvider } from '@/components/layout/FontProvider';
 import { SiteSettingsInitializer } from '@/components/layout/SiteSettingsInitializer';
+import { ScrollToTop } from '@/components/layout/ScrollToTop';
 
 const playfair = Playfair_Display({
   subsets: ['latin'],
@@ -62,6 +63,7 @@ export default function RootLayout({
           <ThemeProvider>
             <main className="flex-1">{children}</main>
             <CartDrawer />
+            <ScrollToTop />
           </ThemeProvider>
         </FontProvider>
       </body>

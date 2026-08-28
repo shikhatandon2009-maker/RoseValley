@@ -380,13 +380,19 @@ export function ProductDetailClient({ product, variants, initialReviews, initial
                 <Maximize2 className="w-3.5 h-3.5 text-[#F6A6BB]" /> Click for 4K View
               </span>
 
+              {/* Best Seller Graphic Ribbon Badge — Top Right */}
+              {product.is_bestseller && (
+                <div className="absolute -top-1 right-2 sm:top-0 sm:right-3 z-40 pointer-events-none select-none">
+                  <img
+                    src="/images/bestseller-badge.png"
+                    alt="Best Seller"
+                    className="w-14 sm:w-20 md:w-24 h-auto drop-shadow-lg transform hover:scale-105 transition-transform duration-300"
+                  />
+                </div>
+              )}
+
               {/* Dynamic Store Badges (Admin Section 6) */}
               <div className="absolute top-3 left-3 z-40 flex flex-col gap-1.5 pointer-events-none">
-                {product.is_bestseller && (
-                  <span className="bg-[#4A0D25] text-white text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full shadow-md flex items-center gap-1.5">
-                    <Flame className="w-3.5 h-3.5 text-[#F6A6BB] fill-[#F6A6BB]" /> Bestseller
-                  </span>
-                )}
                 {product.is_featured && (
                   <span className="bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full shadow-md flex items-center gap-1.5">
                     <Crown className="w-3.5 h-3.5 text-amber-700" /> Featured Heritage

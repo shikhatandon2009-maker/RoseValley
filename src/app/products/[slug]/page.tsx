@@ -97,7 +97,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
     <div className="min-h-screen bg-[#F7EEED] text-[#1A0510] flex flex-col justify-between overflow-x-hidden w-full">
       <LuxuryHeader />
 
-      <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-10 w-full overflow-x-hidden">
+      <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-2 sm:pt-3 pb-6 sm:pb-10 w-full overflow-x-hidden">
         <ProductDetailClient
           product={product}
           variants={variants}

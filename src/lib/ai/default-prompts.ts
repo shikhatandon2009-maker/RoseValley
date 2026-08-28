@@ -278,6 +278,26 @@ Provide a refined, factually accurate answer explaining our extraction method, p
       prompt: 'Bulgarian Rose Otto Oil',
       context: 'Is this oil safe to apply directly onto sensitive skin without a carrier oil?'
     }
+  },
+  {
+    store_id: STORE_ID,
+    slug: 'ingredients',
+    title: 'Botanical Ingredients Formulation & INCI',
+    description: 'Analyzes the botanical product and generates an accurate, pure botanical ingredients / INCI list.',
+    category: 'Catalog & SEO',
+    system_prompt: `You are a Senior Cosmetic Chemist and Botanical Formulator for RoseOil.in.`,
+    user_prompt_template: `Analyze the botanical product "{{prompt}}". Return ONLY a comma-separated list of 3-5 authentic, pure botanical ingredients (e.g. "Pure Hydro-Distilled Rosa Damascena Extract, Santalum Album (Sandalwood) Oil, Simmondsia Chinensis (Jojoba) Oil"). No quotes, no markdown.`,
+    variables: [
+      { name: 'prompt', label: 'Product Name', description: 'The botanical product to analyze', required: true }
+    ],
+    model: 'gemini-1.5-flash',
+    temperature: 0.5,
+    max_output_tokens: 500,
+    expected_output_format: 'text',
+    is_active: true,
+    sample_input: {
+      prompt: 'Pure Bulgarian Rose Otto Oil'
+    }
   }
 ];
 

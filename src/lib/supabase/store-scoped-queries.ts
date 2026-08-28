@@ -16,7 +16,11 @@ export interface CatalogProduct {
   name: string;
   slug: string;
   category_slug?: string;
+  category_slugs?: string[];
   category_id?: string;
+  category_name?: string;
+  categories?: any[];
+  category?: any;
   description: string;
   price: number;
   compare_at_price?: number;
@@ -34,9 +38,6 @@ export interface CatalogProduct {
   meta_keywords?: string;
   meta_description?: string;
   created_at?: string;
-  categories?: any[];
-  category?: any;
-  category_name?: string;
   variants?: any[];
 }
 
@@ -86,31 +87,58 @@ export async function fetchProducts(options?: ProductQueryOptions): Promise<Cata
       query = query.limit(options.limit);
     }
 
-    const { data: dbProducts, error } = await query;
+    const [{ data: dbProducts, error }, { data: junctions }, { data: dbCategories }] = await Promise.all([
+      query,
+      supabase.from('product_categories').select('product_id, category_id').eq('store_id', STORE_ID),
+      supabase.from('categories').select('id, name, slug').eq('store_id', STORE_ID),
+    ]);
 
     if (error || !dbProducts) {
       console.error('Error fetching products from Supabase:', error);
       return cached ? cached.data : [];
     }
 
-    let productList: CatalogProduct[] = dbProducts.map((p: any) => ({
-      id: String(p.id),
-      store_id: p.store_id || STORE_ID,
-      name: p.name || 'Artisanal Fragrance',
-      slug: p.slug || '',
-      description: p.description || '',
-      price: Number(p.price) || 0,
-      compare_at_price: p.compare_at_price ? Number(p.compare_at_price) : undefined,
-      images: Array.isArray(p.images) ? p.images.filter(Boolean) : [],
-      scent_notes: p.scent_notes || { top: [], heart: [], base: [] },
-      ingredients: Array.isArray(p.ingredients) ? p.ingredients : [],
-      is_featured: Boolean(p.is_featured),
-      is_bestseller: Boolean(p.is_bestseller),
-      meta_title: p.meta_title || '',
-      meta_keywords: p.meta_keywords || '',
-      meta_description: p.meta_description || '',
-      created_at: p.created_at || new Date().toISOString(),
-    }));
+    const catMap = new Map<string, { id: string; name: string; slug: string }>();
+    (dbCategories || []).forEach((c: any) => catMap.set(String(c.id), c));
+
+    const prodCatMap = new Map<string, any[]>();
+    (junctions || []).forEach((j: any) => {
+      const cat = catMap.get(String(j.category_id));
+      if (cat) {
+        const list = prodCatMap.get(String(j.product_id)) || [];
+        list.push(cat);
+        prodCatMap.set(String(j.product_id), list);
+      }
+    });
+
+    let productList: CatalogProduct[] = dbProducts.map((p: any) => {
+      const assignedCats = prodCatMap.get(String(p.id)) || [];
+      const primaryCat = assignedCats[0];
+      return {
+        id: String(p.id),
+        store_id: p.store_id || STORE_ID,
+        name: p.name || 'Artisanal Fragrance',
+        slug: p.slug || '',
+        description: p.description || '',
+        price: Number(p.price) || 0,
+        compare_at_price: p.compare_at_price ? Number(p.compare_at_price) : undefined,
+        images: Array.isArray(p.images) ? p.images.filter(Boolean) : [],
+        scent_notes: p.scent_notes || { top: [], heart: [], base: [] },
+        ingredients: Array.isArray(p.ingredients) ? p.ingredients : [],
+        is_featured: Boolean(p.is_featured),
+        is_bestseller: Boolean(p.is_bestseller),
+        meta_title: p.meta_title || '',
+        meta_keywords: p.meta_keywords || '',
+        meta_description: p.meta_description || '',
+        created_at: p.created_at || new Date().toISOString(),
+        categories: assignedCats,
+        category: primaryCat,
+        category_id: primaryCat?.id,
+        category_name: primaryCat?.name,
+        category_slug: primaryCat?.slug,
+        category_slugs: assignedCats.map((c: any) => c.slug),
+      };
+    });
 
     // Deduplicate duplicate products of the same name (prefer cleaner hyphenated slug)
     const dedupMap = new Map<string, CatalogProduct>();

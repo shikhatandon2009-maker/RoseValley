@@ -15,7 +15,7 @@ export default function ReturnRefundPolicyPage() {
     <div className="min-h-screen bg-[#F7EEED] text-[#1A0510] font-sans flex flex-col justify-between">
       <LuxuryHeader />
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 space-y-10 flex-1">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 sm:pt-3 pb-12 sm:pb-16 space-y-10 flex-1">
         {/* Breadcrumb & Navigation */}
         <div className="flex items-center gap-2 text-xs font-bold text-[#4A0D25]/70">
           <Link href="/" className="hover:text-[#F6A6BB] transition-colors flex items-center gap-1">

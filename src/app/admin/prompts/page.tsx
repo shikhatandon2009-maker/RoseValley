@@ -36,16 +36,17 @@ import { SUPABASE_AI_PROMPTS_SQL } from '@/lib/ai/sql-schema';
 
 export default function AdminPromptsPage() {
   const [prompts, setPrompts] = useState<AIPromptItem[]>(DEFAULT_AI_PROMPTS);
+  const [drafts, setDrafts] = useState<Record<string, AIPromptItem>>({});
   const [selectedSlug, setSelectedSlug] = useState<string>('all_in_one_seo_and_description');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
-  
+
   // Active editing state for current selected prompt
   const [currentPrompt, setCurrentPrompt] = useState<AIPromptItem>(DEFAULT_AI_PROMPTS[0]);
 
   // Test playground variables input
   const [testVariables, setTestVariables] = useState<Record<string, any>>({});
-  
+
   // Test result state
   const [isRunningTest, setIsRunningTest] = useState(false);
   const [testResult, setTestResult] = useState<AIPromptTestResponse | null>(null);
@@ -54,6 +55,7 @@ export default function AdminPromptsPage() {
   // Loading and feedback states
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSeeding, setIsSeeding] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [isSqlModalOpen, setIsSqlModalOpen] = useState(false);
   const [copiedRaw, setCopiedRaw] = useState(false);
@@ -67,13 +69,20 @@ export default function AdminPromptsPage() {
   const fetchPrompts = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch('/api/admin/prompts');
+      const res = await fetch('/api/admin/prompts', {
+        cache: 'no-store',
+        headers: { Pragma: 'no-cache', 'Cache-Control': 'no-cache' },
+      });
       const data = await res.json();
       if (data.prompts && data.prompts.length > 0) {
         setPrompts(data.prompts);
-        const match = data.prompts.find((p: AIPromptItem) => p.slug === selectedSlug) || data.prompts[0];
-        setCurrentPrompt({ ...match });
-        setTestVariables(match.sample_input || {});
+        setSelectedSlug((curSlug) => {
+          const match = data.prompts.find((p: AIPromptItem) => p.slug === curSlug) || data.prompts[0];
+          // Use draft if exists, else match
+          setCurrentPrompt((prev) => drafts[match.slug] || { ...match });
+          setTestVariables(match.sample_input || {});
+          return match.slug;
+        });
       }
     } catch (err) {
       console.error('Error fetching prompts:', err);
@@ -82,11 +91,21 @@ export default function AdminPromptsPage() {
     }
   };
 
+  // Update current prompt with in-memory draft retention
+  const updateCurrentPrompt = (changes: Partial<AIPromptItem>) => {
+    setCurrentPrompt((prev) => {
+      const updated = { ...prev, ...changes };
+      setDrafts((d) => ({ ...d, [updated.slug]: updated }));
+      return updated;
+    });
+  };
+
   // Handle selecting a different prompt
   const handleSelectPrompt = (prompt: AIPromptItem) => {
     setSelectedSlug(prompt.slug);
-    setCurrentPrompt({ ...prompt });
-    setTestVariables(prompt.sample_input || {});
+    const promptToLoad = drafts[prompt.slug] || prompts.find((p) => p.slug === prompt.slug) || prompt;
+    setCurrentPrompt({ ...promptToLoad });
+    setTestVariables(promptToLoad.sample_input || {});
     setTestResult(null);
     setStatusMessage(null);
   };
@@ -107,15 +126,23 @@ export default function AdminPromptsPage() {
         throw new Error(data.error || 'Failed to save prompt');
       }
 
+      const savedItem = data.prompt ? { ...currentPrompt, ...data.prompt } : { ...currentPrompt };
+
       setStatusMessage({
         type: 'success',
-        text: `Prompt "${currentPrompt.title}" saved successfully to Supabase.`,
+        text: `Prompt "${currentPrompt.title || currentPrompt.slug}" saved successfully to Supabase DB.`,
       });
 
-      // Update local prompts list
+      // Update local prompts list and clear draft for this slug
       setPrompts((prev) =>
-        prev.map((p) => (p.slug === currentPrompt.slug ? { ...currentPrompt } : p))
+        prev.map((p) => (p.slug === currentPrompt.slug ? savedItem : p))
       );
+      setDrafts((d) => {
+        const next = { ...d };
+        delete next[currentPrompt.slug];
+        return next;
+      });
+      setCurrentPrompt(savedItem);
     } catch (err: any) {
       setStatusMessage({
         type: 'error',
@@ -126,18 +153,71 @@ export default function AdminPromptsPage() {
     }
   };
 
-  // Reset to default factory prompt
+  // Seed all 11 default prompts to Supabase
+  const handleSeedAllDefaults = async () => {
+    if (!window.confirm('Are you sure you want to seed/overwrite all default prompts in Supabase with standard RoseOil.in prompts?')) {
+      return;
+    }
+    setIsSeeding(true);
+    setStatusMessage(null);
+    try {
+      const res = await fetch('/api/admin/prompts?action=seed_defaults', {
+        method: 'POST',
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to seed defaults');
+
+      setStatusMessage({
+        type: 'success',
+        text: data.message || 'Successfully seeded all AI prompts to Supabase!',
+      });
+      setDrafts({});
+      await fetchPrompts();
+    } catch (err: any) {
+      setStatusMessage({
+        type: 'error',
+        text: err.message || 'Error seeding default prompts',
+      });
+    } finally {
+      setIsSeeding(false);
+    }
+  };
+
+  // Reset current prompt to default factory prompt
   const handleResetToDefault = () => {
     const defaultItem = DEFAULT_AI_PROMPTS.find((p) => p.slug === currentPrompt.slug);
     if (defaultItem) {
-      setCurrentPrompt({ ...defaultItem });
+      updateCurrentPrompt({
+        ...defaultItem,
+      });
       setTestVariables(defaultItem.sample_input || {});
       setStatusMessage({
         type: 'success',
-        text: `Reset "${currentPrompt.title}" to factory default configuration.`,
+        text: `Loaded factory defaults for "${currentPrompt.title}". Click "Save Changes to Supabase" to persist to DB.`,
       });
     }
   };
+
+  // Check if current prompt has unsaved edits
+  const originalPrompt = prompts.find((p) => p.slug === currentPrompt.slug);
+  const isDirty = originalPrompt
+    ? JSON.stringify({
+        system_prompt: currentPrompt.system_prompt,
+        user_prompt_template: currentPrompt.user_prompt_template,
+        model: currentPrompt.model,
+        temperature: currentPrompt.temperature,
+        max_output_tokens: currentPrompt.max_output_tokens,
+        expected_output_format: currentPrompt.expected_output_format,
+      }) !==
+      JSON.stringify({
+        system_prompt: originalPrompt.system_prompt,
+        user_prompt_template: originalPrompt.user_prompt_template,
+        model: originalPrompt.model,
+        temperature: originalPrompt.temperature,
+        max_output_tokens: originalPrompt.max_output_tokens,
+        expected_output_format: originalPrompt.expected_output_format,
+      })
+    : false;
 
   // Run Test / Try Prompt
   const handleRunTest = async () => {
@@ -198,7 +278,7 @@ export default function AdminPromptsPage() {
   // Categories
   const categories = ['All', 'Catalog & SEO', 'AI Shopping Experience', 'Community & Social Proof', 'Editorial & Content'];
 
-  const filteredPrompts = prompts.filter((p) => {
+  const filteredPrompts = prompts.map((p) => drafts[p.slug] || p).filter((p) => {
     const matchesSearch =
       p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.slug.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -229,6 +309,16 @@ export default function AdminPromptsPage() {
 
         <div className="flex items-center gap-2.5 flex-wrap">
           <button
+            onClick={handleSeedAllDefaults}
+            disabled={isSeeding}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-white border border-[#F7D1D8] text-[#8A1D41] hover:bg-[#FAE6E7] transition-all shadow-xs disabled:opacity-50"
+            title="Seed all 11 default prompts to Supabase database"
+          >
+            <RotateCcw className={`w-4 h-4 ${isSeeding ? 'animate-spin' : ''}`} />
+            <span>{isSeeding ? 'Seeding...' : 'Seed All Defaults to DB'}</span>
+          </button>
+
+          <button
             onClick={() => setIsSqlModalOpen(true)}
             className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-white border border-[#F7D1D8] text-[#4A0D25] hover:bg-[#FAE6E7] transition-all shadow-xs"
           >
@@ -248,10 +338,14 @@ export default function AdminPromptsPage() {
           <button
             onClick={handleSavePrompt}
             disabled={isSaving}
-            className="flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold bg-[#4A0D25] text-white hover:bg-[#340718] transition-all shadow-md active:scale-95 disabled:opacity-50"
+            className={`flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold transition-all shadow-md active:scale-95 disabled:opacity-50 ${
+              isDirty
+                ? 'bg-[#8A1D41] text-white ring-2 ring-[#E6CA65] animate-pulse'
+                : 'bg-[#4A0D25] text-white hover:bg-[#340718]'
+            }`}
           >
             <Save className="w-4 h-4 text-[#E6CA65]" />
-            <span>{isSaving ? 'Saving to DB...' : 'Save Changes to Supabase'}</span>
+            <span>{isSaving ? 'Saving to DB...' : isDirty ? 'Save Unsaved Changes' : 'Save to Supabase'}</span>
           </button>
         </div>
       </div>
@@ -327,6 +421,7 @@ export default function AdminPromptsPage() {
             <div className="space-y-1.5 max-h-[620px] overflow-y-auto pr-1">
               {filteredPrompts.map((p) => {
                 const isSelected = p.slug === selectedSlug;
+                const hasDraft = Boolean(drafts[p.slug]);
                 return (
                   <div
                     key={p.slug}
@@ -338,9 +433,16 @@ export default function AdminPromptsPage() {
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#8A1D41] px-1.5 py-0.5 rounded bg-white/80 border border-[#F7D1D8]">
-                        {p.expected_output_format.toUpperCase()}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#8A1D41] px-1.5 py-0.5 rounded bg-white/80 border border-[#F7D1D8]">
+                          {p.expected_output_format.toUpperCase()}
+                        </span>
+                        {hasDraft && (
+                          <span className="text-[9px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.2 rounded border border-amber-300">
+                            Draft
+                          </span>
+                        )}
+                      </div>
                       <span className="text-[9px] text-[#A38895] font-mono">
                         {p.model.replace('gemini-', '')}
                       </span>
@@ -363,9 +465,16 @@ export default function AdminPromptsPage() {
           <div className="bg-white rounded-2xl border border-[#F7D1D8] shadow-sm p-5 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-[#F7D1D8]">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#8A1D41]">
-                  {currentPrompt.category}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#8A1D41]">
+                    {currentPrompt.category}
+                  </span>
+                  {isDirty && (
+                    <span className="text-[9px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-300 animate-pulse">
+                      ● Unsaved Edits
+                    </span>
+                  )}
+                </div>
                 <h3 className="text-sm font-bold text-[#1A0510]">{currentPrompt.title}</h3>
                 <span className="text-[10px] font-mono text-[#7A5866]">Slug: {currentPrompt.slug}</span>
               </div>
@@ -375,7 +484,7 @@ export default function AdminPromptsPage() {
                 title="Reset to factory default"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
-                <span>Reset</span>
+                <span>Reset Default</span>
               </button>
             </div>
 
@@ -385,7 +494,7 @@ export default function AdminPromptsPage() {
                 <label className="text-[9px] font-bold text-[#7A5866] uppercase block mb-1">Model</label>
                 <select
                   value={currentPrompt.model}
-                  onChange={(e) => setCurrentPrompt({ ...currentPrompt, model: e.target.value })}
+                  onChange={(e) => updateCurrentPrompt({ model: e.target.value })}
                   className="w-full bg-white border border-[#F7D1D8] text-[11px] rounded-lg px-2 py-1 font-medium text-[#1A0510] focus:ring-1 focus:ring-[#4A0D25]"
                 >
                   <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
@@ -405,7 +514,7 @@ export default function AdminPromptsPage() {
                   step="0.05"
                   value={currentPrompt.temperature}
                   onChange={(e) =>
-                    setCurrentPrompt({ ...currentPrompt, temperature: parseFloat(e.target.value) })
+                    updateCurrentPrompt({ temperature: parseFloat(e.target.value) })
                   }
                   className="w-full accent-[#4A0D25] cursor-pointer mt-1"
                 />
@@ -417,8 +526,7 @@ export default function AdminPromptsPage() {
                   type="number"
                   value={currentPrompt.max_output_tokens}
                   onChange={(e) =>
-                    setCurrentPrompt({
-                      ...currentPrompt,
+                    updateCurrentPrompt({
                       max_output_tokens: parseInt(e.target.value) || 2000,
                     })
                   }
@@ -440,7 +548,7 @@ export default function AdminPromptsPage() {
                 rows={5}
                 value={currentPrompt.system_prompt}
                 onChange={(e) =>
-                  setCurrentPrompt({ ...currentPrompt, system_prompt: e.target.value })
+                  updateCurrentPrompt({ system_prompt: e.target.value })
                 }
                 className="w-full p-2.5 bg-[#FAF8F5] border border-[#F7D1D8] rounded-xl text-xs font-mono text-[#1A0510] focus:outline-none focus:ring-1 focus:ring-[#4A0D25] leading-relaxed resize-y"
               />
@@ -454,12 +562,11 @@ export default function AdminPromptsPage() {
                   User Prompt Template
                 </label>
                 <div className="flex items-center gap-1">
-                  {currentPrompt.variables.map((v) => (
+                  {(currentPrompt.variables || []).map((v) => (
                     <span
                       key={v.name}
                       onClick={() => {
-                        setCurrentPrompt({
-                          ...currentPrompt,
+                        updateCurrentPrompt({
                           user_prompt_template: `${currentPrompt.user_prompt_template} {{${v.name}}}`,
                         });
                       }}
@@ -475,7 +582,7 @@ export default function AdminPromptsPage() {
                 rows={12}
                 value={currentPrompt.user_prompt_template}
                 onChange={(e) =>
-                  setCurrentPrompt({ ...currentPrompt, user_prompt_template: e.target.value })
+                  updateCurrentPrompt({ user_prompt_template: e.target.value })
                 }
                 className="w-full p-2.5 bg-[#FAF8F5] border border-[#F7D1D8] rounded-xl text-xs font-mono text-[#1A0510] focus:outline-none focus:ring-1 focus:ring-[#4A0D25] leading-relaxed resize-y"
               />
@@ -489,7 +596,7 @@ export default function AdminPromptsPage() {
                   {(['json', 'text', 'markdown'] as const).map((fmt) => (
                     <button
                       key={fmt}
-                      onClick={() => setCurrentPrompt({ ...currentPrompt, expected_output_format: fmt })}
+                      onClick={() => updateCurrentPrompt({ expected_output_format: fmt })}
                       className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase transition-all ${
                         currentPrompt.expected_output_format === fmt
                           ? 'bg-[#4A0D25] text-white'
@@ -505,10 +612,14 @@ export default function AdminPromptsPage() {
               <button
                 onClick={handleSavePrompt}
                 disabled={isSaving}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-[#8A1D41] text-white hover:bg-[#4A0D25] transition-all shadow-xs"
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs ${
+                  isDirty
+                    ? 'bg-[#8A1D41] text-white hover:bg-[#4A0D25] ring-2 ring-[#E6CA65]'
+                    : 'bg-[#4A0D25] text-white hover:bg-[#340718]'
+                }`}
               >
-                <Save className="w-3.5 h-3.5" />
-                <span>{isSaving ? 'Saving...' : 'Save Prompt'}</span>
+                <Save className="w-3.5 h-3.5 text-[#E6CA65]" />
+                <span>{isSaving ? 'Saving...' : isDirty ? 'Save to DB *' : 'Saved in DB'}</span>
               </button>
             </div>
           </div>

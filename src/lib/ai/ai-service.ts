@@ -1,3 +1,8 @@
+import { getSupabaseServerClient } from '@/lib/supabase/server';
+import { STORE_ID } from '@/lib/constants';
+import { DEFAULT_AI_PROMPTS, interpolateTemplate } from '@/lib/ai/default-prompts';
+import { AIPromptItem } from '@/types/ai-prompt';
+
 export interface AIGenerateRequest {
   type:
     | 'product_description'
@@ -15,9 +20,50 @@ export interface AIGenerateRequest {
   context?: any;
 }
 
+export async function getPromptConfig(slug: string): Promise<AIPromptItem> {
+  const fallback = DEFAULT_AI_PROMPTS.find((p) => p.slug === slug) || DEFAULT_AI_PROMPTS[0];
+  try {
+    const supabase = getSupabaseServerClient();
+    const { data: dbPrompt } = await supabase
+      .from('ai_prompts')
+      .select('*')
+      .eq('store_id', STORE_ID)
+      .eq('slug', slug)
+      .maybeSingle();
+
+    if (dbPrompt && dbPrompt.system_prompt && dbPrompt.user_prompt_template) {
+      return {
+        ...fallback,
+        ...dbPrompt,
+        variables: Array.isArray(dbPrompt.variables) ? dbPrompt.variables : fallback.variables,
+        model: dbPrompt.model || fallback.model,
+        temperature: typeof dbPrompt.temperature === 'number' ? dbPrompt.temperature : fallback.temperature,
+        max_output_tokens: typeof dbPrompt.max_output_tokens === 'number' ? dbPrompt.max_output_tokens : fallback.max_output_tokens,
+        expected_output_format: dbPrompt.expected_output_format || fallback.expected_output_format,
+      };
+    }
+  } catch (err) {
+    console.warn(`[AI Service] Could not load prompt "${slug}" from DB, using defaults:`, err);
+  }
+  return fallback;
+}
+
 export async function generateAIContent(request: AIGenerateRequest): Promise<string> {
+  const promptConfig = await getPromptConfig(request.type);
+
+  const variables: Record<string, any> = {
+    prompt: request.prompt,
+    ...(typeof request.context === 'object' && request.context !== null ? request.context : { context: request.context }),
+  };
+
+  const userPrompt = interpolateTemplate(promptConfig.user_prompt_template, variables);
+  const systemPrompt = promptConfig.system_prompt;
+  const fullPromptText = systemPrompt ? `System: ${systemPrompt}\n\nTask: ${userPrompt}` : userPrompt;
+
   const apiKey = process.env.GEMINI_API_KEY || process.env.AI_PROVIDER_API_KEY;
-  const configuredModel = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
+  const configuredModel = promptConfig.model || process.env.GEMINI_MODEL || 'gemini-1.5-flash';
+  const temperature = Number(promptConfig.temperature) >= 0 ? Number(promptConfig.temperature) : 0.7;
+  const maxTokens = Number(promptConfig.max_output_tokens) > 0 ? Number(promptConfig.max_output_tokens) : 3500;
 
   // Candidate models to try in order
   const modelsToTry = [
@@ -41,17 +87,15 @@ export async function generateAIContent(request: AIGenerateRequest): Promise<str
               {
                 parts: [
                   {
-                    text: `System: You are an internationally acclaimed Essential Oil Chemist, Master Botanical Analyst, and Chief SEO Strategist for RoseOil.in, a premier purveyor of 100% pure, therapeutic-grade botanical oils, hydro-distillates, and rare plant essences. 
-
-Generate world-class, ultra-bespoke, evocative, and high-converting copy grounded in authentic botanical science and olfactory distinction. Do NOT use boilerplate templates, robotic keyword stuffing, or generic macro phrasing. Tailor every word to the specific botanical character, olfactory notes, and therapeutic aura of the product.\n\nTask: ${constructPrompt(request)}`
-                  }
-                ]
-              }
+                    text: fullPromptText,
+                  },
+                ],
+              },
             ],
             generationConfig: {
-              temperature: 0.7,
-              maxOutputTokens: 3500,
-            }
+              temperature: temperature,
+              maxOutputTokens: maxTokens,
+            },
           }),
         });
 

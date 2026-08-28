@@ -123,20 +123,26 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
           />
         </Link>
 
-        {/* Badges — Top Left */}
+        {/* Badges — Top Left (Discount) */}
         <div className="absolute top-2 left-2 sm:top-3 sm:left-3 flex flex-col gap-1 sm:gap-1.5 z-10 pointer-events-none">
-          {product.is_bestseller && (
-            <span className="bg-[#4A0D25] text-white text-[8px] sm:text-[9px] font-bold uppercase tracking-wider px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full shadow-sm flex items-center gap-1">
-              <Sparkles className="w-2.5 h-2.5 text-[#F6A6BB]" />
-              <span className="hidden xs:inline">Bestseller</span>
-            </span>
-          )}
           {discountPercent > 0 && (
             <span className="bg-[#F6A6BB] text-[#4A0D25] text-[8px] sm:text-[9px] font-extrabold uppercase tracking-wider px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full shadow-sm">
               -{discountPercent}% OFF
             </span>
           )}
         </div>
+
+        {/* Best Seller Graphic Ribbon Badge — Top Right Corner */}
+        {product.is_bestseller && (
+          <div className="absolute -top-0.5 right-1 sm:top-0 sm:right-2 z-20 pointer-events-none select-none">
+            <img
+              src="/images/bestseller-badge.png"
+              alt="Best Seller"
+              className="w-10 xs:w-11 sm:w-14 md:w-16 h-auto drop-shadow-md transform hover:scale-105 transition-transform duration-300"
+              loading="lazy"
+            />
+          </div>
+        )}
 
         {/* Low Stock / Out of Stock Badge */}
         {isLowStock && (
@@ -157,10 +163,14 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
         {/* Wishlist Button */}
         <button
           onClick={handleWishlist}
-          className={`absolute top-2 right-2 sm:top-3 sm:right-3 p-1.5 sm:p-2 rounded-full backdrop-blur-md transition-all z-10 cursor-pointer ${
+          className={`absolute ${
+            product.is_bestseller
+              ? 'top-13 xs:top-14 sm:top-18 right-2 sm:right-3'
+              : 'top-2 right-2 sm:top-3 sm:right-3'
+          } p-1.5 sm:p-2 rounded-full backdrop-blur-md transition-all z-30 cursor-pointer ${
             isLiked
               ? 'bg-[#F6A6BB] text-[#4A0D25] shadow-md'
-              : 'bg-white/80 text-[#4A0D25] hover:bg-white hover:shadow-md'
+              : 'bg-white/85 text-[#4A0D25] hover:bg-white hover:shadow-md'
           }`}
           aria-label="Add to wishlist"
           suppressHydrationWarning

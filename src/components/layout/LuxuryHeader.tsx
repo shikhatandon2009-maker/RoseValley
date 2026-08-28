@@ -67,6 +67,7 @@ export function LuxuryHeader() {
 
   const { items, toggleCart, updateQuantity, removeItem, getTotalINR } = useCartStore();
   const { productIds } = useWishlistStore();
+  const settings = useSiteSettingsStore((s) => s.settings);
 
   // Pre-fetch / live search products
   useEffect(() => {
@@ -152,8 +153,6 @@ export function LuxuryHeader() {
     router.refresh();
   };
 
-  const settings = useSiteSettingsStore((s) => s.settings);
-
   // Mount + fetch categories
   useEffect(() => {
     setMounted(true);
@@ -172,9 +171,24 @@ export function LuxuryHeader() {
       .catch((err) => console.error('Categories fetch error:', err));
   }, []);
 
-  // Scroll-aware header
+  // Scroll-aware header with hysteresis to prevent flickering
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 60);
+    let ticking = false;
+    const handleScroll = () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(() => {
+          const y = window.scrollY;
+          setScrolled((prev) => {
+            // Hysteresis: scroll down past 60 to compact, scroll up past 10 to restore
+            if (!prev && y > 60) return true;
+            if (prev && y < 10) return false;
+            return prev;
+          });
+          ticking = false;
+        });
+      }
+    };
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);

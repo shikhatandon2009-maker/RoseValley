@@ -415,15 +415,15 @@ export default function AdminInquiriesPage() {
                 {[
                   {
                     label: '📦 Shipment & Tracking Update',
-                    text: `Dear ${selectedInquiry.name},\n\nThank you for reaching out to Rose Valley Kannauj. Your order has been dispatched via insured courier and tracking updates have been synchronized to your client portal.\n\nWarm regards,\nMaison Concierge Desk`,
+                    text: `Dear ${selectedInquiry.name},\n\nThank you for reaching out to RoseOil.in. Your order has been dispatched via insured courier and tracking updates have been synchronized to your client portal.\n\nWarm regards,\nRoseOil.in Support Desk`,
                   },
                   {
                     label: '🏢 GST Tax Invoice & ITC Credit',
-                    text: `Dear ${selectedInquiry.name},\n\nYour tax invoice with your buyer GSTIN has been processed under HSN Code 330300. You can download and print the GST tax invoice directly from your orders tab in the account portal.\n\nWarm regards,\nMaison Concierge Desk`,
+                    text: `Dear ${selectedInquiry.name},\n\nYour tax invoice with your buyer GSTIN has been processed under HSN Code 330129. You can download and print the GST tax invoice directly from your orders tab in the account portal.\n\nWarm regards,\nRoseOil.in Accounts Desk`,
                   },
                   {
-                    label: '🌸 Custom Hydro-Distillation Batch',
-                    text: `Dear ${selectedInquiry.name},\n\nOur master distillers in Kannauj have reviewed your custom attar formulation request. A dedicated perfumer will reach out to discuss your scent profile requirements.\n\nWarm regards,\nMaison Concierge Desk`,
+                    label: '🌸 Custom Botanical Extraction Batch',
+                    text: `Dear ${selectedInquiry.name},\n\nOur distillation team has reviewed your custom essential oil inquiry. A specialist will reach out shortly to discuss your botanical requirements.\n\nWarm regards,\nRoseOil.in Botanical Desk`,
                   },
                 ].map((preset, idx) => (
                   <button

@@ -42,13 +42,13 @@ interface StoreInfo {
 export default function ContactUsPage() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [storeInfo, setStoreInfo] = useState<StoreInfo>({
-    store_address_line1: 'Rose Valley Estate, Deg-Bhapka Heritage Stills',
-    store_address_line2: 'Kannauj Industrial Area',
+    store_address_line1: 'RoseOil.in Botanical Laboratories',
+    store_address_line2: 'Distillation Center',
     store_city: 'Kannauj',
     store_state: 'Uttar Pradesh',
     store_pincode: '209725',
     store_country: 'India',
-    contact_email: 'shikhatandon2009@gmail.com',
+    contact_email: 'support@roseoil.in',
     contact_phone: '+91 96486 78599',
     whatsapp_number: '+91 96486 78599',
     support_hours: 'Mon - Sat: 9:00 AM - 8:00 PM IST',
@@ -175,10 +175,10 @@ export default function ContactUsPage() {
       <section className="relative py-12 bg-gradient-to-b from-[#FAE6E7]/60 via-[#F7EEED] to-white border-b border-[#F7D1D8] text-center">
         <div className="max-w-3xl mx-auto px-4 space-y-3">
           <h1 className="font-serif font-bold text-2xl sm:text-3xl text-[#1A0510] tracking-tight">
-            Contact Rose Valley Kannauj
+            Contact RoseOil.in
           </h1>
           <p className="text-xs sm:text-sm text-[#4A0D25] max-w-2xl mx-auto font-medium leading-relaxed">
-            Have inquiries regarding custom attar formulations, bulk hydro-distillates, or order tracking? Our master perfumers and client concierge are at your service.
+            Have inquiries regarding pure essential oils, botanical hydro-distillates, or order tracking? Our specialists and client support are at your service.
           </p>
         </div>
       </section>
@@ -190,13 +190,13 @@ export default function ContactUsPage() {
           <div className="lg:col-span-5 space-y-6 text-left">
             <div>
               <span className="text-xs font-black text-[#F6A6BB] uppercase tracking-widest">
-                Maison Concierge
+                Customer Concierge
               </span>
               <h2 className="font-serif font-extrabold text-3xl text-[#1A0510] mt-1">
                 Direct Contact Channels
               </h2>
               <p className="text-xs sm:text-sm text-[#4A0D25] font-bold mt-2 leading-relaxed">
-                Reach out to our distillery in Kannauj, Uttar Pradesh, India or our global client care desk.
+                Reach out to our customer care desk at RoseOil.in for support and wholesale inquiries.
               </p>
             </div>
 
@@ -207,9 +207,9 @@ export default function ContactUsPage() {
                   <MapPin className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-serif font-extrabold text-[#1A0510] text-base">Distillery & Estate Address</h3>
+                  <h3 className="font-serif font-extrabold text-[#1A0510] text-base">Laboratories & Office</h3>
                   <p className="text-xs text-[#4A0D25] font-bold mt-1 leading-relaxed">
-                    {storeInfo.store_address_line1 || 'Rose Valley Estate, Deg-Bhapka Heritage Stills'}<br />
+                    {storeInfo.store_address_line1 || 'RoseOil.in Botanical Laboratories'}<br />
                     {storeInfo.store_address_line2 ? `${storeInfo.store_address_line2}, ` : ''}
                     {storeInfo.store_city || 'Kannauj'}, {storeInfo.store_state || 'Uttar Pradesh'} {storeInfo.store_pincode || '209725'}, {storeInfo.store_country || 'India'}
                   </p>
@@ -480,7 +480,7 @@ export default function ContactUsPage() {
 
           <div className="rounded-3xl overflow-hidden border-2 border-[#F7D1D8] shadow-xl aspect-[21/9] w-full relative">
             <iframe
-              title="Rose Valley Kannauj Estate Google Map"
+              title="RoseOil.in Laboratories Google Map"
               src={storeInfo.google_map_embed || 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d57053.86427339191!2d79.88939768652973!3d27.051939886745195!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x399e2e604f56fdd1%3A0x8979b9bc88a55639!2sKannauj%2C%20Uttar%20Pradesh%20209725!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin'}
               width="100%"
               height="100%"

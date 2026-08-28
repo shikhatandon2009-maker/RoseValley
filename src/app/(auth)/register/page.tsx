@@ -63,7 +63,7 @@ function RegisterContent() {
             <Sparkles className="w-3.5 h-3.5" /> Luxury Membership
           </span>
           <h1 className="font-serif text-2xl font-bold text-[#7A1840]">Create Your Account</h1>
-          <p className="text-xs text-[#5A1030]">Join Maison De L'Essence for private offers and order history.</p>
+          <p className="text-xs text-[#5A1030]">Join RoseOil.in for exclusive botanical offers and order history.</p>
         </div>
 
         {error && (

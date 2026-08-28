@@ -13,147 +13,147 @@ const HIGH_QUALITY_PAGES_SEED = [
     slug: 'art-of-fragrance-layering',
     page_type: 'blog',
     featured_image: 'https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=1000&auto=format&fit=crop',
-    excerpt: 'Discover how master perfumers combine pure Kannauj hydro-distilled Ruh Gulab with Mysore Sandalwood for an enduring, personal scent trail.',
-    meta_title: 'The Art of Fragrance Layering | Rose Valley Kannauj',
-    meta_description: 'Learn traditional Kannauj fragrance layering techniques using pure hydro-distilled attars and Sandalwood oils.',
-    content: `Fragrance layering is an intimate, creative ritual. Rather than wearing a single linear scent, layering pure Kannauj hydro-distilled Ruh Gulab underneath Mysore Sandalwood allows you to compose a sensory signature that reacts uniquely to your personal skin chemistry.
+    excerpt: 'Discover how master distillers combine pure hydro-distilled Rose Oil with Mysore Sandalwood for an enduring, personal scent trail.',
+    meta_title: 'The Art of Fragrance Layering | RoseOil.in',
+    meta_description: 'Learn botanical fragrance layering techniques using pure hydro-distilled essential oils and Sandalwood oils from RoseOil.in.',
+    content: `Fragrance layering is an intimate, creative ritual. Rather than wearing a single linear scent, layering pure hydro-distilled Rose Oil with Mysore Sandalwood allows you to compose a sensory signature that reacts uniquely to your personal skin chemistry.
 
 1. Prepare with Pure Botanicals
-Aromatic molecules adhere best to warm, hydrated skin. Apply a few drops of 100% pure alcohol-free Kannauj rose water or Sandalwood oil immediately after bathing to create a rich moisture barrier.
+Aromatic molecules adhere best to warm, hydrated skin. Apply a few drops of 100% pure alcohol-free Rose water or botanical carrier oil immediately after bathing to create a rich moisture barrier.
 
 2. Anchor with Aged Mysore Sandalwood
-Apply deeper, resinous attars first—such as Aged Mysore Sandalwood, Velvet Oud, or Shamama. These dense molecules act as anchors for lighter pre-dawn rose top notes applied subsequently.
+Apply deeper, resinous oils first—such as Aged Mysore Sandalwood or Vetiver. These dense molecules act as anchors for lighter pre-dawn rose top notes applied subsequently.
 
-3. The Finishing Touch: Pre-Dawn Damask Rose
-Dab Ruh Gulab on pulse points: behind earlobes, wrists, and collarbones. The heat from your pulse points diffuses the ethereal floral bouquet, producing a subtle sillage that lingers gracefully for over 14 hours.`,
+3. The Finishing Touch: Pure Damask Rose
+Dab pure Rose Oil on pulse points: behind earlobes, wrists, and collarbones. The heat from your pulse points diffuses the ethereal floral bouquet, producing a subtle sillage that lingers gracefully for over 14 hours.`,
   },
   {
-    title: 'Dawn Harvest: Inside Kannauj’s Pre-Dawn Damask Rose Fields',
+    title: 'Dawn Harvest: Inside Pre-Dawn Damask Rose Fields',
     slug: 'harvesting-damask-roses',
     page_type: 'blog',
     featured_image: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=1000&auto=format&fit=crop',
     excerpt: 'Step into the fields at 4:30 AM as delicate Rosa Damascena petals are hand-picked before the morning sun evaporates volatile aromatic compounds.',
-    meta_title: 'Dawn Harvest: Kannauj Damask Rose Fields | Rose Valley',
-    meta_description: 'Experience the pre-dawn harvest in Kannauj rose fields where master harvesters pick fresh Damask rose petals for traditional Deg-Bhapka hydro-distillation.',
-    content: `In the quiet mist of 4:30 AM in Kannauj, Uttar Pradesh, the air carries a sweet, dew-kissed perfume. Harvesters move swiftly through rows of Rosa Damascena bushes, carefully hand-selecting opening blossoms before sunrise.
+    meta_title: 'Dawn Harvest: Damask Rose Fields | RoseOil.in',
+    meta_description: 'Experience the pre-dawn harvest in rose fields where fresh Damask rose petals are picked for pure hydro-distillation at RoseOil.in.',
+    content: `In the quiet mist of 4:30 AM, the air carries a sweet, dew-kissed perfume. Harvesters move swiftly through rows of Rosa Damascena bushes, carefully hand-selecting opening blossoms before sunrise.
 
 Why Harvest Before Dawn?
 The essential oil content within Damask rose petals reaches its absolute peak during cool pre-dawn hours. As the sun rises, solar warmth causes delicate volatile aromatic terpenes to evaporate into the atmosphere.
 
-Immediate Copper Deg Sealing
-Within two hours of picking, thousands of rose petals are transferred into heavy copper Deg vessels, submerged in natural spring water, and sealed airtight with mud clay—ready for wood-fired hydro-distillation.`,
+Immediate Distillation
+Within hours of picking, thousands of fresh rose petals are transferred into stills, submerged in natural spring water, and prepared for slow hydro-distillation.`,
   },
   {
-    title: 'The 400-Year Heritage of Copper Deg-Bhapka Hydro-Distillation',
+    title: 'The Science and Art of Botanical Hydro-Distillation',
     slug: 'copper-deg-bhapka-legacy',
     page_type: 'blog',
     featured_image: 'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?q=80&w=1000&auto=format&fit=crop',
-    excerpt: 'Explore why wood-fired copper vessels and clay sealing techniques create unmatchable depth that modern industrial factories cannot replicate.',
-    meta_title: '400-Year Copper Deg-Bhapka Heritage | Rose Valley Kannauj',
-    meta_description: 'Discover the ancient Deg-Bhapka hydro-distillation apparatus preserved in Kannauj since 1620.',
-    content: `For over four centuries, Kannauj has preserved the ancient Deg-Bhapka hydro-distillation process. Unlike modern steam distillation plants that utilize high pressure and solvent extraction, traditional Deg-Bhapka relies entirely on copper vessels, natural bamboo pipes (chonga), and wood fires.
+    excerpt: 'Explore why slow hydro-distillation creates unmatchable depth and purity that synthetic modern chemicals cannot replicate.',
+    meta_title: 'Botanical Hydro-Distillation Science | RoseOil.in',
+    meta_description: 'Discover the artisanal hydro-distillation techniques preserved at RoseOil.in.',
+    content: `Pure hydro-distillation is a time-honored botanical art. Unlike modern solvent extraction that leaves chemical residues, traditional hydro-distillation relies entirely on pure water, gentle heat, and cold condensation.
 
-The Deg: Heavy Hand-Hammered Copper Still
-Fresh botanical materials and water are placed inside the copper Deg. Copper acts as a natural catalyst, neutralizing sulfurous notes and enhancing sweet floral nuances.
+Natural Steam Vapor
+Fresh botanical materials and water are heated gently. The rising steam ruptures the delicate microscopic oil glands in petals, carrying volatile aromatic molecules upward.
 
-The Bhapka: Water-Cooled Receiver Tank
-As steam rises, it passes through bamboo pipes into the Bhapka—a copper receiver vessel submerged in cold water tanks. The aromatic vapor condenses back into liquid attar oil, naturally absorbing into pure sandalwood base.`,
+Cold Condensation
+As steam rises, it condenses into pure liquid essential oil and floral water, completely free of harsh petrochemicals.`,
   },
   {
-    title: 'Ruh Khus: The Ancient Indian Cooling Elixir Distilled from Wild Vetiver',
+    title: 'Ruh Khus: The Natural Cooling Elixir Distilled from Wild Vetiver',
     slug: 'ruh-khus-cooling-elixir',
     page_type: 'blog',
     featured_image: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=1000&auto=format&fit=crop',
-    excerpt: 'How wild vetiver roots harvested along riverbanks produce a deep, earthy emerald extract revered for centuries during hot summer months.',
-    meta_title: 'Ruh Khus: Wild Vetiver Hydro-Extract | Rose Valley Kannauj',
-    meta_description: 'Learn about Ruh Khus, the rare green vetiver extract distilled in copper stills.',
-    content: `Ruh Khus is distilled exclusively from the wild roots of Chrysopogon zizanioides (Vetiveria zizanioides) harvested along the riverbeds of North India. Known as the "Oil of Tranquility," it yields a natural emerald-green distillate celebrated for its remarkable cooling properties.
+    excerpt: 'How wild vetiver roots produce a deep, earthy emerald extract revered for its grounding, cooling aromatherapeutic properties.',
+    meta_title: 'Ruh Khus: Wild Vetiver Extract | RoseOil.in',
+    meta_description: 'Learn about Ruh Khus, the rare green vetiver extract from RoseOil.in.',
+    content: `Ruh Khus is distilled exclusively from the wild roots of Chrysopogon zizanioides (Vetiveria zizanioides). Known as the "Oil of Tranquility," it yields a natural emerald-green distillate celebrated for its remarkable cooling properties.
 
 A Scent of Damp Earth and Rain
-Unlike cultivated vetiver, wild Khus possesses an unmistakable woody-earthy profile reminiscent of monsoon rain touching dry soil (Petrichor). It calms the mind, lowers body temperature, and offers a grounded, serene sillage.`,
+Wild Khus possesses an unmistakable woody-earthy profile reminiscent of monsoon rain touching dry soil (Petrichor). It calms the mind, lowers stress, and offers a grounded, serene sillage.`,
   },
   {
-    title: 'Why Pure Alcohol-Free Attars Outlast Synthetic Alcohol Perfumes',
+    title: 'Why Pure Alcohol-Free Essential Oils Outlast Synthetic Perfumes',
     slug: 'alcohol-free-attar-purity',
     page_type: 'blog',
     featured_image: 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?q=80&w=1000&auto=format&fit=crop',
-    excerpt: 'Uncover the science of oil-based fragrance retention: how natural botanical oils bond with skin lipids for a 12+ hour intimate sillage.',
-    meta_title: 'Why Alcohol-Free Attars Last Longer | Rose Valley Kannauj',
-    meta_description: 'Understand the science of oil-based natural attars vs commercial alcohol sprays.',
-    content: `Commercial eau de parfums often contain 80% to 90% denatured alcohol. While alcohol provides an intense initial scent burst, it rapidly evaporates within 2 to 3 hours, stripping the skin of moisture and breaking down delicate floral top notes.
+    excerpt: 'Uncover the science of oil-based fragrance retention: how natural botanical oils bond with skin lipids for long-lasting intimate sillage.',
+    meta_title: 'Why Pure Essential Oils Last Longer | RoseOil.in',
+    meta_description: 'Understand the science of oil-based natural extracts vs commercial alcohol perfumes.',
+    content: `Commercial perfumes often contain 80% to 90% denatured alcohol. While alcohol provides an intense initial burst, it rapidly evaporates within 2 hours, drying the skin.
 
 The Longevity of Pure Botanical Oil
-Pure hydro-distilled attars are 100% oil-based. Natural plant lipids seamlessly merge with your skin's natural moisture barrier, creating a slow-release aromatic warmth that develops over 12 to 16 hours without dry synthetic harshness.`,
+Pure botanical oils are 100% oil-based. Natural plant lipids seamlessly merge with your skin's natural moisture barrier, creating a slow-release aromatic warmth that develops over 12 to 16 hours without synthetic harshness.`,
   },
 
   // ----------------------------------------------------
   // PRESS RELEASES / MEDIA MENTIONS (page_type: 'press')
   // ----------------------------------------------------
   {
-    title: 'Vogue India: Inside Kannauj’s 400-Year-Old Copper Deg Stills with Rose Valley',
+    title: 'Vogue India: Pure Botanical Extraction with RoseOil.in',
     slug: 'press-vogue-india-feature',
     page_type: 'press',
     featured_image: 'https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=1000&auto=format&fit=crop',
-    excerpt: 'Vogue India highlights Rose Valley Kannauj for preserving ancient pre-dawn hydro-distillation and bringing pure Ruh Gulab to international luxury fragrance connoisseurs.',
-    meta_title: 'Vogue India Feature | Rose Valley Kannauj Press',
-    meta_description: 'Vogue India feature on Rose Valley Kannauj pure hydro-distilled rose attars.',
+    excerpt: 'Vogue India highlights RoseOil.in for preserving pure botanical distillation and bringing therapeutic Rose Otto to luxury connoisseurs.',
+    meta_title: 'Vogue India Feature | RoseOil.in Press',
+    meta_description: 'Vogue India feature on RoseOil.in pure hydro-distilled essential oils.',
     content: `Publisher: Vogue India (Luxury Feature & Print Cover)
 
-"Rose Valley Kannauj preserves the sacred art of pre-dawn hydro-distillation. Their Ruh Gulab and Ruh Khus extracts represent the pinnacle of Indian luxury perfumery."
+"RoseOil.in preserves the authentic science of pure botanical distillation. Their pure Rose Otto and Vetiver extracts represent the pinnacle of natural luxury."
 
 Full Article Highlights:
-- Pre-dawn harvesting of Damask Roses in Kannauj.
-- Preservation of 400-year-old copper Deg-Bhapka wood-fired stills.
-- 100% alcohol-free purity certified by batch QR passports.`,
+- Pre-dawn harvesting of Damask Roses.
+- Pure steam hydro-distillation without chemical solvents.
+- 100% alcohol-free purity verified by GC-MS lab testing.`,
   },
   {
-    title: 'Harper’s Bazaar: The Liquid Gold of Kannauj - Why Natural Attars Are Replacing Synthetics',
+    title: 'Harper’s Bazaar: The Liquid Gold of Botanicals - Why Pure Essential Oils Lead Skincare',
     slug: 'press-harpers-bazaar-feature',
     page_type: 'press',
     featured_image: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=1000&auto=format&fit=crop',
-    excerpt: 'Harper\'s Bazaar selects Rose Valley\'s Damask Rose hydro-distillates as the top artisanal selection for pure, alcohol-free fragrance longevity.',
-    meta_title: 'Harper’s Bazaar Feature | Rose Valley Press',
-    meta_description: 'Harper\'s Bazaar feature on natural Kannauj attars and alcohol-free perfumery.',
+    excerpt: 'Harper\'s Bazaar selects RoseOil.in\'s Damask Rose distillates as the top artisanal selection for pure, alcohol-free aromatic longevity.',
+    meta_title: 'Harper’s Bazaar Feature | RoseOil.in Press',
+    meta_description: 'Harper\'s Bazaar feature on natural botanical extracts and alcohol-free perfumery.',
     content: `Publisher: Harper's Bazaar (Artisanal Selection)
 
-"Free from synthetic alcohol and parabens, Rose Valley’s Damask Rose distillates unfold with an extraordinary 14-hour longevity on pulse points."
+"Free from synthetic chemicals and parabens, RoseOil.in’s Damask Rose distillates unfold with an extraordinary 14-hour longevity on pulse points."
 
 Full Article Highlights:
 - Deep dive into natural botanical oil chemistry.
 - Comparison of synthetic spray diffusion vs. organic oil intimacy.
-- Sustainable harvesting along the Ganges basin.`,
+- Sustainable harvesting and ethical sourcing.`,
   },
   {
-    title: 'The Economic Times: Reviving Ancient Craftsmanship - How Rose Valley Took Kannauj Attar Global',
+    title: 'The Economic Times: Redefining Purity - How RoseOil.in Built a Global Botanical Legacy',
     slug: 'press-economic-times-feature',
     page_type: 'press',
     featured_image: 'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?q=80&w=1000&auto=format&fit=crop',
-    excerpt: 'The Economic Times covers Rose Valley\'s QR provenance passport integration with traditional 1620 Deg-Bhapka distillation to pioneer heritage luxury exports.',
-    meta_title: 'The Economic Times Feature | Rose Valley Press',
-    meta_description: 'The Economic Times business profile on Rose Valley Kannauj global exports.',
+    excerpt: 'The Economic Times covers RoseOil.in\'s digital batch provenance and GC-MS certified distillation to set the benchmark in global exports.',
+    meta_title: 'The Economic Times Feature | RoseOil.in Press',
+    meta_description: 'The Economic Times business profile on RoseOil.in global exports.',
     content: `Publisher: The Economic Times (Heritage & Enterprise)
 
-"Combining QR provenance passports with traditional copper deg distillation, Rose Valley has redefined heritage luxury exports for discerning international collectors."
+"Combining rigorous GC-MS testing with traditional hydro-distillation, RoseOil.in has set the benchmark for pure botanical exports."
 
 Full Article Highlights:
-- Economic revival of Kannauj master artisan families.
-- Modern QR provenance spectrum tracking.
-- Worldwide shipping of authentic alcohol-free distillates.`,
+- Rigorous purity standards and ethical farming partnerships.
+- Batch transparency and provenance tracking.
+- Worldwide shipping of authentic therapeutic distillates.`,
   },
   {
-    title: 'GQ Magazine: The Best Artisanal Alcohol-Free Fragrances Every Collector Needs',
+    title: 'GQ Magazine: The Best Therapeutic Essential Oils Every Connoisseur Needs',
     slug: 'press-gq-magazine-feature',
     page_type: 'press',
     featured_image: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=1000&auto=format&fit=crop',
-    excerpt: 'GQ Magazine awards Rose Valley Ruh Khus Vetiver Extract top honors in Gentlemen\'s Artisanal Grooming.',
-    meta_title: 'GQ Magazine Grooming Choice | Rose Valley Press',
-    meta_description: 'GQ Magazine feature on Rose Valley Ruh Khus Vetiver Extract.',
+    excerpt: 'GQ Magazine awards RoseOil.in Wild Vetiver Extract top honors in Men\'s Artisanal Grooming.',
+    meta_title: 'GQ Magazine Grooming Choice | RoseOil.in Press',
+    meta_description: 'GQ Magazine feature on RoseOil.in Wild Vetiver Essential Oil.',
     content: `Publisher: GQ Magazine (Gentlemen Grooming Choice)
 
-"Ruh Khus Vetiver Extract by Rose Valley is an olfactory masterpiece—cooling, earthy, and steeped in four centuries of Kannauj craftsmanship."
+"Wild Vetiver Essential Oil by RoseOil.in is a grounding botanical masterpiece—cooling, earthy, and deeply restorative."
 
 Full Article Highlights:
-- Selection of top natural vetiver extracts worldwide.
+- Selection of top natural essential oils worldwide.
 - Cooling olfactory notes for hot summer weather.
 - Zero synthetic additives or fixatives.`,
   },
@@ -163,86 +163,66 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = getSupabaseServerClient();
 
-    const { searchParams } = new URL(request.url);
-    const forceReset = searchParams.get('reset') === 'true';
-
-    if (forceReset) {
-      await supabase
-        .from('pages')
-        .delete()
-        .eq('store_id', STORE_ID);
+    if (!supabase) {
+      return NextResponse.json(
+        { error: 'Database client unavailable. Configure Supabase credentials in settings.' },
+        { status: 500 }
+      );
     }
 
-    const inserted: any[] = [];
-    const errors: any[] = [];
+    let insertedCount = 0;
+    let updatedCount = 0;
 
-    for (const item of HIGH_QUALITY_PAGES_SEED) {
+    for (const page of HIGH_QUALITY_PAGES_SEED) {
       const { data: existing } = await supabase
         .from('pages')
         .select('id')
         .eq('store_id', STORE_ID)
-        .eq('slug', item.slug)
+        .eq('slug', page.slug)
         .maybeSingle();
 
       if (existing) {
-        const { data: updated, error: updateErr } = await supabase
+        await supabase
           .from('pages')
           .update({
-            title: item.title,
-            page_type: item.page_type,
-            content: item.content,
-            excerpt: item.excerpt,
-            featured_image: item.featured_image,
-            meta_title: item.meta_title,
-            meta_description: item.meta_description,
-            updated_at: new Date().toISOString(),
+            title: page.title,
+            page_type: page.page_type,
+            featured_image: page.featured_image,
+            excerpt: page.excerpt,
+            meta_title: page.meta_title,
+            meta_description: page.meta_description,
+            content: page.content,
+            is_published: true,
           })
-          .eq('id', existing.id)
-          .select('*')
-          .single();
-
-        if (updateErr) errors.push({ slug: item.slug, error: updateErr.message });
-        else inserted.push(updated);
+          .eq('id', existing.id);
+        updatedCount++;
       } else {
-        const { data: insertedItem, error: insertErr } = await supabase
-          .from('pages')
-          .insert([
-            {
-              store_id: STORE_ID,
-              slug: item.slug,
-              title: item.title,
-              page_type: item.page_type,
-              content: item.content,
-              excerpt: item.excerpt,
-              featured_image: item.featured_image,
-              meta_title: item.meta_title,
-              meta_description: item.meta_description,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            },
-          ])
-          .select('*')
-          .single();
-
-        if (insertErr) errors.push({ slug: item.slug, error: insertErr.message });
-        else inserted.push(insertedItem);
+        await supabase.from('pages').insert({
+          store_id: STORE_ID,
+          slug: page.slug,
+          title: page.title,
+          page_type: page.page_type,
+          featured_image: page.featured_image,
+          excerpt: page.excerpt,
+          meta_title: page.meta_title,
+          meta_description: page.meta_description,
+          content: page.content,
+          is_published: true,
+        });
+        insertedCount++;
       }
     }
 
     return NextResponse.json({
-      message: `Successfully seeded ${inserted.length} high quality blog posts & press releases into database!`,
-      count: inserted.length,
-      errors: errors.length > 0 ? errors : undefined,
+      success: true,
+      message: `Successfully seeded editorial pages (${insertedCount} added, ${updatedCount} updated).`,
+      total: HIGH_QUALITY_PAGES_SEED.length,
     });
-  } catch (err: any) {
-    console.error('API Error in POST /api/admin/pages/seed:', err);
-    return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });
+  } catch (error: any) {
+    console.error('Error seeding editorial pages:', error);
+    return NextResponse.json(
+      { error: error.message || 'Failed to seed editorial pages.' },
+      { status: 500 }
+    );
   }
-}
-
-export async function GET() {
-  return NextResponse.json({
-    availableSeedCount: HIGH_QUALITY_PAGES_SEED.length,
-    seedItems: HIGH_QUALITY_PAGES_SEED.map((p) => ({ title: p.title, slug: p.slug, type: p.page_type })),
-  });
 }

@@ -87,7 +87,7 @@ export function AdminPinGate({ children }: { children: React.ReactNode }) {
               {settings.use_text_logo ? (
                 <div className="text-center px-4 py-2">
                   <span className="font-serif font-black text-xl sm:text-2xl text-[#1A0510] uppercase tracking-wider block">
-                    {settings.site_name || 'Rose Valley'}
+                    {settings.site_name || 'RoseOil.in'}
                   </span>
                   <span className="text-[10px] font-bold text-[#4A0D25] tracking-widest block uppercase mt-0.5">
                     Executive Suite
@@ -96,7 +96,7 @@ export function AdminPinGate({ children }: { children: React.ReactNode }) {
               ) : (
                 <img 
                   src={formatImageUrl(settings.logo_url, '/images/logo/logo.png')} 
-                  alt={settings.site_name || "Rose Valley Kannauj"} 
+                  alt={settings.site_name || "RoseOil.in"} 
                   className="h-16 sm:h-20 w-auto object-contain"
                   onError={(e) => {
                     (e.target as HTMLImageElement).src = '/images/logo/logo.png';

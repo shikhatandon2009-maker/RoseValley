@@ -884,7 +884,7 @@ export default function UsersAdminPage() {
                   required
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="user@maisonessence.com"
+                  placeholder="user@roseoil.in"
                   className="w-full px-3.5 py-2.5 rounded-xl bg-[#F7EEED] border border-[#F7D1D8] text-xs font-bold text-[#1A0510] placeholder-[#4A0D25]/40 focus:outline-none focus:border-[#F6A6BB] focus:bg-white transition-all"
                 />
               </div>

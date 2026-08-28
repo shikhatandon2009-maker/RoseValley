@@ -532,17 +532,17 @@ export default function AdminSeoDrawer({
 
                 <div className="p-3.5 rounded-xl bg-stone-50 border border-stone-200 space-y-1 font-sans">
                   <div className="text-[11px] text-[#202124] flex items-center gap-1 truncate">
-                    <span className="text-stone-500">https://rosevalleykannauj.com &gt; products &gt;</span>
+                    <span className="text-stone-500">https://roseoil.in &gt; products &gt;</span>
                     <span className="font-medium text-stone-700">{selectedProduct.slug}</span>
                   </div>
                   <h3 className="text-sm sm:text-base text-[#1a0dab] font-medium leading-snug hover:underline cursor-pointer">
-                    {productForm.meta_title.trim() || `${selectedProduct.name} | Rose Valley Kannauj`}
+                    {productForm.meta_title.trim() || `${selectedProduct.name} | RoseOil.in`}
                   </h3>
                   <p className="text-xs text-[#4d5156] leading-relaxed line-clamp-2">
                     {productForm.meta_description.trim() ||
                       (productForm.description
                         ? productForm.description.slice(0, 155)
-                        : `Explore ${selectedProduct.name}, pure hydro-distilled Damask Rose attar and rare botanical oil hand-crafted in Kannauj since 1620.`)}
+                        : `Explore ${selectedProduct.name}, 100% pure botanical essential oil and natural therapeutic extract from RoseOil.in.`)}
                   </p>
                 </div>
               </div>
@@ -630,7 +630,7 @@ export default function AdminSeoDrawer({
                     onChange={(e) =>
                       setProductForm({ ...productForm, meta_title: e.target.value })
                     }
-                    placeholder={`e.g. ${selectedProduct.name} | 100% Pure Kannauj Attar | Rose Valley`}
+                    placeholder={`e.g. ${selectedProduct.name} | 100% Pure Essential Oil | RoseOil.in`}
                     className="w-full p-2.5 bg-[#F7EEED] border border-[#F7D1D8] rounded-xl text-xs text-[#1A0510] font-semibold focus:outline-none focus:ring-2 focus:ring-[#F6A6BB]"
                   />
                 </div>
@@ -844,17 +844,17 @@ export default function AdminSeoDrawer({
 
                 <div className="p-3.5 rounded-xl bg-stone-50 border border-stone-200 space-y-1 font-sans">
                   <div className="text-[11px] text-[#202124] flex items-center gap-1 truncate">
-                    <span className="text-stone-500">https://rosevalleykannauj.com /</span>
+                    <span className="text-stone-500">https://roseoil.in /</span>
                     <span className="font-medium text-stone-700">{selectedPage.slug}</span>
                   </div>
                   <h3 className="text-sm sm:text-base text-[#1a0dab] font-medium leading-snug hover:underline cursor-pointer">
-                    {pageForm.meta_title.trim() || `${selectedPage.title} | Rose Valley Kannauj`}
+                    {pageForm.meta_title.trim() || `${selectedPage.title} | RoseOil.in`}
                   </h3>
                   <p className="text-xs text-[#4d5156] leading-relaxed line-clamp-2">
                     {pageForm.meta_description.trim() ||
                       (pageForm.excerpt
                         ? pageForm.excerpt.slice(0, 155)
-                        : `Discover ${selectedPage.title} from Rose Valley Kannauj, distillers of pure Damask rose attar since 1620.`)}
+                        : `Discover ${selectedPage.title} from RoseOil.in, purveyors of 100% pure botanical essential oils.`)}
                   </p>
                 </div>
               </div>
@@ -886,7 +886,7 @@ export default function AdminSeoDrawer({
                     onChange={(e) =>
                       setPageForm({ ...pageForm, meta_title: e.target.value })
                     }
-                    placeholder={`e.g. ${selectedPage.title} | Rose Valley Kannauj`}
+                    placeholder={`e.g. ${selectedPage.title} | RoseOil.in`}
                     className="w-full p-2.5 bg-[#F7EEED] border border-[#F7D1D8] rounded-xl text-xs text-[#1A0510] font-semibold focus:outline-none focus:ring-2 focus:ring-[#F6A6BB]"
                   />
                 </div>

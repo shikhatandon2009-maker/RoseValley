@@ -22,8 +22,8 @@ export const useNotificationStore = create<NotificationState>((set) => ({
   notifications: [
     {
       id: '1',
-      title: 'Welcome to Maison De L\'Essence',
-      message: 'Explore our latest artisanal Rose Royale Eau de Parfum.',
+      title: 'Welcome to RoseOil.in',
+      message: 'Explore our 100% pure botanical essential oils & distillates.',
       type: 'welcome',
       read: false,
       created_at: new Date().toISOString(),

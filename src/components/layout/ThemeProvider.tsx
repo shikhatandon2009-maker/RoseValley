@@ -77,10 +77,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const injectCustomCss = (css: string) => {
     if (typeof document === 'undefined') return;
-    let styleEl = document.getElementById('maison-custom-css');
+    let styleEl = document.getElementById('roseoil-custom-css');
     if (!styleEl) {
       styleEl = document.createElement('style');
-      styleEl.id = 'maison-custom-css';
+      styleEl.id = 'roseoil-custom-css';
       document.head.appendChild(styleEl);
     }
     styleEl.textContent = css || '';

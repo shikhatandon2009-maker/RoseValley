@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Support both wrapper { data: { ... } } and direct { products: [...] } or array formats
+    // Support both wrapper { data: { ... } } and direct format
     let storeData: any = payload.data ? payload.data : payload;
     if (Array.isArray(payload)) {
       storeData = { products: payload };
@@ -27,6 +27,10 @@ export async function POST(request: NextRequest) {
     const metadata = payload.metadata || null;
     const results = {
       site_settings: 0,
+      site_themes: 0,
+      countries: 0,
+      pages: 0,
+      blogs: 0,
       categories: 0,
       products: 0,
       variants: 0,
@@ -35,9 +39,10 @@ export async function POST(request: NextRequest) {
       orders: 0,
       reviews: 0,
       questions: 0,
+      inquiries: 0,
     };
 
-    // 1. Restore Site Settings
+    // 1. Restore Site Settings (including all weight slabs, domestic rates, export tiers)
     if (storeData.site_settings) {
       const s = storeData.site_settings;
       const { error: settingsErr } = await supabase
@@ -53,7 +58,60 @@ export async function POST(request: NextRequest) {
       if (!settingsErr) results.site_settings = 1;
     }
 
-    // 2. Restore Categories
+    // 2. Restore Site Theme
+    if (storeData.site_themes) {
+      try {
+        const { error: themeErr } = await supabase
+          .from('site_themes')
+          .upsert(
+            {
+              ...storeData.site_themes,
+              store_id: STORE_ID,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: 'store_id' }
+          );
+        if (!themeErr) results.site_themes = 1;
+      } catch (_) {}
+    }
+
+    // 3. Restore Countries
+    if (Array.isArray(storeData.countries) && storeData.countries.length > 0) {
+      for (const country of storeData.countries) {
+        try {
+          const { error: cErr } = await supabase
+            .from('countries')
+            .upsert(country, { onConflict: 'code' });
+          if (!cErr) results.countries++;
+        } catch (_) {}
+      }
+    }
+
+    // 4. Restore CMS Pages
+    if (Array.isArray(storeData.pages) && storeData.pages.length > 0) {
+      for (const p of storeData.pages) {
+        try {
+          const { error: pErr } = await supabase
+            .from('pages')
+            .upsert({ ...p, store_id: STORE_ID }, { onConflict: 'id' });
+          if (!pErr) results.pages++;
+        } catch (_) {}
+      }
+    }
+
+    // 5. Restore Blogs
+    if (Array.isArray(storeData.blogs) && storeData.blogs.length > 0) {
+      for (const b of storeData.blogs) {
+        try {
+          const { error: bErr } = await supabase
+            .from('blogs')
+            .upsert({ ...b, store_id: STORE_ID }, { onConflict: 'id' });
+          if (!bErr) results.blogs++;
+        } catch (_) {}
+      }
+    }
+
+    // 6. Restore Categories
     const categoriesList = storeData.categories || storeData.product_categories;
     if (Array.isArray(categoriesList) && categoriesList.length > 0) {
       for (const cat of categoriesList) {
@@ -77,7 +135,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 3. Restore Products (Batch Upsert, always forcing active store_id)
+    // 7. Restore Products (Batch Upsert, always forcing active store_id)
     if (Array.isArray(storeData.products) && storeData.products.length > 0) {
       for (let i = 0; i < storeData.products.length; i += 50) {
         const chunk = storeData.products.slice(i, i + 50).map((prod: any) => ({
@@ -96,7 +154,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 4. Restore Product Categories Mapping
+    // 8. Restore Product Categories Mapping
     const prodCatList = storeData.product_categories;
     if (Array.isArray(prodCatList) && prodCatList.length > 0) {
       for (let i = 0; i < prodCatList.length; i += 100) {
@@ -110,7 +168,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 5. Restore Product Variants (Batch Upsert, always forcing active store_id)
+    // 9. Restore Product Variants (Batch Upsert, always forcing active store_id)
     const variantsList = storeData.variants || storeData.product_variants;
     if (Array.isArray(variantsList) && variantsList.length > 0) {
       for (let i = 0; i < variantsList.length; i += 100) {
@@ -129,7 +187,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 6. Restore Coupons
+    // 10. Restore Coupons
     if (Array.isArray(storeData.coupons) && storeData.coupons.length > 0) {
       for (const coupon of storeData.coupons) {
         const { error: coupErr } = await supabase
@@ -145,7 +203,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 7. Invalidate Memory & Next.js ISR Caches
+    // 11. Invalidate Memory & Next.js ISR Caches
     invalidateStoreCache();
     try {
       revalidatePath('/');
@@ -156,7 +214,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: 'System data backup successfully restored.',
+      message: 'Full system data backup successfully restored.',
       restored_entities: results,
       metadata: metadata || null,
     });
@@ -168,4 +226,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

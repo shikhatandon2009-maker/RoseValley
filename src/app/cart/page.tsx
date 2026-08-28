@@ -210,9 +210,21 @@ export default function ViewCartPage() {
                       <div className="min-w-0">
                         <h3 className="font-serif font-extrabold text-sm sm:text-base text-[#1A0510] line-clamp-1">{item.name}</h3>
                         {item.variantName && (
-                          <span className="inline-block px-2 py-0.5 rounded-full bg-[#FAE6E7] text-[#4A0D25] text-[9px] sm:text-[10px] font-extrabold mt-0.5 border border-[#F7D1D8]">
-                            Size: {item.variantName}
-                          </span>
+                          <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                            <span className="inline-block px-2 py-0.5 rounded-full bg-[#FAE6E7] text-[#4A0D25] text-[9px] sm:text-[10px] font-extrabold border border-[#F7D1D8]">
+                              Size: {item.variantName}
+                            </span>
+                            {item.gross_weight ? (
+                              <span className="text-[10px] text-stone-500 font-medium">
+                                • {(() => {
+                                  const unit = (item.weight_unit || '').toLowerCase();
+                                  const gw = item.gross_weight;
+                                  const isKg = unit === 'kg' || unit === 'l' || (item.variantName && item.variantName.toLowerCase().includes('kg'));
+                                  return isKg ? `${gw % 1 === 0 ? gw : gw.toFixed(1)} Kg gross` : `${Math.round(gw)}g gross`;
+                                })()}
+                              </span>
+                            ) : null}
+                          </div>
                         )}
                         <p className="text-xs font-black text-[#4A0D25] mt-1" suppressHydrationWarning>
                           {formatPrice(item.price)} each

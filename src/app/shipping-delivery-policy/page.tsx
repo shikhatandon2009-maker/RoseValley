@@ -6,8 +6,8 @@ import { LuxuryFooter } from '@/components/layout/LuxuryFooter';
 import { Truck, Clock, ShieldCheck, Globe, PackageCheck, AlertCircle, ArrowLeft } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Shipping and Delivery Policy | Rose Valley Kannauj',
-  description: 'Learn about shipping timelines, domestic delivery in India, international express dispatch, and packaging standards for Rose Valley Kannauj artisanal perfumes.',
+  title: 'Shipping and Delivery Policy | RoseOil.in',
+  description: 'Learn about shipping timelines, domestic delivery in India, international express dispatch, and packaging standards for RoseOil.in pure essential oils.',
 };
 
 export default function ShippingDeliveryPolicyPage() {
@@ -34,7 +34,7 @@ export default function ShippingDeliveryPolicyPage() {
             Shipping & Delivery Policy
           </h1>
           <p className="text-xs sm:text-sm text-[#4A0D25] font-medium leading-relaxed">
-            Last Updated: August 2026 • Rose Valley Kannauj (Maison De L&apos;Essence)
+            Last Updated: August 2026 • RoseOil.in
           </p>
         </div>
 
@@ -44,7 +44,7 @@ export default function ShippingDeliveryPolicyPage() {
             <div className="flex items-center gap-2 text-xs font-extrabold text-[#1A0510]">
               <Clock className="w-4 h-4 text-[#F6A6BB]" /> 24-48 Hours
             </div>
-            <p className="text-[11px] text-[#4A0D25] font-medium">Fast artisanal batch dispatch from Kannauj distillery</p>
+            <p className="text-[11px] text-[#4A0D25] font-medium">Fast batch dispatch from our distillation center</p>
           </div>
 
           <div className="p-4 rounded-2xl bg-white/80 border border-[#F7D1D8] shadow-xs space-y-1">
@@ -70,7 +70,7 @@ export default function ShippingDeliveryPolicyPage() {
               <PackageCheck className="w-5 h-5 text-[#4A0D25]" /> 1. Order Processing & Dispatch Timelines
             </h2>
             <p>
-              Every fragrance and attar at <strong>Rose Valley Kannauj</strong> is handcrafted and decanted under strict quality control. 
+              Every botanical oil at <strong>RoseOil.in</strong> is carefully bottled and decanted under strict purity standards. 
               Orders are typically processed and dispatched within <strong>24 to 48 business hours</strong> (excluding Sundays and national holidays) after payment confirmation.
             </p>
             <p>
@@ -101,7 +101,7 @@ export default function ShippingDeliveryPolicyPage() {
               <Globe className="w-5 h-5 text-[#4A0D25]" /> 3. International Express Shipping
             </h2>
             <p>
-              We deliver our pure Rosa Damascena hydro-distillates and botanical extracts worldwide to over 100 countries including the United States, United Kingdom, European Union, UAE, Saudi Arabia, Canada, Australia, and Singapore via <strong>DHL Express</strong> and <strong>FedEx International Priority</strong>.
+              We deliver our pure essential oils and botanical extracts worldwide to over 100 countries including the United States, United Kingdom, European Union, UAE, Saudi Arabia, Canada, Australia, and Singapore via <strong>DHL Express</strong> and <strong>FedEx International Priority</strong>.
             </p>
             <p>
               • <strong>International Transit Time:</strong> 5 to 10 business days depending on customs clearance.<br />
@@ -112,13 +112,13 @@ export default function ShippingDeliveryPolicyPage() {
           {/* Section 4 */}
           <section className="p-6 rounded-3xl bg-white border border-[#F7D1D8] shadow-xs space-y-3">
             <h2 className="font-serif text-lg sm:text-xl font-bold text-[#1A0510] flex items-center gap-2">
-              <ShieldCheck className="w-5 h-5 text-[#4A0D25]" /> 4. Luxury Packaging & Transit Insurance
+              <ShieldCheck className="w-5 h-5 text-[#4A0D25]" /> 4. Premium Packaging & Transit Insurance
             </h2>
             <p>
-              All pure attars, flacons, and botanical oils are encased in custom shock-absorbing foam capsules and sealed luxury boxes to ensure zero leakage and full temperature stability during transit.
+              All pure essential oils and flacons are encased in custom shock-absorbing foam capsules and sealed luxury boxes to ensure zero leakage and full temperature stability during transit.
             </p>
             <p>
-              Every shipment is fully insured by Rose Valley Kannauj against transit loss or damage. In the rare event of transit damage, please notify us within 48 hours of delivery at <a href="mailto:support@rosevalleykannauj.com" className="font-bold underline text-[#1A0510]">support@rosevalleykannauj.com</a> with photos or unboxing video for an instant complimentary replacement.
+              Every shipment is fully insured by RoseOil.in against transit loss or damage. In the rare event of transit damage, please notify us within 48 hours of delivery at <a href="mailto:support@roseoil.in" className="font-bold underline text-[#1A0510]">support@roseoil.in</a> with photos or unboxing video for an instant complimentary replacement.
             </p>
           </section>
 
@@ -128,11 +128,10 @@ export default function ShippingDeliveryPolicyPage() {
               <AlertCircle className="w-5 h-5 text-[#4A0D25]" /> 5. Need Assistance with Your Delivery?
             </h2>
             <p>
-              Our private concierge team is available Monday to Saturday, 9:00 AM – 7:00 PM IST to assist with address adjustments before dispatch, expedited shipments, or courier coordination.
+              Our support team is available Monday to Saturday, 9:00 AM – 7:00 PM IST to assist with address adjustments before dispatch, expedited shipments, or courier coordination.
             </p>
             <p className="font-semibold text-xs">
-              Estate & Registered Office: Rose Valley Kannauj, Perfume City, Kannauj, Uttar Pradesh — 209725, India.<br />
-              Email: <a href="mailto:support@rosevalleykannauj.com" className="underline">support@rosevalleykannauj.com</a> • WhatsApp / Phone: +91 94500 00000
+              Email: <a href="mailto:support@roseoil.in" className="underline">support@roseoil.in</a>
             </p>
           </section>
         </div>

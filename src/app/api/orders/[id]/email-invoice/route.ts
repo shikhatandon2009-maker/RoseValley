@@ -56,8 +56,8 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     const htmlContent = `
       <div style="max-width: 650px; margin: 0 auto; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: #ffffff; border: 2px solid #F7D1D8; border-radius: 16px; overflow: hidden;">
         <div style="background: #4A0D25; padding: 24px; text-align: center; color: #ffffff;">
-          <h1 style="margin: 0; font-size: 22px; letter-spacing: 2px; text-transform: uppercase;">Rose Valley Kannauj</h1>
-          <p style="margin: 4px 0 0; font-size: 11px; opacity: 0.85; letter-spacing: 1px;">Maison De L'Essence • Official GST Tax Invoice</p>
+          <h1 style="margin: 0; font-size: 22px; letter-spacing: 2px; text-transform: uppercase;">RoseOil.in</h1>
+          <p style="margin: 4px 0 0; font-size: 11px; opacity: 0.85; letter-spacing: 1px;">Pure Botanical Extracts • Official GST Tax Invoice</p>
         </div>
 
         <div style="padding: 24px; color: #1A0510;">
@@ -69,9 +69,9 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
             </div>
             <div style="text-align: right;">
               <p style="margin: 0; font-size: 11px; color: #888; text-transform: uppercase; font-weight: bold;">Supplier Details</p>
-              <p style="margin: 2px 0 0; font-size: 12px; font-weight: bold; color: #1A0510;">Rose Valley Kannauj</p>
+              <p style="margin: 2px 0 0; font-size: 12px; font-weight: bold; color: #1A0510;">RoseOil.in</p>
               <p style="margin: 2px 0 0; font-size: 11px; color: #666;">GSTIN: <strong>09AAACR1234F1Z5</strong></p>
-              <p style="margin: 2px 0 0; font-size: 10px; color: #666;">Kannauj, Uttar Pradesh - 209725</p>
+              <p style="margin: 2px 0 0; font-size: 10px; color: #666;">India</p>
             </div>
           </div>
 
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
             <thead>
               <tr style="background: #FAF5F5; border-bottom: 2px solid #F7D1D8; text-align: left;">
                 <th style="padding: 8px 10px; font-size: 11px; color: #4A0D25; text-transform: uppercase;">#</th>
-                <th style="padding: 8px 10px; font-size: 11px; color: #4A0D25; text-transform: uppercase;">Description (HSN 330300)</th>
+                <th style="padding: 8px 10px; font-size: 11px; color: #4A0D25; text-transform: uppercase;">Description (HSN 330129)</th>
                 <th style="padding: 8px 10px; font-size: 11px; color: #4A0D25; text-transform: uppercase; text-align: center;">Qty</th>
                 <th style="padding: 8px 10px; font-size: 11px; color: #4A0D25; text-transform: uppercase; text-align: right;">Amount (INR)</th>
               </tr>
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
           </div>
 
           <div style="background: #FDF2F4; padding: 12px; border-radius: 8px; font-size: 10px; color: #666; text-align: center;">
-            This is a computer-generated official GST Tax Invoice under CGST/SGST/IGST Act. For concierge queries, contact us at concierge@rosevalleykannauj.com.
+            This is a computer-generated official GST Tax Invoice under CGST/SGST/IGST Act. For queries, contact us at support@roseoil.in.
           </div>
         </div>
       </div>
@@ -115,7 +115,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
     const emailResult = await sendEmail({
       to: recipientEmail,
-      subject: `Official GST Tax Invoice #${invoiceNumber} • Rose Valley Kannauj`,
+      subject: `Official GST Tax Invoice #${invoiceNumber} • RoseOil.in`,
       html: htmlContent,
       type: 'tax_invoice',
     });

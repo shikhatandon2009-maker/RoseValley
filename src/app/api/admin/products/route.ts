@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     const isFeatured = searchParams.get('is_featured');
     const isBestseller = searchParams.get('is_bestseller');
 
-    const cols = 'id, store_id, name, slug, price, compare_at_price, is_featured, is_bestseller, images, description, scent_notes, ingredients, meta_title, meta_keywords, meta_description, created_at, updated_at';
+    const cols = 'id, store_id, name, slug, price, compare_at_price, is_featured, is_bestseller, images, description, scent_notes, ingredients, meta_title, meta_keywords, meta_description, net_weight, weight_unit, gross_weight, item_shipping_cost, is_free_shipping, created_at, updated_at';
     let query = supabase
       .from('products')
       .select(cols)
@@ -225,6 +225,11 @@ export async function POST(request: NextRequest) {
       meta_description = '',
       category_ids = [],
       variants = [],
+      net_weight = 0,
+      weight_unit = 'gm',
+      gross_weight = 0,
+      item_shipping_cost = 0,
+      is_free_shipping = false,
     } = body;
 
     if (!name || name.trim() === '') {
@@ -233,6 +238,14 @@ export async function POST(request: NextRequest) {
 
     const finalSlug = slug && slug.trim() !== '' ? generateSlug(slug) : generateSlug(name);
     const supabase = getSupabaseServerClient();
+
+    // Calculate gross weight with 20% packaging buffer if not explicitly passed
+    const calculatedGrossWeight =
+      gross_weight && Number(gross_weight) > 0
+        ? Number(gross_weight)
+        : net_weight && Number(net_weight) > 0
+        ? Number((Number(net_weight) * 1.2).toFixed(3))
+        : 0;
 
     // Check slug uniqueness
     const { data: existingProduct } = await supabase
@@ -267,6 +280,11 @@ export async function POST(request: NextRequest) {
           meta_title: meta_title.trim(),
           meta_keywords: meta_keywords ? meta_keywords.trim() : '',
           meta_description: meta_description.trim(),
+          net_weight: Number(net_weight) || 0,
+          weight_unit: weight_unit || 'gm',
+          gross_weight: calculatedGrossWeight,
+          item_shipping_cost: Number(item_shipping_cost) || 0,
+          is_free_shipping: Boolean(is_free_shipping),
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         },
@@ -293,14 +311,28 @@ export async function POST(request: NextRequest) {
     // Insert variants if provided
     let createdVariants: any[] = [];
     if (Array.isArray(variants) && variants.length > 0) {
-      const variantRows = variants.map((v: any) => ({
-        store_id: STORE_ID,
-        product_id: newProduct.id,
-        name: String(v.name || 'Default Variant').trim(),
-        sku: v.sku ? String(v.sku).trim() : null,
-        price: Number(v.price) || Number(price) || 0,
-        compare_at_price: v.compare_at_price ? Number(v.compare_at_price) : null,
-      }));
+      const variantRows = variants.map((v: any) => {
+        const vNetWeight = Number(v.net_weight) || 0;
+        const vGrossWeight =
+          v.gross_weight && Number(v.gross_weight) > 0
+            ? Number(v.gross_weight)
+            : vNetWeight > 0
+            ? Number((vNetWeight * 1.2).toFixed(3))
+            : 0;
+
+        return {
+          store_id: STORE_ID,
+          product_id: newProduct.id,
+          name: String(v.name || 'Default Variant').trim(),
+          sku: v.sku ? String(v.sku).trim() : null,
+          price: Number(v.price) || Number(price) || 0,
+          compare_at_price: v.compare_at_price ? Number(v.compare_at_price) : null,
+          net_weight: vNetWeight,
+          weight_unit: v.weight_unit || weight_unit || 'gm',
+          gross_weight: vGrossWeight,
+          item_shipping_cost: Number(v.item_shipping_cost) || 0,
+        };
+      });
 
       const { data: insertedVariants } = await supabase
         .from('product_variants')

@@ -1,15 +1,15 @@
 export function getWelcomeEmailTemplate(name: string, generatedPassword?: string) {
   return {
-    subject: "Welcome to Rose Valley Kannauj - Luxury Artisanal Fragrances",
+    subject: "Welcome to RoseOil.in - 100% Pure Essential Oils & Botanical Distillates",
     html: `
       <div style="font-family: 'Georgia', serif; color: #4A0D25; background-color: #F8E8E8; padding: 40px 20px;">
         <div style="max-width: 600px; margin: 0 auto; background: #ffffff; padding: 40px; border-radius: 16px; border: 1px solid #F7D1D8; box-shadow: 0 4px 20px rgba(74, 13, 37, 0.05);">
           <div style="text-align: center; margin-bottom: 25px;">
-            <h1 style="color: #4A0D25; font-size: 26px; margin: 0; font-family: 'Georgia', serif; letter-spacing: 1px;">ROSE VALLEY KANNAUJ</h1>
-            <p style="color: #9A2048; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; margin: 5px 0 0 0;">Artisanal Hydro-Distillates & Pure Attars</p>
+            <h1 style="color: #4A0D25; font-size: 26px; margin: 0; font-family: 'Georgia', serif; letter-spacing: 1px;">ROSEOIL.IN</h1>
+            <p style="color: #9A2048; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; margin: 5px 0 0 0;">Pure Botanical Distillates & Essential Oils</p>
           </div>
           <p style="font-size: 15px; line-height: 1.6; color: #4A0D25;">Dear <strong>${name}</strong>,</p>
-          <p style="font-size: 15px; line-height: 1.6; color: #4A0D25;">We are delighted to welcome you to Rose Valley Kannauj. Discover centuries-old artisanal botanical distillations, authentic Deg-Bhapka attars, and rare essential oils crafted in the perfume capital of India.</p>
+          <p style="font-size: 15px; line-height: 1.6; color: #4A0D25;">We are delighted to welcome you to RoseOil.in. Discover our pure botanical distillations, organic certified essential oils, and therapeutic aromatics crafted with uncompromising purity.</p>
           
           ${generatedPassword ? `
           <div style="background-color: #FAE6E7; padding: 20px; border-radius: 12px; margin: 25px 0; border: 1px solid #F6A6BB;">
@@ -23,7 +23,7 @@ export function getWelcomeEmailTemplate(name: string, generatedPassword?: string
             <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://roseoil.in'}/products" style="background-color: #4A0D25; color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 9999px; font-weight: bold; font-size: 13px; display: inline-block; letter-spacing: 1px;">Explore Collection</a>
           </div>
           <hr style="border: none; border-top: 1px solid #F7D1D8; margin: 30px 0;" />
-          <p style="font-size: 11px; text-align: center; color: #9A2048; margin: 0;">Rose Valley Kannauj • Hydro-Distilled in Traditional Copper Degs • Kannauj, Uttar Pradesh</p>
+          <p style="font-size: 11px; text-align: center; color: #9A2048; margin: 0;">RoseOil.in • 100% Pure Botanical Distillates</p>
         </div>
       </div>
     `
@@ -44,13 +44,13 @@ export function getOrderConfirmationEmailTemplate(orderNumber: string, total: st
   `).join('');
 
   return {
-    subject: `Order Confirmation #${orderNumber} - Rose Valley Kannauj`,
+    subject: `Order Confirmation #${orderNumber} - RoseOil.in`,
     html: `
       <div style="font-family: 'Georgia', serif; color: #4A0D25; background-color: #F8E8E8; padding: 40px 20px;">
         <div style="max-width: 600px; margin: 0 auto; background: #ffffff; padding: 40px; border-radius: 16px; border: 1px solid #F7D1D8; box-shadow: 0 4px 20px rgba(74, 13, 37, 0.05);">
           <div style="text-align: center; margin-bottom: 25px;">
-            <h1 style="color: #4A0D25; font-size: 26px; margin: 0; letter-spacing: 1px;">ROSE VALLEY KANNAUJ</h1>
-            <p style="color: #9A2048; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; margin: 5px 0 0 0;">Artisanal Hydro-Distillates & Pure Attars</p>
+            <h1 style="color: #4A0D25; font-size: 26px; margin: 0; letter-spacing: 1px;">ROSEOIL.IN</h1>
+            <p style="color: #9A2048; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; margin: 5px 0 0 0;">Pure Botanical Distillates & Essential Oils</p>
           </div>
 
           <div style="background-color: #e8f5e9; border: 1px solid #c8e6c9; padding: 14px 20px; border-radius: 12px; text-align: center; margin-bottom: 25px;">
@@ -58,7 +58,7 @@ export function getOrderConfirmationEmailTemplate(orderNumber: string, total: st
           </div>
 
           <p style="font-size: 15px; color: #4A0D25;">Dear <strong>${recipientName}</strong>,</p>
-          <p style="font-size: 14px; line-height: 1.6; color: #4A0D25;">Thank you for your valued order <strong>#${orderNumber}</strong>. Our master distillers are hand-packaging your pure artisanal extracts with utmost care.</p>
+          <p style="font-size: 14px; line-height: 1.6; color: #4A0D25;">Thank you for your valued order <strong>#${orderNumber}</strong>. Our team is hand-packaging your pure artisanal extracts with utmost care.</p>
           
           <div style="background: #FAE6E7; padding: 20px; border-radius: 12px; margin: 25px 0; border: 1px solid #F6A6BB;">
             <h3 style="margin-top: 0; color: #4A0D25; font-size: 16px; border-bottom: 1px solid #F7D1D8; padding-bottom: 8px;">Order Details (#${orderNumber})</h3>
@@ -72,14 +72,14 @@ export function getOrderConfirmationEmailTemplate(orderNumber: string, total: st
             </div>
           </div>
 
-          <p style="font-size: 13px; line-height: 1.6; color: #7A1840;">You will receive an additional email containing your courier tracking number as soon as your order is dispatched from Kannauj.</p>
+          <p style="font-size: 13px; line-height: 1.6; color: #7A1840;">You will receive an additional email containing your courier tracking number as soon as your order is dispatched.</p>
           
           <div style="text-align: center; margin: 30px 0;">
             <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://roseoil.in'}/account" style="background-color: #4A0D25; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 9999px; font-weight: bold; font-size: 12px; display: inline-block;">View Order in Dashboard</a>
           </div>
 
           <hr style="border: none; border-top: 1px solid #F7D1D8; margin: 30px 0;" />
-          <p style="font-size: 11px; text-align: center; color: #9A2048; margin: 0;">Rose Valley Kannauj • Client Concierge: shikhatandon2009@gmail.com</p>
+          <p style="font-size: 11px; text-align: center; color: #9A2048; margin: 0;">RoseOil.in • Client Concierge: support@roseoil.in</p>
         </div>
       </div>
     `
@@ -93,8 +93,8 @@ export function getDispatchEmailTemplate(orderNumber: string, courierName: strin
       <div style="font-family: 'Georgia', serif; color: #4A0D25; background-color: #F8E8E8; padding: 40px 20px;">
         <div style="max-width: 600px; margin: 0 auto; background: #ffffff; padding: 40px; border-radius: 16px; border: 1px solid #F7D1D8; box-shadow: 0 4px 20px rgba(74, 13, 37, 0.05);">
           <div style="text-align: center; margin-bottom: 25px;">
-            <h1 style="color: #4A0D25; font-size: 26px; margin: 0; letter-spacing: 1px;">ROSE VALLEY KANNAUJ</h1>
-            <p style="color: #9A2048; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; margin: 5px 0 0 0;">Artisanal Hydro-Distillates & Pure Attars</p>
+            <h1 style="color: #4A0D25; font-size: 26px; margin: 0; letter-spacing: 1px;">ROSEOIL.IN</h1>
+            <p style="color: #9A2048; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; margin: 5px 0 0 0;">Pure Botanical Distillates & Essential Oils</p>
           </div>
 
           <div style="background-color: #e3f2fd; border: 1px solid #90caf9; padding: 14px 20px; border-radius: 12px; text-align: center; margin-bottom: 25px;">
@@ -102,21 +102,21 @@ export function getDispatchEmailTemplate(orderNumber: string, courierName: strin
           </div>
 
           <p style="font-size: 15px; color: #4A0D25;">Dear <strong>${recipientName}</strong>,</p>
-          <p style="font-size: 14px; line-height: 1.6; color: #4A0D25;">Great news! Your luxury fragrance order <strong>#${orderNumber}</strong> has been handed over to our expedited courier partner.</p>
+          <p style="font-size: 14px; line-height: 1.6; color: #4A0D25;">Great news! Your pure essential oils order <strong>#${orderNumber}</strong> has been handed over to our expedited courier partner.</p>
           
           <div style="background-color: #FAE6E7; padding: 20px; border-radius: 12px; margin: 25px 0; border: 1px solid #F6A6BB;">
             <p style="margin: 0 0 10px 0; font-size: 14px; color: #4A0D25;"><strong>Courier Partner:</strong> ${courierName || 'Expedited Air Courier'}</p>
             <p style="margin: 0; font-size: 14px; color: #4A0D25;"><strong>Tracking Number (AWB):</strong> <span style="font-family: monospace; font-size: 18px; color: #9A2048; font-weight: bold; letter-spacing: 1px;">${trackingNumber}</span></p>
           </div>
           
-          <p style="font-size: 13px; line-height: 1.6; color: #7A1840;">You can track real-time delivery status using the tracking code above or directly in your Rose Valley account portal.</p>
+          <p style="font-size: 13px; line-height: 1.6; color: #7A1840;">You can track real-time delivery status using the tracking code above or directly in your RoseOil.in account portal.</p>
 
           <div style="text-align: center; margin: 30px 0;">
             <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://roseoil.in'}/account" style="background-color: #4A0D25; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 9999px; font-weight: bold; font-size: 12px; display: inline-block;">Track Order in Dashboard</a>
           </div>
 
           <hr style="border: none; border-top: 1px solid #F7D1D8; margin: 30px 0;" />
-          <p style="font-size: 11px; text-align: center; color: #9A2048; margin: 0;">Rose Valley Kannauj • Client Concierge: shikhatandon2009@gmail.com</p>
+          <p style="font-size: 11px; text-align: center; color: #9A2048; margin: 0;">RoseOil.in • Client Concierge: support@roseoil.in</p>
         </div>
       </div>
     `
@@ -150,19 +150,19 @@ export function getInquiryAdminNotificationTemplate(name: string, email: string,
 
 export function getInquiryAcknowledgmentTemplate(name: string, subject: string, inquiryRef: string) {
   return {
-    subject: `We have received your message [${inquiryRef}] - Rose Valley Kannauj`,
+    subject: `We have received your message [${inquiryRef}] - RoseOil.in`,
     html: `
       <div style="font-family: 'Georgia', serif; color: #4A0D25; background-color: #F8E8E8; padding: 40px 20px;">
         <div style="max-width: 600px; margin: 0 auto; background: #ffffff; padding: 40px; border-radius: 16px; border: 1px solid #F7D1D8; box-shadow: 0 4px 20px rgba(74, 13, 37, 0.05);">
           <div style="text-align: center; margin-bottom: 25px;">
-            <h1 style="color: #4A0D25; font-size: 26px; margin: 0; letter-spacing: 1px;">ROSE VALLEY KANNAUJ</h1>
-            <p style="color: #9A2048; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; margin: 5px 0 0 0;">Artisanal Hydro-Distillates & Pure Attars</p>
+            <h1 style="color: #4A0D25; font-size: 26px; margin: 0; letter-spacing: 1px;">ROSEOIL.IN</h1>
+            <p style="color: #9A2048; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; margin: 5px 0 0 0;">Pure Botanical Distillates & Essential Oils</p>
           </div>
           <p style="font-size: 15px; color: #4A0D25;">Dear <strong>${name}</strong>,</p>
-          <p style="font-size: 14px; line-height: 1.6; color: #4A0D25;">Thank you for contacting Rose Valley Kannauj regarding <strong>"${subject || 'Your Inquiry'}"</strong>. Your request has been assigned reference <strong>${inquiryRef}</strong>.</p>
+          <p style="font-size: 14px; line-height: 1.6; color: #4A0D25;">Thank you for contacting RoseOil.in regarding <strong>"${subject || 'Your Inquiry'}"</strong>. Your request has been assigned reference <strong>${inquiryRef}</strong>.</p>
           <p style="font-size: 14px; line-height: 1.6; color: #4A0D25;">Our concierge desk is reviewing your message and will respond within 24 hours.</p>
           <hr style="border: none; border-top: 1px solid #F7D1D8; margin: 30px 0;" />
-          <p style="font-size: 11px; text-align: center; color: #9A2048; margin: 0;">Rose Valley Kannauj • Client Concierge: shikhatandon2009@gmail.com</p>
+          <p style="font-size: 11px; text-align: center; color: #9A2048; margin: 0;">RoseOil.in • Client Concierge: support@roseoil.in</p>
         </div>
       </div>
     `
@@ -171,13 +171,13 @@ export function getInquiryAcknowledgmentTemplate(name: string, subject: string, 
 
 export function getInquiryReplyTemplate(name: string, subject: string, replyMessage: string, inquiryRef: string) {
   return {
-    subject: `Response to your inquiry [${inquiryRef}] - Rose Valley Kannauj`,
+    subject: `Response to your inquiry [${inquiryRef}] - RoseOil.in`,
     html: `
       <div style="font-family: 'Georgia', serif; color: #4A0D25; background-color: #F8E8E8; padding: 40px 20px;">
         <div style="max-width: 600px; margin: 0 auto; background: #ffffff; padding: 40px; border-radius: 16px; border: 1px solid #F7D1D8; box-shadow: 0 4px 20px rgba(74, 13, 37, 0.05);">
           <div style="text-align: center; margin-bottom: 25px;">
-            <h1 style="color: #4A0D25; font-size: 26px; margin: 0; letter-spacing: 1px;">ROSE VALLEY KANNAUJ</h1>
-            <p style="color: #9A2048; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; margin: 5px 0 0 0;">Artisanal Hydro-Distillates & Pure Attars</p>
+            <h1 style="color: #4A0D25; font-size: 26px; margin: 0; letter-spacing: 1px;">ROSEOIL.IN</h1>
+            <p style="color: #9A2048; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; margin: 5px 0 0 0;">Pure Botanical Distillates & Essential Oils</p>
           </div>
           <p style="font-size: 15px; color: #4A0D25;">Dear <strong>${name || 'Valued Client'}</strong>,</p>
           <p style="font-size: 14px; line-height: 1.6; color: #4A0D25;">In response to your inquiry <strong>[${inquiryRef}] ${subject || ''}</strong>, our concierge desk has provided the following update:</p>
@@ -188,7 +188,7 @@ ${replyMessage}
 
           <p style="font-size: 13px; line-height: 1.6; color: #7A1840;">If you have any further questions, simply reply directly to this email.</p>
           <hr style="border: none; border-top: 1px solid #F7D1D8; margin: 30px 0;" />
-          <p style="font-size: 11px; text-align: center; color: #9A2048; margin: 0;">Rose Valley Kannauj • Client Concierge: shikhatandon2009@gmail.com</p>
+          <p style="font-size: 11px; text-align: center; color: #9A2048; margin: 0;">RoseOil.in • Client Concierge: support@roseoil.in</p>
         </div>
       </div>
     `

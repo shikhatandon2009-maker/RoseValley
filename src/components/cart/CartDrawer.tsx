@@ -117,7 +117,19 @@ export function CartDrawer() {
                     <div>
                       <h4 className="font-serif font-extrabold text-sm text-[#1A0510] line-clamp-1">{item.name}</h4>
                       {item.variantName && (
-                        <span className="text-xs text-[#4A0D25] font-bold block mt-0.5">{item.variantName}</span>
+                        <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                          <span className="text-xs text-[#4A0D25] font-bold">{item.variantName}</span>
+                          {item.gross_weight ? (
+                            <span className="text-[10px] text-stone-500 font-medium">
+                              • {(() => {
+                                const unit = (item.weight_unit || '').toLowerCase();
+                                const gw = item.gross_weight;
+                                const isKg = unit === 'kg' || unit === 'l' || (item.variantName && item.variantName.toLowerCase().includes('kg'));
+                                return isKg ? `${gw % 1 === 0 ? gw : gw.toFixed(1)} Kg gross` : `${Math.round(gw)}g gross`;
+                              })()}
+                            </span>
+                          ) : null}
+                        </div>
                       )}
                       <p className="text-xs font-black text-[#4A0D25] mt-1" suppressHydrationWarning>
                         {formatPrice(item.price * item.quantity)}

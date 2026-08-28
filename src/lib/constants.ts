@@ -1,6 +1,6 @@
 export const STORE_ID = process.env.STORE_ID || "essential_oils_perfumes_store_01";
 
-export const STORE_NAME = "Rose Valley Kannauj";
+export const STORE_NAME = "RoseOil.in";
 
 export const DEFAULT_CURRENCY = "INR";
 

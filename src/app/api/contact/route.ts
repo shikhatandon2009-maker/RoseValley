@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
             subject: `[${inquiryRef}] ${inquirySubject}: ${customerName}`,
             notification_type: 'personal_communication',
             status: 'sent',
-            provider_response: 'Customer inquiry recorded in Maison Concierge CRM',
+            provider_response: 'Customer inquiry recorded in RoseOil.in CRM',
             metadata: {
               inquiry_ref: inquiryRef,
               user_id: user_id || null,
@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
               subject: inquirySubject,
               message: inquiryMessage,
               status: 'In Review',
-              concierge_notes: 'Assigned to Kannauj Master Distiller concierge desk.',
+              concierge_notes: 'Assigned to RoseOil.in customer support desk.',
               submitted_at: new Date().toISOString(),
             },
             created_at: new Date().toISOString(),

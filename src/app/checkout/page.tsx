@@ -28,11 +28,14 @@ import {
   CheckCircle,
   Receipt,
   Sparkles,
-  Wallet
+  Wallet,
+  Truck,
+  Flame
 } from 'lucide-react';
 import { LuxuryHeader } from '@/components/layout/LuxuryHeader';
 import { LuxuryFooter } from '@/components/layout/LuxuryFooter';
 import { CheckoutChoiceModal } from '@/components/checkout/CheckoutChoiceModal';
+import { calculateWeightBasedShipping } from '@/lib/shipping-calculator';
 
 interface CountryConfig {
   code: string;
@@ -200,7 +203,7 @@ const DEFAULT_COUPONS = [
 
 export default function CheckoutPage() {
   const { items, getTotalINR, clearCart } = useCartStore();
-  const { formatPrice, setCurrency } = useCurrencyStore();
+  const { formatPrice, setCurrency, currency, rates } = useCurrencyStore();
   const settings = useSiteSettingsStore((s) => s.settings);
   const router = useRouter();
 
@@ -483,6 +486,9 @@ export default function CheckoutPage() {
       });
   }, []);
 
+  // Shipping Method Selection: 'standard' or 'express'
+  const [shippingMethod, setShippingMethod] = useState<'standard' | 'express'>('standard');
+
   // Price & GST Tax Calculations (Reactively computed from items to prevent initial render lag)
   const subtotalINR = useMemo(() => {
     if (!items || items.length === 0) return 0;
@@ -494,13 +500,39 @@ export default function CheckoutPage() {
     }, 0);
   }, [items]);
 
+  // Robust Weight & Region Based Shipping Calculation
+  const shippingCalculation = useMemo(() => {
+    return calculateWeightBasedShipping({
+      items,
+      destinationCountryCode: selectedCountryCode,
+      targetCurrency: currency,
+      rates,
+      freeShippingThresholdINR: Number(settings?.shipping_rates?.free_threshold) || 0,
+      orderSubtotalINR: subtotalINR,
+      customIndiaSlabs: settings?.shipping_rates?.india_weight_slabs,
+    });
+  }, [items, selectedCountryCode, currency, rates, settings, subtotalINR]);
+
+  const totalNetKg = shippingCalculation.totalNetWeightKg;
+  const totalGrossKg = shippingCalculation.totalGrossWeightKg;
+  const totalGrossWeightGrams = shippingCalculation.totalGrossWeightGrams;
+  const isDomestic = shippingCalculation.isDomestic;
+
+  // Base shipping fee in INR
+  const shippingFee = shippingCalculation.shippingFeeINR;
+
   const discountPercent = appliedCoupon ? appliedCoupon.percent : 0;
   const discountAmount = Math.round((subtotalINR * discountPercent) / 100);
-  const taxableAmount = Math.max(0, subtotalINR - discountAmount);
+  const taxableGoodsAmount = Math.max(0, subtotalINR - discountAmount);
+
+  // Under GST Law: Domestic freight/shipping is a taxable supply (18% GST).
+  const taxableAmount = taxableGoodsAmount + shippingFee;
 
   // Dynamic GST Tax Rate from Store Settings (Defaults to 18.00%)
   const taxRate = typeof settings?.tax_rate === 'number' ? settings.tax_rate : 18.00;
-  const taxAmount = Math.round((taxableAmount * taxRate) / 100);
+  const goodsTaxAmount = Math.round((taxableGoodsAmount * taxRate) / 100);
+  const shippingTaxAmount = isDomestic ? Math.round((shippingFee * taxRate) / 100) : 0;
+  const taxAmount = goodsTaxAmount + shippingTaxAmount;
   const finalTotalINR = Math.round(taxableAmount + taxAmount);
 
   const handleCountryChange = (countryCode: string) => {
@@ -681,8 +713,8 @@ export default function CheckoutPage() {
           key: razorpayKey,
           amount: Math.round(finalTotalINR * 100),
           currency: 'INR',
-          name: 'Rose Valley Kannauj',
-          description: `Luxury Perfumes Order #${orderNumber}`,
+          name: 'RoseOil.in',
+          description: `RoseOil.in Order #${orderNumber}`,
           order_id: orderData.razorpayOrderId,
           handler: async function (response: any) {
             setLoading(true);
@@ -703,6 +735,10 @@ export default function CheckoutPage() {
                   taxAmount,
                   taxRate,
                   taxableAmount,
+                  shippingFee,
+                  shippingTax: shippingTaxAmount,
+                  totalWeightGrams: totalGrossWeightGrams,
+                  shippingMethod,
                   gstin: shippingAddress.gstin,
                   paymentMethod: 'razorpay',
                   currency: 'INR',
@@ -758,6 +794,10 @@ export default function CheckoutPage() {
             taxAmount,
             taxRate,
             taxableAmount,
+            shippingFee,
+            shippingTax: shippingTaxAmount,
+            totalWeightGrams: totalGrossWeightGrams,
+            shippingMethod,
             gstin: shippingAddress.gstin,
             paymentMethod: 'paypal',
             currency: 'INR',
@@ -1202,11 +1242,80 @@ export default function CheckoutPage() {
                         type="text"
                         value={companyName}
                         onChange={(e) => handleCompanyNameChange(e.target.value)}
-                        placeholder="Maison Luxe Private Ltd"
+                        placeholder="e.g. Wellness Botanicals Pvt Ltd"
                         className="w-full bg-white border border-[#F7D1D8] rounded-xl py-2 px-3 text-xs text-[#1A0510] font-semibold focus:outline-none focus:ring-2 focus:ring-[#F6A6BB]"
                       />
                     </div>
                   </div>
+                </div>
+              )}
+            </div>
+
+            {/* REQUIREMENT 3.5: Weight-Based & Regional Shipping Logistics */}
+            <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-[#FAE6E7]/80 border border-[#F7D1D8] space-y-4 shadow-sm">
+              <div className="flex items-center justify-between border-b border-[#F7D1D8] pb-3">
+                <h3 className="font-serif font-bold text-[#1A0510] text-sm sm:text-base flex items-center gap-2">
+                  <Truck className="w-4 h-4 text-[#F6A6BB]" /> Shipping & Freight Logistics
+                </h3>
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#4A0D25] bg-white px-2.5 py-1 rounded-full border border-[#F7D1D8]">
+                  {totalNetKg} Kg Net • {totalGrossKg} Kg Gross (+20%)
+                </span>
+              </div>
+
+              {/* Dynamic Domestic vs Export Logistics Card */}
+              {isDomestic ? (
+                <div className="p-4 rounded-2xl bg-white border border-[#F7D1D8] space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">🇮🇳</span>
+                      <div>
+                        <span className="font-bold text-xs text-[#1A0510] block">India Domestic Surface & Express Logistics</span>
+                        <span className="text-[10px] text-stone-500 font-semibold">{shippingCalculation.slabLabel}</span>
+                      </div>
+                    </div>
+                    <span className="font-mono font-black text-sm text-[#4A0D25]">
+                      {shippingFee === 0 ? 'FREE' : `₹${shippingFee.toLocaleString('en-IN')}`}
+                    </span>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-amber-50/70 border border-amber-200 text-[11px] text-amber-950 flex items-center justify-between">
+                    <span>📦 Packaging Buffer: Net {totalNetKg} Kg + 20% overhead</span>
+                    <span className="font-mono font-bold">{totalGrossKg} Kg Gross Billed</span>
+                  </div>
+                  {shippingCalculation.isOver200Kg && (
+                    <div className="text-[11px] text-emerald-800 font-bold">
+                      ✓ Bulk Freight Tier Applied: Flat ₹100 / Kg for cargo over 200 Kg.
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="p-4 rounded-2xl bg-white border border-[#F7D1D8] space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">{currentCountry.flag}</span>
+                      <div>
+                        <span className="font-bold text-xs text-[#1A0510] block">
+                          International Priority Air Freight ({shippingCalculation.regionName})
+                        </span>
+                        <span className="text-[10px] text-stone-500 font-semibold">{shippingCalculation.slabLabel}</span>
+                      </div>
+                    </div>
+                    <span className="font-mono font-black text-sm text-[#4A0D25]">
+                      {currency !== 'INR'
+                        ? `${currency} ${shippingCalculation.shippingFeeTargetCurrency.toLocaleString()}`
+                        : `₹${shippingFee.toLocaleString('en-IN')}`}
+                    </span>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-amber-50/70 border border-amber-200 text-[11px] text-amber-950 flex items-center justify-between">
+                    <span>
+                      ✈️ {shippingCalculation.regionName} Rate: ${shippingCalculation.appliedRatePerKgUSD}/Kg (Min $30 USD)
+                    </span>
+                    <span className="font-mono font-bold">{totalGrossKg} Kg Gross</span>
+                  </div>
+                  {shippingCalculation.isMinChargeApplied && (
+                    <div className="text-[10px] text-stone-600 italic">
+                      * Fixed minimum export dispatch charge of $30 USD applied for parcels up to 3.3 Kg.
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -1296,15 +1405,40 @@ export default function CheckoutPage() {
               </div>
 
               <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
-                {items.map((item) => (
-                  <div key={item.id} className="flex justify-between items-center text-xs">
-                    <div>
-                      <p className="font-bold text-[#1A0510]">{item.name}</p>
-                      <span className="text-[10px] text-[#4A0D25] font-semibold">Qty: {item.quantity}</span>
+                {items.map((item) => {
+                  const q = item.quantity || 1;
+                  const unit = (item.weight_unit || '').toLowerCase();
+                  let gw = item.gross_weight;
+                  if (!gw && item.net_weight) {
+                    gw = Number((item.net_weight * 1.2).toFixed(2));
+                  }
+                  const totalGw = gw ? gw * q : 0;
+                  const isKg =
+                    unit === 'kg' ||
+                    unit === 'l' ||
+                    (item.variantName && item.variantName.toLowerCase().includes('kg')) ||
+                    (item.name && item.name.toLowerCase().includes('kg'));
+                  const formattedGross = isKg
+                    ? `${totalGw % 1 === 0 ? totalGw : totalGw.toFixed(1)} Kg`
+                    : `${totalGw >= 1000 ? (totalGw / 1000).toFixed(1) + ' Kg' : Math.round(totalGw) + 'g'}`;
+
+                  return (
+                    <div key={item.id} className="flex justify-between items-center text-xs">
+                      <div>
+                        <p className="font-bold text-[#1A0510]">
+                          {item.name} {item.variantName ? <span className="text-[#D45A7A] font-bold">({item.variantName})</span> : null}
+                        </p>
+                        <div className="flex items-center gap-2 text-[10px] text-[#4A0D25] font-semibold">
+                          <span>Qty: {item.quantity}</span>
+                          {gw ? (
+                            <span className="text-stone-500 font-medium">• {formattedGross} gross</span>
+                          ) : null}
+                        </div>
+                      </div>
+                      <span className="font-bold text-[#1A0510]" suppressHydrationWarning>{formatPrice(item.price * item.quantity)}</span>
                     </div>
-                    <span className="font-bold text-[#1A0510]" suppressHydrationWarning>{formatPrice(item.price * item.quantity)}</span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Coupon Code Section */}
@@ -1463,7 +1597,7 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              {/* REQUIREMENT 1: Totals with 18% GST Breakdown */}
+              {/* Robust Shipping & 18% GST Breakdown */}
               <div className="space-y-2.5 pt-3 border-t border-[#F7D1D8] text-xs font-semibold">
                 <div className="flex justify-between text-[#1A0510]">
                   <span>Item Subtotal</span>
@@ -1477,21 +1611,43 @@ export default function CheckoutPage() {
                   </div>
                 )}
 
+                {/* Total Gross Package Weight Badge */}
+                <div className="flex justify-between items-center text-amber-900 bg-amber-50/80 px-2.5 py-1 rounded-xl border border-amber-200">
+                  <span className="flex items-center gap-1 font-bold">
+                    <Truck className="w-3.5 h-3.5 text-amber-700" /> Package Gross Weight:
+                  </span>
+                  <span className="font-mono font-black">{totalGrossKg} Kg ({totalGrossWeightGrams} g)</span>
+                </div>
+
+                {/* Shipping & Handling (Weight/Region based) */}
+                <div className="flex justify-between text-[#1A0510] items-center">
+                  <div className="space-y-0.5">
+                    <span className="flex items-center gap-1 font-bold text-xs">
+                      <span>{isDomestic ? '🇮🇳 Domestic Shipping' : `✈️ Export Shipping (${shippingCalculation.regionName})`}</span>
+                    </span>
+                    <span className="text-[10px] text-stone-500 block">
+                      {isDomestic
+                        ? `${shippingCalculation.slabLabel} • 18% GST Taxable`
+                        : `${totalGrossKg} Kg @ $${shippingCalculation.appliedRatePerKgUSD}/kg${shippingCalculation.isMinChargeApplied ? ' (Min $30)' : ''}`}
+                    </span>
+                  </div>
+                  {shippingFee === 0 ? (
+                    <span className="text-emerald-800 font-extrabold uppercase">FREE DELIVERY</span>
+                  ) : (
+                    <span className="font-bold font-mono" suppressHydrationWarning>{formatPrice(shippingFee)}</span>
+                  )}
+                </div>
+
                 <div className="flex justify-between text-stone-600 font-medium pt-1 border-t border-dashed border-[#F7D1D8]">
-                  <span>Taxable Subtotal</span>
+                  <span>Total Taxable Base (Goods + Shipping)</span>
                   <span suppressHydrationWarning>{formatPrice(taxableAmount)}</span>
                 </div>
 
                 <div className="flex justify-between text-[#4A0D25] font-bold">
                   <span className="flex items-center gap-1">
-                    <Receipt className="w-3.5 h-3.5 text-[#F6A6BB]" /> GST / Tax ({taxRate}%)
+                    <Receipt className="w-3.5 h-3.5 text-[#F6A6BB]" /> Total GST Tax ({taxRate}%)
                   </span>
                   <span suppressHydrationWarning>{formatPrice(taxAmount)}</span>
-                </div>
-
-                <div className="flex justify-between text-[#1A0510]">
-                  <span>Complimentary Shipping</span>
-                  <span className="text-emerald-800 font-extrabold">FREE</span>
                 </div>
 
                 {gstinNumber && (

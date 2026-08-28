@@ -3,11 +3,11 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import { LuxuryHeader } from '@/components/layout/LuxuryHeader';
 import { LuxuryFooter } from '@/components/layout/LuxuryFooter';
-import { Lock, ShieldCheck, Database, Eye, Bell, ArrowLeft, Mail } from 'lucide-react';
+import { Lock, ShieldCheck, Database, Eye, ArrowLeft } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy | Rose Valley Kannauj',
-  description: 'Learn how Rose Valley Kannauj protects your personal data, payment information, GST details, and browsing privacy.',
+  title: 'Privacy Policy | RoseOil.in',
+  description: 'Learn how RoseOil.in protects your personal data, payment information, GST details, and browsing privacy.',
 };
 
 export default function PrivacyPolicyPage() {
@@ -34,7 +34,7 @@ export default function PrivacyPolicyPage() {
             Privacy Policy
           </h1>
           <p className="text-xs sm:text-sm text-[#4A0D25] font-medium leading-relaxed">
-            Effective Date: August 1, 2026 • Rose Valley Kannauj (Maison De L&apos;Essence)
+            Effective Date: August 1, 2026 • RoseOil.in
           </p>
         </div>
 
@@ -69,7 +69,7 @@ export default function PrivacyPolicyPage() {
               1. Information We Collect
             </h2>
             <p>
-              When you purchase our fragrances, register for a private client account, or contact our customer concierge, we may collect the following details:
+              When you purchase our botanical oils, register for a client account, or contact our customer desk, we may collect the following details:
             </p>
             <ul className="list-disc pl-6 space-y-1 text-xs">
               <li><strong>Contact Information:</strong> Full Name, Email Address, and Phone Number.</li>
@@ -86,9 +86,9 @@ export default function PrivacyPolicyPage() {
             <p>Your personal information is used exclusively to:</p>
             <ul className="list-disc pl-6 space-y-1 text-xs">
               <li>Fulfill and dispatch your orders, generate GST Tax Invoices, and provide delivery tracking updates.</li>
-              <li>Authenticate your account login and secure your order history in your private client dashboard.</li>
+              <li>Authenticate your account login and secure your order history in your private dashboard.</li>
               <li>Send critical transactional alerts (order confirmation, dispatch, delivery, and password reset notifications).</li>
-              <li>Prevent fraudulent transactions and comply with Indian commercial tax laws.</li>
+              <li>Prevent fraudulent transactions and comply with commercial tax regulations.</li>
             </ul>
           </section>
 
@@ -97,8 +97,8 @@ export default function PrivacyPolicyPage() {
               3. Payment Security & Third-Party Processors
             </h2>
             <p>
-              All online payments on <strong>rosevalleykannauj.com</strong> are processed through PCI-DSS Level 1 certified gateways (Razorpay, Stripe, and authorized banking partners). 
-              Rose Valley Kannauj <strong>never collects, stores, or accesses</strong> your credit card number, debit card PIN, or CVV code.
+              All online payments on <strong>roseoil.in</strong> are processed through PCI-DSS Level 1 certified gateways (Razorpay, Stripe, and authorized banking partners). 
+              RoseOil.in <strong>never collects, stores, or accesses</strong> your credit card number, debit card PIN, or CVV code.
             </p>
           </section>
 
@@ -116,19 +116,18 @@ export default function PrivacyPolicyPage() {
               5. Your Privacy Rights & Data Deletion
             </h2>
             <p>
-              Under applicable Indian and international data protection laws, you retain the right to review, update, or request deletion of your personal information from our database. To request data deletion or update your saved details, please email our Data Protection Officer at <a href="mailto:privacy@rosevalleykannauj.com" className="font-bold underline text-[#1A0510]">privacy@rosevalleykannauj.com</a>.
+              Under applicable data protection laws, you retain the right to review, update, or request deletion of your personal information from our database. To request data deletion or update your saved details, please email our Privacy Desk at <a href="mailto:support@roseoil.in" className="font-bold underline text-[#1A0510]">support@roseoil.in</a>.
             </p>
           </section>
 
           <section className="p-6 rounded-3xl bg-[#FAE6E7]/60 border border-[#F7D1D8] shadow-xs space-y-3">
             <h2 className="font-serif text-lg sm:text-xl font-bold text-[#1A0510]">
-              6. Contact Our Legal & Privacy Desk
+              6. Contact Our Privacy Desk
             </h2>
             <p className="text-xs">
-              Maison De L&apos;Essence • Rose Valley Kannauj<br />
-              Attn: Privacy & Legal Officer<br />
-              Estate Address: G.T. Road, Perfume City, Kannauj, Uttar Pradesh — 209725, India.<br />
-              Email: <a href="mailto:privacy@rosevalleykannauj.com" className="underline">privacy@rosevalleykannauj.com</a>
+              RoseOil.in<br />
+              Attn: Privacy Officer<br />
+              Email: <a href="mailto:support@roseoil.in" className="underline">support@roseoil.in</a>
             </p>
           </section>
         </div>

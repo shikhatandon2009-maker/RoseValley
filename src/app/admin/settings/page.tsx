@@ -32,10 +32,11 @@ import {
   Database,
   ShieldAlert,
   AlertTriangle,
-  FileText
+  FileText,
 } from 'lucide-react';
 import { formatImageUrl } from '@/lib/format-image';
 import { useSiteSettingsStore } from '@/store/site-settings-store';
+import { DEFAULT_INDIA_WEIGHT_SLABS, WeightSlab } from '@/lib/shipping-calculator';
 
 interface SiteSettings {
   store_id: string;
@@ -59,6 +60,16 @@ interface SiteSettings {
     standard: number;
     express: number;
     free_threshold: number;
+    calculation_mode?: 'weight_based' | 'item_based' | 'flat' | 'hybrid';
+    weight_rate_per_kg?: number;
+    express_rate_per_kg?: number;
+    packaging_overhead_percent?: number;
+    min_shipping_fee?: number;
+    india_weight_slabs?: WeightSlab[];
+    india_over_200kg_rate_per_kg?: number;
+    export_under_200kg_rate_usd?: number;
+    export_min_charge_usd?: number;
+    export_region_over_200kg_rates?: Record<string, number>;
   };
   tax_rate: number;
   store_gstin?: string;
@@ -89,16 +100,16 @@ interface PasswordResetItem {
 export default function SiteSettingsAdminPage() {
   const [settings, setSettings] = useState<SiteSettings>({
     store_id: 'essential_oils_perfumes_store_01',
-    site_name: 'Rose Valley Kannauj',
-    tagline: 'Artisanal Attars & Pure Distillates • Kannauj',
+    site_name: 'RoseOil.in',
+    tagline: 'Pure Essential Oils & Artisanal Botanical Distillates',
     logo_url: '/images/logo/logo.png',
     favicon_url: '/images/logo/favicon.png',
     use_text_logo: false,
-    contact_email: 'shikhatandon2009@gmail.com',
+    contact_email: 'support@roseoil.in',
     contact_phone: '+91 96486 78599',
     whatsapp_number: '+91 96486 78599',
-    store_address_line1: 'Rose Valley Estate, Deg-Bhapka Heritage Stills',
-    store_address_line2: 'Kannauj Industrial Area',
+    store_address_line1: 'RoseOil.in Botanical Laboratories',
+    store_address_line2: 'Distillation Center',
     store_city: 'Kannauj',
     store_state: 'Uttar Pradesh',
     store_pincode: '209725',
@@ -690,7 +701,7 @@ export default function SiteSettingsAdminPage() {
                       {settings.use_text_logo ? (
                         <div className="text-center px-1 py-1">
                           <span className="font-serif font-extrabold text-xs text-[#1A0510] uppercase tracking-wider block line-clamp-1">
-                            {settings.site_name || 'Rose Valley'}
+                            {settings.site_name || 'RoseOil.in'}
                           </span>
                           <span className="text-[8px] font-black text-[#4A0D25] tracking-widest block uppercase">
                             [TEXT LOGO MODE]
@@ -761,7 +772,7 @@ export default function SiteSettingsAdminPage() {
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Rose Valley Estate, Deg-Bhapka Heritage Stills"
+                    placeholder="e.g. RoseOil.in Botanical Laboratories"
                     value={settings.store_address_line1 || ''}
                     onChange={(e) => setSettings({ ...settings, store_address_line1: e.target.value })}
                     className="w-full px-3.5 py-2.5 rounded-xl bg-stone-50 border border-stone-300 text-xs text-stone-900 font-semibold focus:outline-none focus:border-amber-600"
@@ -1076,56 +1087,527 @@ export default function SiteSettingsAdminPage() {
             )}
           </div>
 
-          {/* SECTION 4: Shipping Rates & GST Tax Configuration */}
+          {/* SECTION 4: Shipping Rates & Regional Logistics Matrix */}
           <div className="p-6 rounded-2xl bg-white border border-stone-200 space-y-6 shadow-sm">
-            <div className="flex items-center gap-2 text-stone-900 font-serif font-bold text-lg border-b border-stone-200 pb-3">
-              <Truck className="w-5 h-5 text-amber-600" /> Shipping Rates & Logistics Parameters
+            <div className="flex flex-wrap items-center justify-between border-b border-stone-200 pb-3 gap-2">
+              <div className="flex items-center gap-2 text-stone-900 font-serif font-bold text-lg">
+                <Truck className="w-5 h-5 text-amber-600" /> Shipping & Logistics Matrix (Weight & Region Based)
+              </div>
+              <span className="px-3 py-1 rounded-full bg-amber-100 border border-amber-300 text-amber-950 text-[10px] font-black uppercase tracking-wider">
+                Gross = Net + 20% Overhead • Taxable Supply
+              </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-stone-800 mb-1">Standard Shipping Fee (₹)</label>
-                <input
-                  type="number"
-                  value={settings.shipping_rates?.standard || 150}
-                  onChange={(e) =>
-                    setSettings({
-                      ...settings,
-                      shipping_rates: { ...settings.shipping_rates, standard: Number(e.target.value) },
-                    })
-                  }
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-stone-50 border border-stone-300 text-xs text-stone-900 focus:outline-none focus:border-amber-600"
-                />
+            {/* DOMESTIC INDIA SHIPPING SECTION WITH EDITABLE SLAB TABLE */}
+            <div className="p-4 sm:p-5 rounded-2xl bg-stone-50 border border-stone-200 space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-stone-200 pb-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">🇮🇳</span>
+                  <div>
+                    <h4 className="text-sm font-bold text-stone-900 uppercase tracking-wider">
+                      India Domestic Shipping Slabs (10ml to 200+ Kg)
+                    </h4>
+                    <p className="text-[11px] text-stone-600">
+                      Calculated on Gross Weight (+20% packaging buffer). Sizes 10ml to 200 Kg use the tiered rate table below.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const currentSlabs = settings.shipping_rates?.india_weight_slabs || DEFAULT_INDIA_WEIGHT_SLABS;
+                      const newSlab = {
+                        maxKg: currentSlabs.length > 0 ? Number((currentSlabs[currentSlabs.length - 1].maxKg + 5).toFixed(1)) : 1.0,
+                        rateINR: currentSlabs.length > 0 ? currentSlabs[currentSlabs.length - 1].rateINR + 100 : 150,
+                        label: 'Custom Tier',
+                      };
+                      setSettings({
+                        ...settings,
+                        shipping_rates: {
+                          ...settings.shipping_rates,
+                          india_weight_slabs: [...currentSlabs, newSlab],
+                        },
+                      });
+                    }}
+                    className="px-3 py-1.5 rounded-xl bg-[#FAE6E7] hover:bg-[#F7D1D8] border border-[#F7D1D8] text-[#4A0D25] text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> Add Tier Slab
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSettings({
+                        ...settings,
+                        shipping_rates: {
+                          ...settings.shipping_rates,
+                          india_weight_slabs: DEFAULT_INDIA_WEIGHT_SLABS,
+                        },
+                      });
+                    }}
+                    className="px-2.5 py-1.5 rounded-xl bg-white hover:bg-stone-100 border border-stone-300 text-stone-700 text-xs font-semibold transition-all cursor-pointer"
+                    title="Reset to factory standard weight slabs"
+                  >
+                    Reset Defaults
+                  </button>
+                </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-stone-800 mb-1">Express Courier Fee (₹)</label>
-                <input
-                  type="number"
-                  value={settings.shipping_rates?.express || 300}
-                  onChange={(e) =>
-                    setSettings({
-                      ...settings,
-                      shipping_rates: { ...settings.shipping_rates, express: Number(e.target.value) },
-                    })
-                  }
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-stone-50 border border-stone-300 text-xs text-stone-900 focus:outline-none focus:border-amber-600"
-                />
+              {/* Editable Domestic Weight Slabs Table */}
+              <div className="rounded-xl border border-stone-300 bg-white overflow-hidden shadow-2xs">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-stone-100 text-stone-800 uppercase font-black text-[10px] border-b border-stone-200">
+                    <tr>
+                      <th className="p-2.5">#</th>
+                      <th className="p-2.5">Max Weight (Kg)</th>
+                      <th className="p-2.5">Domestic Rate (₹)</th>
+                      <th className="p-2.5">Slab Description / Size Format</th>
+                      <th className="p-2.5 text-right w-12">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-stone-200 font-medium">
+                    {(settings.shipping_rates?.india_weight_slabs || DEFAULT_INDIA_WEIGHT_SLABS).map((slab, idx) => {
+                      const slabsList = settings.shipping_rates?.india_weight_slabs || DEFAULT_INDIA_WEIGHT_SLABS;
+                      return (
+                        <tr key={idx} className="hover:bg-amber-50/40">
+                          <td className="p-2.5 font-bold text-stone-400">{idx + 1}</td>
+                          <td className="p-2">
+                            <div className="flex items-center gap-1">
+                              <input
+                                type="number"
+                                step="0.01"
+                                value={slab.maxKg}
+                                onChange={(e) => {
+                                  const updated = [...slabsList];
+                                  updated[idx] = { ...updated[idx], maxKg: Number(e.target.value) };
+                                  setSettings({
+                                    ...settings,
+                                    shipping_rates: { ...settings.shipping_rates, india_weight_slabs: updated },
+                                  });
+                                }}
+                                className="w-24 px-2 py-1 rounded-lg border border-stone-300 text-xs font-bold text-stone-900"
+                              />
+                              <span className="text-[10px] text-stone-500 font-bold">Kg</span>
+                            </div>
+                          </td>
+                          <td className="p-2">
+                            <div className="flex items-center gap-1">
+                              <span className="text-xs font-bold text-stone-600">₹</span>
+                              <input
+                                type="number"
+                                value={slab.rateINR}
+                                onChange={(e) => {
+                                  const updated = [...slabsList];
+                                  updated[idx] = { ...updated[idx], rateINR: Number(e.target.value) };
+                                  setSettings({
+                                    ...settings,
+                                    shipping_rates: { ...settings.shipping_rates, india_weight_slabs: updated },
+                                  });
+                                }}
+                                className="w-28 px-2 py-1 rounded-lg border border-stone-300 text-xs font-bold text-[#4A0D25]"
+                              />
+                            </div>
+                          </td>
+                          <td className="p-2">
+                            <input
+                              type="text"
+                              value={slab.label}
+                              onChange={(e) => {
+                                const updated = [...slabsList];
+                                updated[idx] = { ...updated[idx], label: e.target.value };
+                                setSettings({
+                                  ...settings,
+                                  shipping_rates: { ...settings.shipping_rates, india_weight_slabs: updated },
+                                });
+                              }}
+                              placeholder="e.g. Up to 100 gm (Sample / 10ml)"
+                              className="w-full px-2 py-1 rounded-lg border border-stone-300 text-xs text-stone-800"
+                            />
+                          </td>
+                          <td className="p-2 text-right">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updated = slabsList.filter((_, i) => i !== idx);
+                                setSettings({
+                                  ...settings,
+                                  shipping_rates: { ...settings.shipping_rates, india_weight_slabs: updated },
+                                });
+                              }}
+                              className="p-1 rounded text-stone-400 hover:text-rose-600"
+                              title="Delete slab"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-stone-800 mb-1">Free Shipping Threshold (₹)</label>
-                <input
-                  type="number"
-                  value={settings.shipping_rates?.free_threshold || 2500}
-                  onChange={(e) =>
-                    setSettings({
-                      ...settings,
-                      shipping_rates: { ...settings.shipping_rates, free_threshold: Number(e.target.value) },
-                    })
-                  }
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-stone-50 border border-stone-300 text-xs text-stone-900 focus:outline-none focus:border-amber-600"
-                />
+              {/* Domestic Shipping Controls: Free Threshold, Over 200 Kg Rate & Packaging Buffer */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+                <div className="p-3.5 rounded-xl bg-white border border-stone-300 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-stone-900">
+                      Free Shipping Threshold (₹)
+                    </label>
+                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                      {(settings.shipping_rates?.free_threshold ?? 2500) > 0 ? 'Active' : 'Disabled (Always Charge)'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-black text-stone-600">₹</span>
+                    <input
+                      type="number"
+                      value={settings.shipping_rates?.free_threshold ?? 2500}
+                      onChange={(e) =>
+                        setSettings({
+                          ...settings,
+                          shipping_rates: { ...settings.shipping_rates, free_threshold: Number(e.target.value) },
+                        })
+                      }
+                      className="w-full px-3 py-1.5 rounded-lg bg-stone-50 border border-stone-300 text-xs text-stone-900 font-bold focus:outline-none"
+                      placeholder="e.g. 2500 (or 0 to always charge)"
+                    />
+                  </div>
+                  <p className="text-[10px] text-stone-500">
+                    Orders at or above this value qualify for free domestic shipping. <strong>Set to 0 to always charge weight-based shipping</strong>.
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-white border border-stone-300 space-y-1">
+                  <label className="block text-xs font-bold text-stone-900">
+                    Over 200 Kg Flat Rate (₹ / Kg) <span className="text-amber-800 font-normal">• Bulk Cargo</span>
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-black text-stone-600">₹</span>
+                    <input
+                      type="number"
+                      value={settings.shipping_rates?.india_over_200kg_rate_per_kg || 100}
+                      onChange={(e) =>
+                        setSettings({
+                          ...settings,
+                          shipping_rates: { ...settings.shipping_rates, india_over_200kg_rate_per_kg: Number(e.target.value) },
+                        })
+                      }
+                      className="w-full px-3 py-1.5 rounded-lg bg-stone-50 border border-stone-300 text-xs text-stone-900 font-bold focus:outline-none"
+                    />
+                    <span className="text-xs text-stone-500 font-bold">/ Kg</span>
+                  </div>
+                  <p className="text-[10px] text-stone-500">Post 200 Kg, orders are charged flat per kg (e.g. 250 Kg × ₹100 = ₹25,000).</p>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-white border border-stone-300 space-y-1">
+                  <label className="block text-xs font-bold text-stone-900">
+                    Packaging Overhead Buffer (%) <span className="text-amber-800 font-normal">• Gross Weight</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      value={settings.shipping_rates?.packaging_overhead_percent || 20}
+                      onChange={(e) =>
+                        setSettings({
+                          ...settings,
+                          shipping_rates: { ...settings.shipping_rates, packaging_overhead_percent: Number(e.target.value) },
+                        })
+                      }
+                      className="w-full px-3 py-1.5 rounded-lg bg-stone-50 border border-stone-300 text-xs text-stone-900 font-bold focus:outline-none pr-8"
+                    />
+                    <span className="absolute right-3 top-2 text-xs text-stone-500 font-bold">%</span>
+                  </div>
+                  <p className="text-[10px] text-stone-500">Gross Weight = Net Weight + 20% (1 Kg Net = 1.2 Kg Gross Billed).</p>
+                </div>
+              </div>
+            </div>
+
+            {/* INTERNATIONAL EXPORT REGIONS SECTION WITH EDITABLE RATES */}
+            <div className="p-4 sm:p-5 rounded-2xl bg-amber-50/50 border border-amber-200/80 space-y-4">
+              <div className="flex items-center justify-between border-b border-amber-200 pb-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">✈️</span>
+                  <div>
+                    <h4 className="text-sm font-bold text-amber-950 uppercase tracking-wider">
+                      International & Export Regional Rates (USD / Kg)
+                    </h4>
+                    <p className="text-[11px] text-amber-800">
+                      Standard Export: $9 USD/Kg (Min $30 USD). Above 200 Kg: Regional Destination Rates below apply.
+                    </p>
+                  </div>
+                </div>
+                <span className="px-2.5 py-0.5 rounded-full bg-amber-200/80 text-amber-950 text-[10px] font-bold">
+                  Global Freight Engine
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="p-3.5 rounded-xl bg-white border border-amber-200 space-y-1">
+                  <label className="block text-xs font-bold text-amber-950">Standard Export Rate Up to 200 Kg ($ USD / Kg)</label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-stone-600">$</span>
+                    <input
+                      type="number"
+                      value={settings.shipping_rates?.export_under_200kg_rate_usd || 9}
+                      onChange={(e) =>
+                        setSettings({
+                          ...settings,
+                          shipping_rates: { ...settings.shipping_rates, export_under_200kg_rate_usd: Number(e.target.value) },
+                        })
+                      }
+                      className="w-full px-3 py-1.5 rounded-lg bg-amber-50/50 border border-amber-300 text-xs text-stone-900 font-bold focus:outline-none"
+                    />
+                    <span className="text-xs text-stone-500 font-bold">/ Kg</span>
+                  </div>
+                  <p className="text-[10px] text-amber-800">Default rate per kg for export parcels under 200 Kg.</p>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-white border border-amber-200 space-y-1">
+                  <label className="block text-xs font-bold text-amber-950">Minimum Export Fixed Charge ($ USD)</label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-stone-600">$</span>
+                    <input
+                      type="number"
+                      value={settings.shipping_rates?.export_min_charge_usd || 30}
+                      onChange={(e) =>
+                        setSettings({
+                          ...settings,
+                          shipping_rates: { ...settings.shipping_rates, export_min_charge_usd: Number(e.target.value) },
+                        })
+                      }
+                      className="w-full px-3 py-1.5 rounded-lg bg-amber-50/50 border border-amber-300 text-xs text-stone-900 font-bold focus:outline-none"
+                    />
+                    <span className="text-xs text-stone-500 font-bold">USD</span>
+                  </div>
+                  <p className="text-[10px] text-amber-800">Minimum base courier fee applied to any export dispatch.</p>
+                </div>
+              </div>
+
+              {/* Above 200 Kg Regional Rate Table with Direct Input Controls */}
+              <div className="pt-2">
+                <label className="block text-xs font-bold text-amber-950 mb-2">
+                  Over 200 Kg Export Regional Rates ($ USD / Kg) — Editable by Destination Zone:
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+                  {/* USA & Canada */}
+                  <div className="p-3 rounded-xl bg-white border border-amber-200 space-y-1.5">
+                    <span className="text-xs font-bold text-stone-800 block">🇺🇸 USA & 🇨🇦 Canada</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-bold text-stone-600">$</span>
+                      <input
+                        type="number"
+                        value={settings.shipping_rates?.export_region_over_200kg_rates?.usa_canada ?? 8}
+                        onChange={(e) =>
+                          setSettings({
+                            ...settings,
+                            shipping_rates: {
+                              ...settings.shipping_rates,
+                              export_region_over_200kg_rates: {
+                                ...(settings.shipping_rates?.export_region_over_200kg_rates || {}),
+                                usa_canada: Number(e.target.value),
+                              },
+                            },
+                          })
+                        }
+                        className="w-full px-2 py-1 rounded-lg border border-amber-300 text-xs font-bold text-amber-950"
+                      />
+                      <span className="text-[10px] text-stone-500 font-bold">/Kg</span>
+                    </div>
+                  </div>
+
+                  {/* Asiana */}
+                  <div className="p-3 rounded-xl bg-white border border-amber-200 space-y-1.5">
+                    <span className="text-xs font-bold text-stone-800 block">🇯🇵 Asiana (East/SE Asia)</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-bold text-stone-600">$</span>
+                      <input
+                        type="number"
+                        value={settings.shipping_rates?.export_region_over_200kg_rates?.asiana ?? 8}
+                        onChange={(e) =>
+                          setSettings({
+                            ...settings,
+                            shipping_rates: {
+                              ...settings.shipping_rates,
+                              export_region_over_200kg_rates: {
+                                ...(settings.shipping_rates?.export_region_over_200kg_rates || {}),
+                                asiana: Number(e.target.value),
+                              },
+                            },
+                          })
+                        }
+                        className="w-full px-2 py-1 rounded-lg border border-amber-300 text-xs font-bold text-amber-950"
+                      />
+                      <span className="text-[10px] text-stone-500 font-bold">/Kg</span>
+                    </div>
+                  </div>
+
+                  {/* Asia Pacific */}
+                  <div className="p-3 rounded-xl bg-white border border-amber-200 space-y-1.5">
+                    <span className="text-xs font-bold text-stone-800 block">🇦🇺 Asia Pacific (AU, NZ)</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-bold text-stone-600">$</span>
+                      <input
+                        type="number"
+                        value={settings.shipping_rates?.export_region_over_200kg_rates?.asia_pacific ?? 6}
+                        onChange={(e) =>
+                          setSettings({
+                            ...settings,
+                            shipping_rates: {
+                              ...settings.shipping_rates,
+                              export_region_over_200kg_rates: {
+                                ...(settings.shipping_rates?.export_region_over_200kg_rates || {}),
+                                asia_pacific: Number(e.target.value),
+                              },
+                            },
+                          })
+                        }
+                        className="w-full px-2 py-1 rounded-lg border border-amber-300 text-xs font-bold text-emerald-900"
+                      />
+                      <span className="text-[10px] text-stone-500 font-bold">/Kg</span>
+                    </div>
+                  </div>
+
+                  {/* Gulf & Middle East */}
+                  <div className="p-3 rounded-xl bg-white border border-amber-200 space-y-1.5">
+                    <span className="text-xs font-bold text-stone-800 block">🇦🇪 Gulf & Middle East</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-bold text-stone-600">$</span>
+                      <input
+                        type="number"
+                        value={settings.shipping_rates?.export_region_over_200kg_rates?.gulf_middle_east ?? 6}
+                        onChange={(e) =>
+                          setSettings({
+                            ...settings,
+                            shipping_rates: {
+                              ...settings.shipping_rates,
+                              export_region_over_200kg_rates: {
+                                ...(settings.shipping_rates?.export_region_over_200kg_rates || {}),
+                                gulf_middle_east: Number(e.target.value),
+                              },
+                            },
+                          })
+                        }
+                        className="w-full px-2 py-1 rounded-lg border border-amber-300 text-xs font-bold text-emerald-900"
+                      />
+                      <span className="text-[10px] text-stone-500 font-bold">/Kg</span>
+                    </div>
+                  </div>
+
+                  {/* Africa */}
+                  <div className="p-3 rounded-xl bg-white border border-amber-200 space-y-1.5">
+                    <span className="text-xs font-bold text-stone-800 block">🌍 Africa</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-bold text-stone-600">$</span>
+                      <input
+                        type="number"
+                        value={settings.shipping_rates?.export_region_over_200kg_rates?.africa ?? 11}
+                        onChange={(e) =>
+                          setSettings({
+                            ...settings,
+                            shipping_rates: {
+                              ...settings.shipping_rates,
+                              export_region_over_200kg_rates: {
+                                ...(settings.shipping_rates?.export_region_over_200kg_rates || {}),
+                                africa: Number(e.target.value),
+                              },
+                            },
+                          })
+                        }
+                        className="w-full px-2 py-1 rounded-lg border border-amber-300 text-xs font-bold text-rose-950"
+                      />
+                      <span className="text-[10px] text-stone-500 font-bold">/Kg</span>
+                    </div>
+                  </div>
+
+                  {/* South America */}
+                  <div className="p-3 rounded-xl bg-white border border-amber-200 space-y-1.5">
+                    <span className="text-xs font-bold text-stone-800 block">🇧🇷 South America</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-bold text-stone-600">$</span>
+                      <input
+                        type="number"
+                        value={settings.shipping_rates?.export_region_over_200kg_rates?.south_america ?? 10}
+                        onChange={(e) =>
+                          setSettings({
+                            ...settings,
+                            shipping_rates: {
+                              ...settings.shipping_rates,
+                              export_region_over_200kg_rates: {
+                                ...(settings.shipping_rates?.export_region_over_200kg_rates || {}),
+                                south_america: Number(e.target.value),
+                              },
+                            },
+                          })
+                        }
+                        className="w-full px-2 py-1 rounded-lg border border-amber-300 text-xs font-bold text-rose-950"
+                      />
+                      <span className="text-[10px] text-stone-500 font-bold">/Kg</span>
+                    </div>
+                  </div>
+
+                  {/* Europe & UK */}
+                  <div className="p-3 rounded-xl bg-white border border-amber-200 space-y-1.5">
+                    <span className="text-xs font-bold text-stone-800 block">🇪🇺 Europe & 🇬🇧 UK</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-bold text-stone-600">$</span>
+                      <input
+                        type="number"
+                        value={settings.shipping_rates?.export_region_over_200kg_rates?.europe ?? 7}
+                        onChange={(e) =>
+                          setSettings({
+                            ...settings,
+                            shipping_rates: {
+                              ...settings.shipping_rates,
+                              export_region_over_200kg_rates: {
+                                ...(settings.shipping_rates?.export_region_over_200kg_rates || {}),
+                                europe: Number(e.target.value),
+                              },
+                            },
+                          })
+                        }
+                        className="w-full px-2 py-1 rounded-lg border border-amber-300 text-xs font-bold text-blue-950"
+                      />
+                      <span className="text-[10px] text-stone-500 font-bold">/Kg</span>
+                    </div>
+                  </div>
+
+                  {/* Rest of World */}
+                  <div className="p-3 rounded-xl bg-white border border-amber-200 space-y-1.5">
+                    <span className="text-xs font-bold text-stone-800 block">🌐 Rest of World</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-bold text-stone-600">$</span>
+                      <input
+                        type="number"
+                        value={settings.shipping_rates?.export_region_over_200kg_rates?.rest_of_world ?? 9}
+                        onChange={(e) =>
+                          setSettings({
+                            ...settings,
+                            shipping_rates: {
+                              ...settings.shipping_rates,
+                              export_region_over_200kg_rates: {
+                                ...(settings.shipping_rates?.export_region_over_200kg_rates || {}),
+                                rest_of_world: Number(e.target.value),
+                              },
+                            },
+                          })
+                        }
+                        className="w-full px-2 py-1 rounded-lg border border-amber-300 text-xs font-bold text-stone-900"
+                      />
+                      <span className="text-[10px] text-stone-500 font-bold">/Kg</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-3.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-700 flex items-start gap-2.5">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+              <div className="space-y-0.5">
+                <span className="font-bold text-stone-900">Taxable Supply Compliance Notice</span>
+                <p className="text-[11px] text-stone-600">
+                  In accordance with GST rules, transportation/freight services on domestic e-commerce transactions are taxable supplies. The applicable {settings.tax_rate ?? 18}% GST is computed on the total taxable base: <strong>(Items Subtotal - Discount) + Shipping Fee</strong>.
+                </p>
               </div>
             </div>
           </div>
@@ -1164,7 +1646,7 @@ export default function SiteSettingsAdminPage() {
 
               <div>
                 <label className="block text-xs font-bold text-stone-800 mb-1">
-                  Maison Store GSTIN Number (For Tax Invoices) *
+                  Store GSTIN Number (For Tax Invoices) *
                 </label>
                 <input
                   type="text"
@@ -1236,7 +1718,7 @@ export default function SiteSettingsAdminPage() {
                     <UploadCloud className="w-4 h-4 text-sky-600" /> 2. Restore from Backup
                   </div>
                   <p className="text-xs text-sky-800 leading-relaxed">
-                    Upload any previously downloaded Rose Valley backup JSON file to safely restore catalog, variants, and configurations to Supabase.
+                    Upload any previously downloaded RoseOil.in backup JSON file to safely restore catalog, variants, and configurations to Supabase.
                   </p>
                   <div className="flex flex-wrap gap-1 pt-1">
                     <span className="px-2 py-0.5 rounded-md bg-white border border-sky-200 text-[10px] font-bold text-sky-700">Auto Upsert</span>
@@ -1409,7 +1891,7 @@ export default function SiteSettingsAdminPage() {
                   required
                   value={resetEmailInput}
                   onChange={(e) => setResetEmailInput(e.target.value)}
-                  placeholder="customer@maisonessence.com"
+                  placeholder="customer@roseoil.in"
                   className="w-full px-3.5 py-2.5 rounded-xl bg-stone-50 border border-stone-300 text-xs text-stone-900 focus:outline-none focus:border-amber-600"
                 />
               </div>
@@ -1480,7 +1962,7 @@ export default function SiteSettingsAdminPage() {
                       : 'N/A'}
                   </span>
                 </div>
-                <div className="grid grid-cols-3 gap-2 pt-2 text-center font-bold">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 text-center font-bold">
                   <div className="p-2 rounded-xl bg-white border border-sky-200 shadow-2xs">
                     <div className="text-base text-sky-700">
                       {backupFilePayload.data?.products?.length ||
@@ -1511,11 +1993,26 @@ export default function SiteSettingsAdminPage() {
                     </div>
                     <div className="text-[10px] text-stone-500 font-semibold">Categories</div>
                   </div>
+                  <div className="p-2 rounded-xl bg-white border border-sky-200 shadow-2xs">
+                    <div className="text-sm font-bold text-emerald-700">
+                      {backupFilePayload.data?.site_settings ? '✓ Complete' : '—'}
+                    </div>
+                    <div className="text-[10px] text-stone-500 font-semibold">Weight & Slabs</div>
+                  </div>
                 </div>
+
+                {(backupFilePayload.data?.pages?.length || backupFilePayload.data?.blogs?.length || backupFilePayload.data?.countries?.length) ? (
+                  <div className="flex items-center justify-between text-[11px] bg-white p-2.5 rounded-xl border border-sky-200 text-stone-600">
+                    <span>Includes Content & Routing:</span>
+                    <span className="font-semibold text-sky-950">
+                      {backupFilePayload.data?.pages?.length || 0} Pages • {backupFilePayload.data?.blogs?.length || 0} Blogs • {backupFilePayload.data?.countries?.length || 0} Countries
+                    </span>
+                  </div>
+                ) : null}
               </div>
 
               <p className="text-xs text-stone-600 leading-relaxed bg-stone-50 p-3 rounded-xl border border-stone-200">
-                Restoring this backup will safely update or upsert all product records, sizes, prices, images, and parameters into the Supabase database.
+                Restoring this backup will safely update or upsert all store configurations, domestic weight slabs, export regional tiers, products, variants, and pages into the Supabase database.
               </p>
 
               <div className="pt-2 flex justify-end gap-3 border-t border-stone-200">

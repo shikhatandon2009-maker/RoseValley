@@ -10,7 +10,7 @@ export default function StaticPolicyPage({ params }: { params: { slug: string } 
     'terms-of-service': 'Terms of Service',
   };
 
-  const title = titles[params.slug] || 'Maison Information';
+  const title = titles[params.slug] || 'Store Information';
 
   return (
     <div className="min-h-screen bg-white text-black font-sans">
@@ -21,7 +21,7 @@ export default function StaticPolicyPage({ params }: { params: { slug: string } 
 
         <div className="p-8 rounded-3xl bg-[#FAE6E7]/50 border border-[#F7D1D8] text-xs text-[#4A0D25] leading-relaxed space-y-4 font-serif">
           <p>
-            Welcome to Rose Valley Kannauj (Maison De L'Essence). We are committed to providing an exceptional luxury experience from copper deg steam creation to global doorstep delivery.
+            Welcome to RoseOil.in. We are committed to providing an exceptional experience from pure botanical steam distillation to global doorstep delivery.
           </p>
 
           <h3 className="font-bold text-sm text-[#1A0510]">Express Worldwide Shipping</h3>

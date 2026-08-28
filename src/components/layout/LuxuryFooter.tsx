@@ -19,16 +19,16 @@ export function LuxuryFooter() {
               {settings.use_text_logo ? (
                 <div className="flex flex-col">
                   <span className="font-serif font-black text-2xl text-[#1A0510] uppercase tracking-widest group-hover:text-[#4A0D25] transition-colors">
-                    {settings.site_name || 'Rose Valley Kannauj'}
+                    {settings.site_name || 'RoseOil.in'}
                   </span>
                   <span className="text-[10px] font-bold text-[#4A0D25] tracking-widest uppercase">
-                    {settings.tagline || 'Est. 1620 • Pure Hydro-Distillates'}
+                    {settings.tagline || '100% Pure Botanical Distillates'}
                   </span>
                 </div>
               ) : (
                 <img
                   src={formatImageUrl(settings.logo_url, '/images/logo/logo.png')}
-                  alt={settings.site_name || "Rose Valley Kannauj"}
+                  alt={settings.site_name || "RoseOil.in"}
                   className="h-14 sm:h-16 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
                   onError={(e) => {
                     (e.target as HTMLImageElement).src = '/images/logo/logo.png';
@@ -37,7 +37,7 @@ export function LuxuryFooter() {
               )}
             </Link>
             <p className="text-xs text-[#4A0D25] leading-relaxed max-w-sm font-medium">
-              World’s Largest Producer of Pure Rose Oil. Distilling rare Rosa Damascena and hydro-distilled botanical attars in Kannauj copper stills for over four centuries.
+              Pure essential oils and authentic botanical hydro-distillates formulated with 100% natural, alcohol-free ingredients.
             </p>
           </div>
 
@@ -45,23 +45,23 @@ export function LuxuryFooter() {
           <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="p-4 rounded-2xl bg-[#FAE6E7]/80 border border-[#F7D1D8] space-y-1 shadow-sm">
               <div className="flex items-center gap-1.5 text-xs font-extrabold text-[#1A0510]">
-                <Sparkles className="w-4 h-4 text-[#F6A6BB]" /> World&apos;s Largest
+                <Sparkles className="w-4 h-4 text-[#F6A6BB]" /> 100% Pure & Natural
               </div>
-              <div className="text-[11px] text-[#4A0D25] font-semibold">Producer of Pure Rose Oil & Attars</div>
+              <div className="text-[11px] text-[#4A0D25] font-semibold">Pure Botanical Essential Oils</div>
             </div>
 
             <div className="p-4 rounded-2xl bg-[#FAE6E7]/80 border border-[#F7D1D8] space-y-1 shadow-sm">
               <div className="flex items-center gap-1.5 text-xs font-extrabold text-[#1A0510]">
-                <Award className="w-4 h-4 text-[#F6A6BB]" /> 400-Year Heritage
+                <Award className="w-4 h-4 text-[#F6A6BB]" /> Steam Distilled
               </div>
-              <div className="text-[11px] text-[#4A0D25] font-semibold">Copper Deg-Bhapka Distillation</div>
+              <div className="text-[11px] text-[#4A0D25] font-semibold">Artisanal Hydro-Distillation</div>
             </div>
 
             <div className="p-4 rounded-2xl bg-[#FAE6E7]/80 border border-[#F7D1D8] space-y-1 shadow-sm">
               <div className="flex items-center gap-1.5 text-xs font-extrabold text-[#1A0510]">
                 <Droplet className="w-4 h-4 text-[#F6A6BB]" /> 100% Alcohol-Free
               </div>
-              <div className="text-[11px] text-[#4A0D25] font-semibold">Pure Botanical Hydro-Distillates</div>
+              <div className="text-[11px] text-[#4A0D25] font-semibold">Pure Botanical Extracts</div>
             </div>
           </div>
         </div>
@@ -75,9 +75,9 @@ export function LuxuryFooter() {
             </h3>
             <ul className="space-y-2 text-[#4A0D25] font-bold">
               <li><Link href="/products?category=pure-essential-oils" className="hover:text-[#F6A6BB] transition-colors">Pure Essential Oils</Link></li>
-              <li><Link href="/products?category=artisanal-blends" className="hover:text-[#F6A6BB] transition-colors">Artisanal Blends & Perfumes</Link></li>
-              <li><Link href="/products?category=royal-attars" className="hover:text-[#F6A6BB] transition-colors">Royal Attars (Deg-Bhapka)</Link></li>
-              <li><Link href="/products" className="hover:text-[#F6A6BB] transition-colors">Explore All Fragrances</Link></li>
+              <li><Link href="/products?category=artisanal-blends" className="hover:text-[#F6A6BB] transition-colors">Artisanal Blends & Distillates</Link></li>
+              <li><Link href="/products?category=royal-attars" className="hover:text-[#F6A6BB] transition-colors">Pure Botanical Extracts</Link></li>
+              <li><Link href="/products" className="hover:text-[#F6A6BB] transition-colors">Explore All Products</Link></li>
             </ul>
           </div>
 
@@ -94,22 +94,22 @@ export function LuxuryFooter() {
             </ul>
           </div>
 
-          {/* Col 3: Estate & Heritage */}
+          {/* Col 3: About & Contact */}
           <div className="space-y-3">
             <h3 className="font-serif font-extrabold text-sm text-[#1A0510] uppercase tracking-widest">
-              Estate & Heritage
+              About & Support
             </h3>
             <ul className="space-y-2 text-[#4A0D25] font-bold">
-              <li><Link href="/about" className="hover:text-[#F6A6BB] transition-colors">About 400-Yr Kannauj Heritage</Link></li>
-              <li><Link href="/contact" className="hover:text-[#F6A6BB] transition-colors">Contact Us & Estate Map</Link></li>
-              <li><Link href="/account" className="hover:text-[#F6A6BB] transition-colors">Private Client Account</Link></li>
+              <li><Link href="/about" className="hover:text-[#F6A6BB] transition-colors">About RoseOil.in</Link></li>
+              <li><Link href="/contact" className="hover:text-[#F6A6BB] transition-colors">Contact Us & Support</Link></li>
+              <li><Link href="/account" className="hover:text-[#F6A6BB] transition-colors">Client Account Portal</Link></li>
             </ul>
           </div>
         </div>
 
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-[#F7D1D8] flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-[#4A0D25] font-semibold">
-          <p>© 2026 Rose Valley Kannauj • Maison De L&apos;Essence. All rights reserved.</p>
+          <p>© 2026 RoseOil.in. All rights reserved.</p>
         </div>
       </div>
     </footer>

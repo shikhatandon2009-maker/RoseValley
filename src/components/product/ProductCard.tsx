@@ -20,6 +20,10 @@ export interface ProductCardProps {
     is_featured?: boolean;
     is_bestseller?: boolean;
     stock?: number;
+    net_weight?: number;
+    weight_unit?: string;
+    gross_weight?: number;
+    item_shipping_cost?: number;
   };
   priority?: boolean;
 }
@@ -65,12 +69,19 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
     e.preventDefault();
     e.stopPropagation();
     if (isOutOfStock) return;
+    const netW = product.net_weight || 100;
+    const grossW = product.gross_weight || (netW ? Number((netW * 1.2).toFixed(3)) : 120);
+
     addItem({
       id: product.id,
       productId: product.id,
       name: product.name,
       price: product.price,
       image: imgSrc,
+      net_weight: netW,
+      weight_unit: product.weight_unit || 'ml',
+      gross_weight: grossW,
+      item_shipping_cost: product.item_shipping_cost || 0,
     });
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);

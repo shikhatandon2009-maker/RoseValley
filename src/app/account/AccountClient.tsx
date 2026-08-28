@@ -534,7 +534,7 @@ export function AccountClient({ user: initialUser, orders: initialOrders, defaul
           </div>
           <div>
             <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-[#FAE6E7] border border-[#F7D1D8] text-[#4A0D25] text-[10px] font-black uppercase tracking-widest">
-              <Sparkles className="w-3.5 h-3.5 text-[#F6A6BB]" /> Maison Private Client Portal
+              <Sparkles className="w-3.5 h-3.5 text-[#F6A6BB]" /> RoseOil.in Client Portal
             </div>
             <h1 className="font-serif font-extrabold text-2xl sm:text-3xl text-[#1A0510] mt-1">
               {userState.full_name || 'Client'}

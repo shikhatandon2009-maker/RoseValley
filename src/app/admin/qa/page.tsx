@@ -551,7 +551,7 @@ export default function QAAdminPage() {
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
                                 <span className="font-extrabold text-[#1A0510]">
-                                  {ans.users?.full_name || 'Rose Valley Master Perfumer'}
+                                  {ans.users?.full_name || 'RoseOil.in Botanical Specialist'}
                                 </span>
                                 {ans.is_official && (
                                   <span className="px-2.5 py-0.5 rounded-full bg-[#F6A6BB] text-[#4A0D25] text-[9px] font-black uppercase tracking-wider flex items-center gap-1 shadow-xs">
@@ -732,7 +732,7 @@ export default function QAAdminPage() {
                   required
                   value={answerInputText}
                   onChange={(e) => setAnswerInputText(e.target.value)}
-                  placeholder="Enter official response from Rose Valley Master Perfumer..."
+                  placeholder="Enter official response from RoseOil.in Botanical Specialist..."
                   className="w-full px-3.5 py-2.5 rounded-2xl bg-[#FAE6E7]/40 border border-[#F7D1D8] text-xs text-[#1A0510] font-bold focus:outline-none focus:ring-2 focus:ring-[#F6A6BB]"
                 />
               </div>

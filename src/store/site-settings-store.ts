@@ -1,6 +1,22 @@
 import { create } from 'zustand';
 import { formatImageUrl } from '@/lib/format-image';
 
+export interface ShippingRates {
+  standard: number;
+  express: number;
+  free_threshold: number;
+  calculation_mode?: 'weight_based' | 'item_based' | 'flat' | 'hybrid';
+  weight_rate_per_kg?: number;
+  express_rate_per_kg?: number;
+  packaging_overhead_percent?: number;
+  min_shipping_fee?: number;
+  india_weight_slabs?: Array<{ maxKg: number; rateINR: number; label: string }>;
+  india_over_200kg_rate_per_kg?: number;
+  export_under_200kg_rate_usd?: number;
+  export_min_charge_usd?: number;
+  export_region_over_200kg_rates?: Record<string, number>;
+}
+
 export interface SiteSettings {
   store_id: string;
   site_name: string;
@@ -10,11 +26,7 @@ export interface SiteSettings {
   use_text_logo: boolean;
   contact_email: string;
   contact_phone: string;
-  shipping_rates: {
-    standard: number;
-    express: number;
-    free_threshold: number;
-  };
+  shipping_rates: ShippingRates;
   tax_rate: number;
   store_gstin?: string;
   social_links: Record<string, string>;
@@ -22,14 +34,36 @@ export interface SiteSettings {
 
 const DEFAULT_SETTINGS: SiteSettings = {
   store_id: 'essential_oils_perfumes_store_01',
-  site_name: 'Rose Valley Kannauj',
-  tagline: 'Artisanal Attars & Pure Distillates • Kannauj',
+  site_name: 'RoseOil.in',
+  tagline: 'Pure Essential Oils & Artisanal Botanical Distillates',
   logo_url: '/images/logo/logo.png',
   favicon_url: '/images/logo/favicon.png',
   use_text_logo: false,
-  contact_email: 'support@rosevalleykannauj.com',
-  contact_phone: '+91 98765 43210',
-  shipping_rates: { standard: 150, express: 300, free_threshold: 2500 },
+  contact_email: 'support@roseoil.in',
+  contact_phone: '+91 96486 78599',
+  shipping_rates: {
+    standard: 150,
+    express: 300,
+    free_threshold: 2500,
+    calculation_mode: 'weight_based',
+    weight_rate_per_kg: 100,
+    express_rate_per_kg: 180,
+    packaging_overhead_percent: 20,
+    min_shipping_fee: 60,
+    india_over_200kg_rate_per_kg: 100,
+    export_under_200kg_rate_usd: 9,
+    export_min_charge_usd: 30,
+    export_region_over_200kg_rates: {
+      usa_canada: 8,
+      asiana: 8,
+      asia_pacific: 6,
+      gulf_middle_east: 6,
+      africa: 11,
+      south_america: 10,
+      europe: 7,
+      rest_of_world: 9,
+    },
+  },
   tax_rate: 18.00,
   store_gstin: '09AAACR1234F1Z5',
   social_links: {

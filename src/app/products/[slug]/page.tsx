@@ -20,15 +20,15 @@ export async function generateMetadata({ params }: ProductDetailPageProps): Prom
 
   if (!product) {
     return {
-      title: 'Product Not Found | Rose Valley Kannauj',
-      description: 'The requested fragrance could not be found.',
+      title: 'Product Not Found | RoseOil.in',
+      description: 'The requested product could not be found.',
     };
   }
 
-  // 1. Meta Title (Fallback to Product Name | Rose Valley Kannauj)
+  // 1. Meta Title (Fallback to Product Name | RoseOil.in)
   const metaTitle = product.meta_title?.trim()
     ? product.meta_title.trim()
-    : `${product.name} | Rose Valley Kannauj`;
+    : `${product.name} | RoseOil.in`;
 
   // 2. Meta Description (Fallback to Product Excerpt)
   const cleanDescription = (product.description || '')
@@ -40,12 +40,12 @@ export async function generateMetadata({ params }: ProductDetailPageProps): Prom
     ? product.meta_description.trim()
     : cleanDescription
       ? cleanDescription.slice(0, 160)
-      : `Explore ${product.name}, 100% pure hydro-distilled Damask Rose attar and botanical extract hand-crafted in Kannauj since 1620.`;
+      : `Explore ${product.name}, 100% pure botanical essential oil and natural therapeutic extract from RoseOil.in.`;
 
   // 3. Meta Keywords
   const metaKeywords = product.meta_keywords?.trim()
     ? product.meta_keywords.split(',').map((k: string) => k.trim()).filter(Boolean)
-    : [product.name, 'pure attar', 'kannauj rose oil', 'hydro-distilled perfume', 'alcohol-free'];
+    : [product.name, 'pure essential oil', 'rose oil', 'botanical extract', 'alcohol-free', 'RoseOil.in'];
 
   // 4. Product Featured Image
   const primaryImage = product.images?.[0] || '/images/deg-bhapka-heritage.jpg';

@@ -86,6 +86,11 @@ export async function PUT(
       meta_description,
       category_ids,
       variants,
+      net_weight,
+      weight_unit,
+      gross_weight,
+      item_shipping_cost,
+      is_free_shipping,
     } = body;
 
     const updates: Record<string, any> = {
@@ -110,6 +115,16 @@ export async function PUT(
     if (meta_title !== undefined) updates.meta_title = meta_title.trim();
     if (meta_keywords !== undefined) updates.meta_keywords = meta_keywords.trim();
     if (meta_description !== undefined) updates.meta_description = meta_description.trim();
+
+    if (net_weight !== undefined) updates.net_weight = Number(net_weight) || 0;
+    if (weight_unit !== undefined) updates.weight_unit = weight_unit || 'gm';
+    if (gross_weight !== undefined) {
+      updates.gross_weight = Number(gross_weight) || 0;
+    } else if (net_weight !== undefined && Number(net_weight) > 0) {
+      updates.gross_weight = Number((Number(net_weight) * 1.2).toFixed(3));
+    }
+    if (item_shipping_cost !== undefined) updates.item_shipping_cost = Number(item_shipping_cost) || 0;
+    if (is_free_shipping !== undefined) updates.is_free_shipping = Boolean(is_free_shipping);
 
     const { data: updatedProduct, error } = await supabase
       .from('products')
@@ -153,14 +168,28 @@ export async function PUT(
         .eq('product_id', id);
 
       if (variants.length > 0) {
-        const variantRows = variants.map((v: any) => ({
-          store_id: STORE_ID,
-          product_id: id,
-          name: String(v.name || 'Default Variant').trim(),
-          sku: v.sku ? String(v.sku).trim() : null,
-          price: Number(v.price) || Number(price || 0),
-          compare_at_price: v.compare_at_price ? Number(v.compare_at_price) : null,
-        }));
+        const variantRows = variants.map((v: any) => {
+          const vNetWeight = Number(v.net_weight) || 0;
+          const vGrossWeight =
+            v.gross_weight && Number(v.gross_weight) > 0
+              ? Number(v.gross_weight)
+              : vNetWeight > 0
+              ? Number((vNetWeight * 1.2).toFixed(3))
+              : 0;
+
+          return {
+            store_id: STORE_ID,
+            product_id: id,
+            name: String(v.name || 'Default Variant').trim(),
+            sku: v.sku ? String(v.sku).trim() : null,
+            price: Number(v.price) || Number(price || 0),
+            compare_at_price: v.compare_at_price ? Number(v.compare_at_price) : null,
+            net_weight: vNetWeight,
+            weight_unit: v.weight_unit || (weight_unit || 'gm'),
+            gross_weight: vGrossWeight,
+            item_shipping_cost: Number(v.item_shipping_cost) || 0,
+          };
+        });
 
         const { data: insertedVariants } = await supabase
           .from('product_variants')

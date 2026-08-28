@@ -14,7 +14,7 @@ export async function sendEmail(options: SendEmailOptions): Promise<{ success: b
   const rawPass = process.env.SMTP_PASS || 'rzcp espy bbdb ktbm';
   const smtpPass = rawPass.trim().replace(/['"]/g, '');
   const emailFrom = process.env.EMAIL_FROM || smtpUser;
-  const emailFromName = process.env.EMAIL_FROM_NAME || 'Rose Valley Kannauj - Luxury Perfumes';
+  const emailFromName = process.env.EMAIL_FROM_NAME || 'RoseOil.in - Pure Essential Oils';
 
   let status: 'sent' | 'failed' = 'sent';
   let providerResponse = '';

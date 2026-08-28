@@ -55,8 +55,8 @@ export default function NotificationLogsAdminPage() {
   // Test Email Modal
   const [isTestModalOpen, setIsTestModalOpen] = useState(false);
   const [testForm, setTestForm] = useState({
-    recipient: 'customer@maisonessence.com',
-    subject: 'Your Maison De L\'Essence Order #MDE-9876 Is Dispatched',
+    recipient: 'customer@roseoil.in',
+    subject: 'Your RoseOil.in Order #RO-9876 Is Dispatched',
     notification_type: 'shipment_dispatch',
     status: 'sent' as 'sent' | 'failed',
     provider_response: '250 2.0.0 OK 1723053600 resend_msg_987654321',

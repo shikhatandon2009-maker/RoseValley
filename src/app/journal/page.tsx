@@ -11,8 +11,8 @@ export const revalidate = 60;
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Inspiration & Olfactory Journal | Rose Valley Kannauj',
-  description: 'Chronicles of Kannauj hydro-distillation, Damask rose harvesting, alcohol-free attar craftsmanship, and scent memory.',
+  title: 'Inspiration & Botanical Journal | RoseOil.in',
+  description: 'Chronicles of pure botanical hydro-distillation, Damask rose harvesting, and pure essential oil craft.',
 };
 
 const FALLBACK_ARTICLES = [
@@ -20,7 +20,7 @@ const FALLBACK_ARTICLES = [
     id: 'f1',
     slug: 'art-of-fragrance-layering',
     title: 'The Art of Fragrance Layering: Creating Your Scent Signature',
-    excerpt: 'Discover how master perfumers combine pure Kannauj hydro-distilled Ruh Gulab with Mysore Sandalwood for an enduring, personal scent trail.',
+    excerpt: 'Discover how master distillers combine pure hydro-distilled Rose Oil with Mysore Sandalwood for an enduring, personal scent trail.',
     featured_image: 'https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=800&auto=format&fit=crop',
     created_at: '2026-08-01T00:00:00Z',
     page_type: 'blog',

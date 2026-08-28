@@ -3,11 +3,11 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import { LuxuryHeader } from '@/components/layout/LuxuryHeader';
 import { LuxuryFooter } from '@/components/layout/LuxuryFooter';
-import { RotateCcw, ShieldCheck, CheckCircle2, Clock, AlertTriangle, ArrowLeft, Mail } from 'lucide-react';
+import { RotateCcw, ShieldCheck, CheckCircle2, Clock, ArrowLeft, Mail } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Return and Refund Policy | Rose Valley Kannauj',
-  description: 'Understand our return, transit replacement, and refund policies for authentic artisanal perfumes and pure essential oils at Rose Valley Kannauj.',
+  title: 'Return and Refund Policy | RoseOil.in',
+  description: 'Understand our return, transit replacement, and refund policies for authentic pure essential oils at RoseOil.in.',
 };
 
 export default function ReturnRefundPolicyPage() {
@@ -34,7 +34,7 @@ export default function ReturnRefundPolicyPage() {
             Return & Refund Policy
           </h1>
           <p className="text-xs sm:text-sm text-[#4A0D25] font-medium leading-relaxed">
-            Effective Date: August 1, 2026 • Rose Valley Kannauj (Maison De L&apos;Essence)
+            Effective Date: August 1, 2026 • RoseOil.in
           </p>
         </div>
 
@@ -69,8 +69,8 @@ export default function ReturnRefundPolicyPage() {
               <ShieldCheck className="w-5 h-5 text-[#4A0D25]" /> 1. Hygiene & Botanical Integrity Standards
             </h2>
             <p>
-              Due to the sensitive, consumable nature of pure hydro-distilled botanical oils, attars, and luxury personal care fragrances, 
-              <strong> opened or used bottles cannot be returned for restock</strong> once the tamper-evident luxury seal is broken, in adherence to international cosmetic hygiene protocols.
+              Due to the sensitive, consumable nature of pure botanical essential oils and extracts, 
+              <strong> opened or used bottles cannot be returned for restock</strong> once the tamper-evident seal is broken, in adherence to cosmetic hygiene protocols.
             </p>
           </section>
 
@@ -83,11 +83,11 @@ export default function ReturnRefundPolicyPage() {
             </p>
             <ul className="list-disc pl-6 space-y-1 text-xs">
               <li>The package is damaged, cracked, or leaking upon arrival.</li>
-              <li>You received an incorrect item or fragrance variant compared to your order confirmation.</li>
-              <li>The bottle atomizer, cap, or seal possesses a manufacturing defect.</li>
+              <li>You received an incorrect item or botanical variant compared to your order confirmation.</li>
+              <li>The bottle dropper, cap, or seal possesses a manufacturing defect.</li>
             </ul>
             <p className="pt-2">
-              <strong>How to Request a Replacement:</strong> Please contact our support team at <a href="mailto:support@rosevalleykannauj.com" className="font-bold underline text-[#1A0510]">support@rosevalleykannauj.com</a> or WhatsApp within <strong>48 hours of delivery</strong> with your Order Number and a clear photograph or unboxing video of the damaged item.
+              <strong>How to Request a Replacement:</strong> Please contact our support team at <a href="mailto:support@roseoil.in" className="font-bold underline text-[#1A0510]">support@roseoil.in</a> within <strong>48 hours of delivery</strong> with your Order Number and a clear photograph or unboxing video of the damaged item.
             </p>
           </section>
 
@@ -96,7 +96,7 @@ export default function ReturnRefundPolicyPage() {
               <RotateCcw className="w-5 h-5 text-[#4A0D25]" /> 3. Order Cancellation Before Dispatch
             </h2>
             <p>
-              Orders can be cancelled free of charge at any time <strong>before dispatch</strong> directly from your <Link href="/account" className="underline font-bold text-[#1A0510]">Private Client Account</Link> or by notifying customer care. 
+              Orders can be cancelled free of charge at any time <strong>before dispatch</strong> directly from your <Link href="/account" className="underline font-bold text-[#1A0510]">Client Account</Link> or by notifying customer support. 
               Upon cancellation, a full 100% refund is initiated immediately.
             </p>
           </section>
@@ -115,11 +115,10 @@ export default function ReturnRefundPolicyPage() {
               <Mail className="w-5 h-5 text-[#4A0D25]" /> 5. Need Immediate Assistance?
             </h2>
             <p>
-              Our dedicated customer care desk in Kannauj is here to help you:
+              Our dedicated customer support desk is here to help you:
             </p>
             <p className="text-xs font-semibold">
-              Email: <a href="mailto:support@rosevalleykannauj.com" className="underline">support@rosevalleykannauj.com</a><br />
-              WhatsApp / Concierge Desk: +91 94500 00000<br />
+              Email: <a href="mailto:support@roseoil.in" className="underline">support@roseoil.in</a><br />
               Hours: Monday – Saturday, 9:00 AM to 7:00 PM IST
             </p>
           </section>

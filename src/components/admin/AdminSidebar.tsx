@@ -31,7 +31,11 @@ import {
   Sparkles,
   Type,
   Lock,
-  X
+  X,
+  Bot,
+  Sliders,
+  Zap,
+  Link2
 } from 'lucide-react';
 
 interface AdminSidebarProps {
@@ -107,10 +111,28 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
           icon: Package,
         },
         {
+          label: 'Bulk Price Manager',
+          href: '/admin/products/bulk-pricing',
+          icon: Zap,
+          badge: '1-Click',
+        },
+        {
+          label: 'URL Slug Manager',
+          href: '/admin/products/slugs',
+          icon: Link2,
+          badge: 'SEO',
+        },
+        {
           label: 'SEO & Content Studio',
           href: '#seo-drawer',
           icon: Sparkles,
           badge: 'Live',
+        },
+        {
+          label: 'AI Prompts Studio',
+          href: '/admin/prompts',
+          icon: Bot,
+          badge: 'New',
         },
       ],
     },
@@ -224,7 +246,7 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                 <div className="p-0.5 rounded-lg bg-white border border-[#F7D1D8] shadow-xs">
                   <img 
                     src={formatImageUrl(settings.logo_url, '/images/logo/logo.png')} 
-                    alt={settings.site_name || "Rose Valley Kannauj"} 
+                    alt={settings.site_name || "RoseOil.in"} 
                     className="h-8 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
                     onError={(e) => {
                       (e.target as HTMLImageElement).src = '/images/logo/logo.png';
@@ -234,7 +256,7 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
               )}
               <div>
                 <h1 className="font-serif font-extrabold text-[#1A0510] text-xs tracking-wider group-hover:text-[#4A0D25] transition-colors leading-tight uppercase">
-                  {settings.site_name || 'ROSE VALLEY'}
+                  {settings.site_name || 'ROSEOIL.IN'}
                 </h1>
                 <p className="text-[8px] tracking-widest text-[#4A0D25] uppercase font-black">
                   Executive Admin Suite

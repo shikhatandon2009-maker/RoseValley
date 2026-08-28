@@ -3,11 +3,12 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Star, Heart, ShoppingBag, CheckCircle2, ShieldCheck, Sparkles, MessageSquare, ThumbsUp, Send, Maximize2, X, ChevronLeft, ChevronRight, Flame, Crown } from 'lucide-react';
+import { Star, Heart, ShoppingBag, CheckCircle2, ShieldCheck, Sparkles, MessageSquare, ThumbsUp, Send, Maximize2, X, ChevronLeft, ChevronRight, Flame, Crown, Truck, Scale, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCartStore } from '@/store/cart-store';
 import { useWishlistStore } from '@/store/wishlist-store';
 import { useCurrencyStore } from '@/store/currency-store';
+import { calculateWeightBasedShipping } from '@/lib/shipping-calculator';
 
 interface ProductDetailClientProps {
   product: any;
@@ -66,7 +67,7 @@ export function ProductDetailClient({ product, variants, initialReviews, initial
   const [selectedImage, setSelectedImage] = useState(product.images?.[0] || '');
   const [selectedVariant, setSelectedVariant] = useState(uniqueVariants[0] || null);
   const [quantity, setQuantity] = useState(1);
-  const [activeTab, setActiveTab] = useState<'story' | 'notes' | 'ingredients' | 'reviews' | 'qa'>('story');
+  const [activeTab, setActiveTab] = useState<'story' | 'notes' | 'ingredients' | 'shipping' | 'reviews' | 'qa'>('story');
 
   // Add to Cart Flying Animation state
   const [isFlying, setIsFlying] = useState(false);
@@ -111,15 +112,50 @@ export function ProductDetailClient({ product, variants, initialReviews, initial
 
   const { addItem, toggleCart } = useCartStore();
   const { toggleWishlist, isInWishlist } = useWishlistStore();
-  const { formatPrice } = useCurrencyStore();
+  const { formatPrice, currency, rates } = useCurrencyStore();
 
   const isLiked = isInWishlist(product.id);
   const currentPrice = selectedVariant ? selectedVariant.price : product.price;
+
+  // Weight & Packaging Calculations for active variant / size
+  const activeNetWeight = Number(selectedVariant?.net_weight || product.net_weight || 100);
+  const activeWeightUnit = (selectedVariant?.weight_unit || product.weight_unit || 'ml').toLowerCase();
+  const activeNetGrams = (activeWeightUnit === 'kg' || activeWeightUnit === 'l') ? activeNetWeight * 1000 : activeNetWeight;
+  const activeGrossGrams = selectedVariant?.gross_weight && Number(selectedVariant.gross_weight) > 0
+    ? (activeWeightUnit === 'kg' || activeWeightUnit === 'l' ? Number(selectedVariant.gross_weight) * 1000 : Number(selectedVariant.gross_weight))
+    : Math.round(activeNetGrams * 1.20);
+  
+  const totalBatchNetKg = Number(((activeNetGrams * quantity) / 1000).toFixed(3));
+  const totalBatchGrossKg = Number(((activeGrossGrams * quantity) / 1000).toFixed(3));
+
+  // Domestic Delivery Preview Calculation
+  const domesticShippingPreview = React.useMemo(() => {
+    return calculateWeightBasedShipping({
+      items: [{
+        price: currentPrice,
+        quantity,
+        net_weight: activeNetWeight,
+        weight_unit: activeWeightUnit,
+        gross_weight: activeGrossGrams,
+        item_shipping_cost: selectedVariant?.item_shipping_cost || product.item_shipping_cost || 0,
+      }],
+      destinationCountryCode: 'IN',
+      targetCurrency: currency,
+      rates,
+    });
+  }, [currentPrice, quantity, activeNetWeight, activeWeightUnit, activeGrossGrams, selectedVariant, product, currency, rates]);
 
   const handleAddToCart = () => {
     // Add item to cart state without opening sidebar cart immediately
     const itemId = selectedVariant ? `${product.id}_${selectedVariant.id}` : product.id;
     const selectedImg = selectedImage || (product.images && product.images[0]) || '';
+
+    const netW = selectedVariant?.net_weight || product.net_weight || 100;
+    const grossW =
+      selectedVariant?.gross_weight ||
+      product.gross_weight ||
+      (Number(netW) > 0 ? Number((Number(netW) * 1.2).toFixed(3)) : 120);
+    const itemShip = selectedVariant?.item_shipping_cost || product.item_shipping_cost || 0;
 
     addItem({
       id: itemId,
@@ -129,6 +165,10 @@ export function ProductDetailClient({ product, variants, initialReviews, initial
       variantName: selectedVariant?.name,
       price: currentPrice,
       image: selectedImg,
+      net_weight: Number(netW) || 0,
+      weight_unit: selectedVariant?.weight_unit || product.weight_unit || 'ml',
+      gross_weight: Number(grossW) || 0,
+      item_shipping_cost: Number(itemShip) || 0,
     }, quantity, false);
 
     setIsFlying(true);
@@ -514,6 +554,54 @@ export function ProductDetailClient({ product, variants, initialReviews, initial
             </div>
           )}
 
+          {/* DYNAMIC WEIGHT & PACKAGING SPECS & ESTIMATED SHIPPING PREVIEW */}
+          <div className="p-3.5 sm:p-4 rounded-2xl bg-[#FAE6E7]/80 border border-[#F7D1D8] space-y-2.5 shadow-2xs">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-[#4A0D25]">
+                <Scale className="w-4 h-4 text-[#F6A6BB]" />
+                <span>Weight & Packaging Specifications:</span>
+              </div>
+              <span className="text-[10px] font-extrabold uppercase tracking-wider bg-white px-2 py-0.5 rounded-full border border-[#F7D1D8] text-[#4A0D25]">
+                {activeNetWeight} {activeWeightUnit} Net • {activeGrossGrams < 1000 ? `${activeGrossGrams} gm` : `${(activeGrossGrams/1000).toFixed(2)} Kg`} Gross
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+              <div className="p-2.5 rounded-xl bg-white/90 border border-[#F7D1D8] space-y-0.5">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-stone-500 font-semibold flex items-center gap-1">
+                    <span>🇮🇳 Domestic Delivery:</span>
+                  </span>
+                  <span className="font-mono font-bold text-[#4A0D25]">
+                    {domesticShippingPreview.shippingFeeINR === 0 ? 'FREE' : `₹${domesticShippingPreview.shippingFeeINR}`}
+                  </span>
+                </div>
+                <span className="text-[10px] text-stone-500 block truncate">
+                  {domesticShippingPreview.slabLabel} (+ 18% GST)
+                </span>
+              </div>
+
+              <div className="p-2.5 rounded-xl bg-white/90 border border-[#F7D1D8] space-y-0.5">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-stone-500 font-semibold flex items-center gap-1">
+                    <span>✈️ Global Air Export:</span>
+                  </span>
+                  <span className="font-mono font-bold text-amber-900">$9 USD / Kg</span>
+                </div>
+                <span className="text-[10px] text-stone-500 block truncate">
+                  Min $30 USD • Tiered Rates over 200 Kg
+                </span>
+              </div>
+            </div>
+
+            <div className="text-[10px] text-[#4A0D25]/75 font-medium flex items-center gap-1 pt-0.5">
+              <Info className="w-3 h-3 text-[#F6A6BB] shrink-0" />
+              <span>
+                Calculated on Gross Weight (+20% packaging buffer). Total billed for {quantity} item(s): <strong>{totalBatchGrossKg} Kg</strong>.
+              </span>
+            </div>
+          </div>
+
           {/* Quantity & CTA Actions */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 pt-4 border-t border-[#F2D4D4]">
             <div className="flex items-center gap-2.5">
@@ -595,7 +683,7 @@ export function ProductDetailClient({ product, variants, initialReviews, initial
       {/* Tabs: Story, Scent Notes, Ingredients, Reviews, Q&A */}
       <div className="space-y-6 sm:space-y-8 w-full overflow-hidden">
         <div className="flex border-b border-[#F7D1D8] overflow-x-auto gap-3 sm:gap-8 pb-1 scrollbar-none touch-pan-x w-full max-w-full -mx-1 px-1">
-          {(['story', 'notes', 'ingredients', 'reviews', 'qa'] as const).map((tab) => (
+          {(['story', 'notes', 'ingredients', 'shipping', 'reviews', 'qa'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -608,6 +696,7 @@ export function ProductDetailClient({ product, variants, initialReviews, initial
               {tab === 'story' && 'Story & Details'}
               {tab === 'notes' && 'Olfactory Notes'}
               {tab === 'ingredients' && 'Ingredients & Origin'}
+              {tab === 'shipping' && 'Weight & Shipping Slabs'}
               {tab === 'reviews' && `Reviews (${reviews.length})`}
               {tab === 'qa' && `Q&A (${questions.length})`}
             </button>
@@ -688,6 +777,97 @@ export function ProductDetailClient({ product, variants, initialReviews, initial
                 <li key={i}>{ing}</li>
               ))}
             </ul>
+          </div>
+        )}
+
+        {/* Tab: Weight & Shipping Logistics Matrix */}
+        {activeTab === 'shipping' && (
+          <div className="p-4 sm:p-8 bg-white/80 rounded-2xl border border-[#F7D1D8] space-y-6 animate-in fade-in shadow-xs">
+            <div>
+              <h3 className="font-serif text-lg sm:text-xl font-bold text-[#1A0510]">
+                Weight Specifications & Transparent Shipping Matrix
+              </h3>
+              <p className="text-xs text-[#4A0D25] leading-relaxed font-medium mt-1">
+                All fragrances are calculated on Gross Weight (Net Weight + 20% shockproof hydro-distillate packaging buffer). Transportation is a taxable supply under GST.
+              </p>
+            </div>
+
+            {/* Sizes & Weights Table */}
+            <div className="space-y-3">
+              <h4 className="font-serif font-bold text-xs uppercase tracking-wider text-[#1A0510] flex items-center gap-1.5">
+                <Scale className="w-4 h-4 text-[#F6A6BB]" /> Available Sizes, Net & Gross Weights
+              </h4>
+              <div className="rounded-xl border border-[#F7D1D8] bg-white overflow-hidden">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-[#FAE6E7] text-[#4A0D25] uppercase font-black text-[10px]">
+                    <tr>
+                      <th className="p-3">Size / Format</th>
+                      <th className="p-3">Net Volume / Weight</th>
+                      <th className="p-3">Gross Dispense Weight (+20%)</th>
+                      <th className="p-3">Unit Price</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#F7D1D8]">
+                    {uniqueVariants.length > 0 ? (
+                      uniqueVariants.map((v) => {
+                        const nw = Number(v.net_weight) || 100;
+                        const u = (v.weight_unit || 'ml').toLowerCase();
+                        const nGrams = (u === 'kg' || u === 'l') ? nw * 1000 : nw;
+                        const gGrams = Math.round(nGrams * 1.20);
+                        const isCurrent = selectedVariant?.id === v.id;
+                        return (
+                          <tr key={v.id || v.name} className={isCurrent ? 'bg-[#FAE6E7]/50 font-bold' : ''}>
+                            <td className="p-3 flex items-center gap-2">
+                              <span>{v.name}</span>
+                              {isCurrent && (
+                                <span className="px-2 py-0.5 rounded-full bg-[#4A0D25] text-white text-[9px] font-black uppercase">
+                                  Selected
+                                </span>
+                              )}
+                            </td>
+                            <td className="p-3 font-mono">{nw} {u}</td>
+                            <td className="p-3 font-mono">{gGrams < 1000 ? `${gGrams} gm` : `${(gGrams/1000).toFixed(2)} Kg`}</td>
+                            <td className="p-3 font-mono text-[#4A0D25]">{formatPrice(v.price)}</td>
+                          </tr>
+                        );
+                      })
+                    ) : (
+                      <tr>
+                        <td className="p-3">{product.name}</td>
+                        <td className="p-3 font-mono">{activeNetWeight} {activeWeightUnit}</td>
+                        <td className="p-3 font-mono">{activeGrossGrams} gm</td>
+                        <td className="p-3 font-mono text-[#4A0D25]">{formatPrice(product.price)}</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Domestic vs Export Rules */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+              <div className="p-4 rounded-xl bg-stone-50 border border-stone-200 space-y-2">
+                <h5 className="font-bold text-stone-900 flex items-center gap-1.5">
+                  <span>🇮🇳 India Domestic Delivery Rules</span>
+                </h5>
+                <ul className="space-y-1 text-stone-600 text-[11px] list-disc list-inside">
+                  <li>Sizes 10ml to 200 Kg gross weight use slab tiers (from ₹60 for 10ml/100g sample).</li>
+                  <li>Over 200 Kg bulk shipments: Flat ₹100 / kg.</li>
+                  <li>18% GST taxable freight compliance on domestic courier services.</li>
+                </ul>
+              </div>
+
+              <div className="p-4 rounded-xl bg-amber-50/60 border border-amber-200 space-y-2">
+                <h5 className="font-bold text-amber-950 flex items-center gap-1.5">
+                  <span>✈️ International Export Rates (USD)</span>
+                </h5>
+                <ul className="space-y-1 text-amber-800 text-[11px] list-disc list-inside">
+                  <li>Up to 200 Kg: $9 USD / kg (Fixed minimum $30 USD applied).</li>
+                  <li>Over 200 Kg: $8 USA/Canada/Asiana • $6 Gulf & Asia Pacific • $11 Africa • $10 South America • $7 Europe.</li>
+                  <li>Converted live to your local billing currency.</li>
+                </ul>
+              </div>
+            </div>
           </div>
         )}
 

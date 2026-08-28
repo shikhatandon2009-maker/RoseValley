@@ -10,6 +10,10 @@ export interface CartItem {
   price: number; // base price in INR
   quantity: number;
   image: string;
+  net_weight?: number;
+  weight_unit?: string;
+  gross_weight?: number;
+  item_shipping_cost?: number;
 }
 
 interface CartState {
@@ -63,7 +67,7 @@ const safeLocalStorage = {
       try {
         for (let i = 0; i < localStorage.length; i++) {
           const key = localStorage.key(i);
-          if (key && key !== name && key.startsWith('maison_')) {
+          if (key && key !== name && (key.startsWith('roseoil_') || key.startsWith('maison_'))) {
             try { localStorage.removeItem(key); } catch (err) {}
           }
         }
@@ -165,7 +169,7 @@ export const useCartStore = create<CartState>()(
       },
     }),
     {
-      name: 'maison_perfumes_cart',
+      name: 'roseoil_perfumes_cart',
       storage: createJSONStorage(() => safeLocalStorage),
     }
   )

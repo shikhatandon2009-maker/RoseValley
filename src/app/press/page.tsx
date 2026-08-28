@@ -1,7 +1,7 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Sparkles, ExternalLink, Award, Newspaper, BookOpen, ChevronRight } from 'lucide-react';
+import { ExternalLink, Award, Newspaper } from 'lucide-react';
 import { LuxuryHeader } from '@/components/layout/LuxuryHeader';
 import { LuxuryFooter } from '@/components/layout/LuxuryFooter';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
@@ -11,40 +11,40 @@ export const revalidate = 60;
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Press & Media Mentions | Rose Valley Kannauj',
-  description: 'Explore national and international press coverage, magazine features, and media mentions of Rose Valley Kannauj pure hydro-distilled attars.',
+  title: 'Press & Media Mentions | RoseOil.in',
+  description: 'Explore national and international press coverage, botanical features, and media mentions of RoseOil.in pure essential oils.',
 };
 
 const FALLBACK_PRESS = [
   {
     id: 'press-vogue-2026',
     publisher: 'Vogue India',
-    title: 'Inside Kannauj’s 400-Year-Old Copper Deg Stills with Rose Valley',
-    quote: 'Rose Valley Kannauj preserves the sacred art of pre-dawn hydro-distillation. Their Ruh Gulab and Ruh Khus extracts represent the pinnacle of Indian luxury perfumery.',
+    title: 'Pure Botanical Extraction with RoseOil.in',
+    quote: 'RoseOil.in preserves the authentic science of pure botanical distillation. Their pure Rose Otto and Vetiver extracts represent the gold standard of organic wellness.',
     image: 'https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=1000&auto=format&fit=crop',
     date: 'June 2026',
   },
   {
     id: 'press-harpers-2026',
     publisher: "Harper's Bazaar",
-    title: 'The Liquid Gold of Kannauj: Why Natural Attars Are Replacing Synthetic Perfumes',
-    quote: 'Free from synthetic alcohol and parabens, Rose Valley’s Damask Rose distillates unfold with an extraordinary 14-hour longevity on pulse points.',
+    title: 'The Liquid Gold of Pure Botanicals: Why Natural Essential Oils Lead Modern Skincare',
+    quote: 'Free from synthetic chemicals and artificial fixatives, RoseOil.in distillates deliver therapeutic potency and long-lasting aromatic richness.',
     image: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=1000&auto=format&fit=crop',
     date: 'May 2026',
   },
   {
     id: 'press-et-2026',
     publisher: 'The Economic Times',
-    title: 'Reviving Ancient Craftsmanship: How Rose Valley Took Kannauj Attar Global',
-    quote: 'Combining QR provenance passports with traditional copper deg distillation, Rose Valley has redefined heritage luxury exports for discerning international collectors.',
+    title: 'Redefining Purity: How RoseOil.in Built a Global Botanical Legacy',
+    quote: 'Combining rigorous GC-MS testing with traditional hydro-distillation, RoseOil.in has set the benchmark for pure botanical exports.',
     image: 'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?q=80&w=1000&auto=format&fit=crop',
     date: 'March 2026',
   },
   {
     id: 'press-gq-2025',
     publisher: 'GQ Magazine',
-    title: 'The Best Artisanal Alcohol-Free Fragrances Every Collector Needs',
-    quote: 'Ruh Khus Vetiver Extract by Rose Valley is an olfactory masterpiece—cooling, earthy, and steeped in four centuries of Kannauj craftsmanship.',
+    title: 'The Best Therapeutic Essential Oils Every Connoisseur Needs',
+    quote: 'Wild Vetiver Essential Oil by RoseOil.in is a grounding botanical masterpiece—cooling, earthy, and deeply restorative.',
     image: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=1000&auto=format&fit=crop',
     date: 'December 2025',
   },
@@ -92,7 +92,7 @@ export default async function PressPage() {
             Press & Media Mentions
           </h1>
           <p className="text-xs sm:text-sm text-[#4A0D25] font-bold leading-relaxed">
-            Featured in leading international beauty, lifestyle, and financial publications.
+            Featured in leading international wellness, lifestyle, and industry publications.
           </p>
         </div>
 
@@ -128,7 +128,7 @@ export default async function PressPage() {
                 </h3>
 
                 <blockquote className="text-xs sm:text-sm text-[#4A0D25] font-medium leading-relaxed italic border-l-2 border-[#F6A6BB] pl-4 py-1">
-                  "{item.quote}"
+                  &ldquo;{item.quote}&rdquo;
                 </blockquote>
               </div>
 

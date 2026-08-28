@@ -3,11 +3,11 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import { LuxuryHeader } from '@/components/layout/LuxuryHeader';
 import { LuxuryFooter } from '@/components/layout/LuxuryFooter';
-import { FileText, ShieldCheck, Scale, Sparkles, AlertCircle, ArrowLeft } from 'lucide-react';
+import { Scale, ArrowLeft } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Terms and Conditions | Rose Valley Kannauj',
-  description: 'Terms and conditions governing orders, authentic Kannauj artisanal hydro-distillates, pricing, and services of Rose Valley Kannauj.',
+  title: 'Terms and Conditions | RoseOil.in',
+  description: 'Terms and conditions governing orders, pure essential oils, pricing, and services of RoseOil.in.',
 };
 
 export default function TermsAndConditionsPage() {
@@ -34,7 +34,7 @@ export default function TermsAndConditionsPage() {
             Terms & Conditions
           </h1>
           <p className="text-xs sm:text-sm text-[#4A0D25] font-medium leading-relaxed">
-            Effective Date: August 1, 2026 • Rose Valley Kannauj (Maison De L&apos;Essence)
+            Effective Date: August 1, 2026 • RoseOil.in
           </p>
         </div>
 
@@ -45,19 +45,19 @@ export default function TermsAndConditionsPage() {
               1. Acceptance of Terms
             </h2>
             <p>
-              By accessing, browsing, or purchasing from <strong>rosevalleykannauj.com</strong> (the &quot;Site&quot;), operated by <strong>Rose Valley Kannauj / Maison De L&apos;Essence</strong>, you agree to be legally bound by these Terms and Conditions and our associated policies (Privacy Policy, Shipping Policy, and Return/Refund Policy).
+              By accessing, browsing, or purchasing from <strong>roseoil.in</strong> (the &quot;Site&quot;), operated by <strong>RoseOil.in</strong>, you agree to be legally bound by these Terms and Conditions and our associated policies (Privacy Policy, Shipping Policy, and Return/Refund Policy).
             </p>
           </section>
 
           <section className="p-6 rounded-3xl bg-white border border-[#F7D1D8] shadow-xs space-y-3">
             <h2 className="font-serif text-lg sm:text-xl font-bold text-[#1A0510]">
-              2. Authentic Artisanal Distillates & Natural Variations
+              2. 100% Pure Botanical Extracts & Natural Variations
             </h2>
             <p>
-              All our Ruh Gulab, wild Ruh Khus, Shamama, and botanical essential oils are 100% pure hydro-distillates produced using traditional copper Deg-Bhapka equipment in Kannauj.
+              All our essential oils, hydro-distillates, and botanical extracts are 100% pure, natural, and therapeutic-grade products.
             </p>
             <p>
-              Because natural harvest yields of <em>Rosa Damascena</em> flowers, vetiver roots, and rainfall conditions vary from season to season, subtle color and scent nuances may naturally occur. These natural variations are the defining hallmark of pure unadulterated artisanal botanical extracts.
+              Because natural harvest yields of <em>Rosa Damascena</em> flowers, botanical roots, and climatic conditions vary across seasons, subtle aroma notes and color depth may naturally occur. These nuances are the defining hallmark of pure, unadulterated botanical essences.
             </p>
           </section>
 
@@ -66,8 +66,8 @@ export default function TermsAndConditionsPage() {
               3. Pricing, Multi-Currency & GST Invoicing
             </h2>
             <p>
-              • Prices are listed in Indian Rupees (INR) and converted into applicable foreign currencies (USD, EUR, GBP, AED) for global patrons using real-time market exchange rates.<br />
-              • All domestic orders in India include statutory GST (HSN 330300). Registered businesses can input their GSTIN and Company Name during checkout or prior to order dispatch to receive an official Input Tax Credit (ITC) compliant GST invoice.
+              • Prices are listed in Indian Rupees (INR) and converted into applicable foreign currencies (USD, EUR, GBP, AED) for international patrons using real-time market exchange rates.<br />
+              • All domestic orders in India include statutory GST. Registered businesses can input their GSTIN and Company Name during checkout or prior to order dispatch to receive an official Input Tax Credit (ITC) compliant GST invoice.
             </p>
           </section>
 
@@ -82,10 +82,10 @@ export default function TermsAndConditionsPage() {
 
           <section className="p-6 rounded-3xl bg-white border border-[#F7D1D8] shadow-xs space-y-3">
             <h2 className="font-serif text-lg sm:text-xl font-bold text-[#1A0510]">
-              5. Intellectual Property & Brand Heritage
+              5. Intellectual Property & Brand Rights
             </h2>
             <p>
-              All trademarks, imagery, historical distillery narratives, bottle designs, logos, and digital content published on this website are the proprietary intellectual property of Rose Valley Kannauj. Unauthorized reproduction or commercial imitation is strictly prohibited.
+              All trademarks, imagery, botanical articles, bottle designs, logos, and digital content published on this website are the proprietary intellectual property of RoseOil.in. Unauthorized reproduction or commercial imitation is strictly prohibited.
             </p>
           </section>
 
@@ -94,10 +94,10 @@ export default function TermsAndConditionsPage() {
               6. Governing Law & Dispute Resolution
             </h2>
             <p>
-              These Terms and Conditions shall be governed by and construed in accordance with the laws of the Republic of India. Any legal disputes arising in connection with orders shall be subject to the exclusive jurisdiction of the competent courts in Kannauj, Uttar Pradesh, India.
+              These Terms and Conditions shall be governed by and construed in accordance with the laws of the Republic of India.
             </p>
             <p className="text-xs font-semibold">
-              Inquiries regarding Terms: <a href="mailto:legal@rosevalleykannauj.com" className="underline">legal@rosevalleykannauj.com</a>
+              Inquiries regarding Terms: <a href="mailto:support@roseoil.in" className="underline">support@roseoil.in</a>
             </p>
           </section>
         </div>

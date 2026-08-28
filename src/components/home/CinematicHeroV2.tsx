@@ -406,7 +406,7 @@ export function CinematicHeroV2({ products }: { products?: any[] }) {
             style={{ color: activeTheme.brandTagColor }}
           >
             <Sparkles className="w-3 h-3" style={{ color: current.accentColor }} />
-            MAISON DE L&apos;ESSENCE · EST. 1620
+            ROSEOIL.IN · 100% PURE BOTANICALS
           </span>
           <div
             className="cinematic-v2-brand-line"

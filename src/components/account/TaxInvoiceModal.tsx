@@ -253,13 +253,13 @@ export function TaxInvoiceModal({ isOpen, onClose, order, userEmail }: TaxInvoic
                 Original For Recipient • Tax Invoice
               </span>
               <h1 className="font-serif font-black text-2xl sm:text-3xl text-[#4A0D25] tracking-wide">
-                ROSE VALLEY KANNAUJ
+                ROSEOIL.IN
               </h1>
               <p className="text-[11px] text-stone-600 font-bold mt-0.5">
-                Maison De L'Essence • Artisanal Botanical Hydro-Distillates
+                Pure Essential Oils & Botanical Hydro-Distillates
               </p>
               <p className="text-[11px] text-stone-600 font-medium">
-                Estate House, Saraimeera, Kannauj, Uttar Pradesh - 209725, India
+                RoseOil.in Botanical Laboratories, India
               </p>
               <p className="text-[11px] text-[#4A0D25] font-extrabold mt-1">
                 Supplier GSTIN: <span className="font-mono">09AAACR1234F1Z5</span> • State: Uttar Pradesh (09)
@@ -355,7 +355,7 @@ export function TaxInvoiceModal({ isOpen, onClose, order, userEmail }: TaxInvoic
                     const itemQty = Number(item.quantity || 1);
                     const itemPrice = Number(item.price || 0);
                     const itemTotal = itemPrice * itemQty;
-                    const itemTaxable = Math.round(itemTotal / (1 + taxRate / 100));
+                    const itemTaxable = itemTotal;
 
                     return (
                       <tr key={idx} className="hover:bg-stone-50">
@@ -364,6 +364,7 @@ export function TaxInvoiceModal({ isOpen, onClose, order, userEmail }: TaxInvoic
                           {item.product_name || item.name}
                           <span className="block text-[10px] text-stone-500 font-medium">
                             {item.variantName || 'Pure Attar Batch Extract'}
+                            {item.gross_weight ? ` • Gross Wt: ${item.gross_weight * itemQty}g` : ''}
                           </span>
                         </td>
                         <td className="p-3 font-mono font-bold text-stone-700">330300</td>
@@ -385,6 +386,33 @@ export function TaxInvoiceModal({ isOpen, onClose, order, userEmail }: TaxInvoic
                     <td className="p-3 text-right font-mono font-black text-[#4A0D25]">₹{totalAmount.toLocaleString('en-IN')}</td>
                   </tr>
                 )}
+
+                {/* Taxable Shipping Line Item if Shipping Fee is charged */}
+                {Number(shippingAddr?.shipping_fee ?? order.shipping_fee ?? 0) > 0 && (
+                  <tr className="bg-amber-50/40 hover:bg-amber-50/70">
+                    <td className="p-3 font-bold text-amber-800">
+                      {(order.order_items?.length || 1) + 1}
+                    </td>
+                    <td className="p-3 font-bold text-[#4A0D25]">
+                      Freight & Courier Logistics Dispatch
+                      <span className="block text-[10px] text-amber-800 font-medium">
+                        {order.courier_name || 'Bluedart / DTDC Express Air Dispatch'}
+                        {shippingAddr?.total_weight_grams ? ` • Package Gross Weight: ${(Number(shippingAddr.total_weight_grams) / 1000).toFixed(3)} Kg` : ''}
+                      </span>
+                    </td>
+                    <td className="p-3 font-mono font-bold text-amber-900">996812</td>
+                    <td className="p-3 text-center font-bold">1</td>
+                    <td className="p-3 text-right font-mono font-bold">
+                      ₹{Number(shippingAddr?.shipping_fee ?? order.shipping_fee).toLocaleString('en-IN')}
+                    </td>
+                    <td className="p-3 text-right font-mono font-bold">
+                      ₹{Number(shippingAddr?.shipping_fee ?? order.shipping_fee).toLocaleString('en-IN')}
+                    </td>
+                    <td className="p-3 text-right font-mono font-black text-[#4A0D25]">
+                      ₹{Number(shippingAddr?.shipping_fee ?? order.shipping_fee).toLocaleString('en-IN')}
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -393,7 +421,7 @@ export function TaxInvoiceModal({ isOpen, onClose, order, userEmail }: TaxInvoic
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
             <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 space-y-2">
               <span className="text-[10px] font-black uppercase tracking-wider text-stone-700 block">
-                Applicable Tax Slabs (HSN 330300):
+                Applicable Tax Slabs (HSN 330300 & SAC 996812):
               </span>
               {isIntraState ? (
                 <>
@@ -413,26 +441,26 @@ export function TaxInvoiceModal({ isOpen, onClose, order, userEmail }: TaxInvoic
                 </div>
               )}
               <div className="pt-2 border-t border-stone-300 text-[10px] text-stone-500">
-                <span>Tax amount calculated on total assessable goods value.</span>
+                <span>Tax amount calculated on total assessable goods & logistics value.</span>
               </div>
             </div>
 
             <div className="p-4 rounded-2xl bg-[#FAE6E7]/50 border border-[#F7D1D8] space-y-2">
               <div className="flex justify-between text-xs font-bold text-stone-700">
-                <span>Taxable Value (Subtotal):</span>
+                <span>Total Taxable Base:</span>
                 <span className="font-mono">₹{taxableAmount.toLocaleString('en-IN')}</span>
               </div>
               <div className="flex justify-between text-xs font-bold text-[#4A0D25]">
-                <span>Total GST (18%):</span>
-                <span className="font-mono">₹{taxAmount.toLocaleString('en-IN')}</span>
+                <span>Shipping & Handling:</span>
+                <span className="font-mono">
+                  {Number(shippingAddr?.shipping_fee ?? order.shipping_fee ?? 0) > 0
+                    ? `₹${Number(shippingAddr?.shipping_fee ?? order.shipping_fee).toLocaleString('en-IN')}`
+                    : 'COMPLIMENTARY'}
+                </span>
               </div>
-              <div className="flex justify-between text-xs font-bold text-emerald-800">
-                <span>Complimentary Delivery:</span>
-                <span>FREE</span>
-              </div>
-              <div className="flex justify-between text-sm sm:text-base font-serif font-black text-[#4A0D25] pt-2 border-t-2 border-[#4A0D25]">
-                <span>Grand Total (INR):</span>
-                <span className="font-mono text-lg font-black">₹{totalAmount.toLocaleString('en-IN')}</span>
+              <div className="flex justify-between text-sm font-black text-[#4A0D25] border-t-2 border-[#4A0D25] pt-2">
+                <span>Invoice Total:</span>
+                <span className="font-mono">₹{(order.total_amount || 0).toLocaleString('en-IN')}</span>
               </div>
             </div>
           </div>
@@ -442,17 +470,17 @@ export function TaxInvoiceModal({ isOpen, onClose, order, userEmail }: TaxInvoic
             <div className="space-y-1">
               <p className="font-bold text-[#1A0510]">Declaration:</p>
               <p className="max-w-md text-stone-500">
-                We declare that this invoice shows the actual price of the hydro-distilled goods described and that all particulars are true and correct under the Indian GST Law.
+                We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct under the Indian GST Law.
               </p>
             </div>
 
             <div className="text-center sm:text-right border-t-2 sm:border-t-0 sm:border-l-2 border-[#F7D1D8] pt-3 sm:pt-0 sm:pl-6">
               <span className="font-serif font-black text-[#4A0D25] text-xs block">
-                For ROSE VALLEY KANNAUJ
+                For ROSEOIL.IN
               </span>
               <div className="h-10 my-1 flex items-center justify-end">
                 <span className="font-serif italic font-extrabold text-sm text-[#B03060]">
-                  Maison De L'Essence
+                  RoseOil.in Botanical Labs
                 </span>
               </div>
               <span className="text-[10px] font-black uppercase text-stone-500 block">

@@ -15,7 +15,9 @@ import {
   ArrowUpRight,
   Sparkles,
   Activity,
-  Type
+  Type,
+  Zap,
+  Link2
 } from 'lucide-react';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 
@@ -119,11 +121,18 @@ export default async function AdminDashboardPage() {
       badge: 'Wishlists',
     },
     {
-      title: 'Coupons & Discounts',
-      desc: 'Create discount codes and expiry criteria.',
-      icon: Ticket,
-      href: '/admin/coupons',
-      badge: 'Promos',
+      title: 'Bulk Price Studio',
+      desc: '3-Column matrix with formula-based auto variant generator and 10-batch fast updates.',
+      icon: Zap,
+      href: '/admin/products/bulk-pricing',
+      badge: '1-Click',
+    },
+    {
+      title: 'URL Slug Manager',
+      desc: 'Detect duplicate slugs, common prefix clashes, and fast batch rename.',
+      icon: Link2,
+      href: '/admin/products/slugs',
+      badge: 'SEO Tool',
     },
     {
       title: 'Coupons & Discounts',

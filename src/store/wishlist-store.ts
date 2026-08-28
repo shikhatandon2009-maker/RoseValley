@@ -51,7 +51,7 @@ export const useWishlistStore = create<WishlistState>()(
       },
     }),
     {
-      name: 'maison_wishlist',
+      name: 'roseoil_wishlist',
     }
   )
 );

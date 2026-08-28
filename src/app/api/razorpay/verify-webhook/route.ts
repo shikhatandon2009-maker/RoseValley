@@ -26,6 +26,10 @@ export async function POST(request: Request) {
       gstin,
       paymentMethod = 'razorpay',
       currency = 'INR',
+      shippingFee = 0,
+      shippingTax = 0,
+      totalWeightGrams = 0,
+      shippingMethod = 'standard',
       isMock = false,
     } = body;
 
@@ -49,6 +53,10 @@ export async function POST(request: Request) {
       tax_amount: taxAmount || 0,
       tax_rate: taxRate || 18.00,
       taxable_amount: taxableAmount || totalAmount,
+      shipping_fee: shippingFee,
+      shipping_tax: shippingTax,
+      total_weight_grams: totalWeightGrams,
+      shipping_method: shippingMethod,
       payment_method: paymentMethod,
     };
 
@@ -65,6 +73,10 @@ export async function POST(request: Request) {
         total_amount: totalAmount,
         currency,
         shipping_address: enhancedShippingAddress,
+        shipping_fee: shippingFee,
+        shipping_tax: shippingTax,
+        total_weight_grams: totalWeightGrams,
+        shipping_method: shippingMethod,
         gstin: (gstin || shippingAddress?.gstin || '').trim().toUpperCase() || null,
         company_name: businessName,
         business_name: businessName,
@@ -90,6 +102,8 @@ export async function POST(request: Request) {
         price: item.price,
         product_name: item.name,
         image_url: item.image,
+        gross_weight: item.gross_weight || (item.net_weight ? Number((item.net_weight * 1.2).toFixed(3)) : 0),
+        item_shipping_cost: item.item_shipping_cost || 0,
       }));
       await supabase.from('order_items').insert(orderItemRecords);
     }

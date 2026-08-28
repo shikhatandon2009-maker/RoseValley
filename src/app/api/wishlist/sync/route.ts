@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
           .insert([
             {
               store_id: STORE_ID,
-              email: 'guest.visitor@maisonessence.com',
+              email: 'guest.visitor@roseoil.in',
               password_hash: 'guest_no_login_hash_12345',
               full_name: 'Guest Visitor',
               role: 'customer',

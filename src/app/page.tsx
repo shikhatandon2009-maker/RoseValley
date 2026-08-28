@@ -185,13 +185,13 @@ export default async function Home() {
                 name: 'Sheikh Ahmed Al-Rashid',
                 location: 'Dubai, UAE',
                 rating: 5,
-                text: 'As someone who collects rare attars, Rose Valley Kannauj stands apart. The purity certificate and provenance passport add incredible trust.',
+                text: 'As someone who collects rare botanical extracts, RoseOil.in stands apart. The purity certificate and provenance passport add incredible trust.',
               },
               {
                 name: 'Victoria Sterling',
                 location: 'London, UK',
                 rating: 5,
-                text: 'I\'ve been ordering from Rose Valley for 3 years. The Saffron Crocus Attar receives compliments every single time. Absolute perfection.',
+                text: 'I\'ve been ordering from RoseOil.in for years. The Saffron and Rose Essential Oils receive compliments every single time. Absolute perfection.',
               },
             ].map((testimonial, idx) => (
               <div key={idx} className="p-6 rounded-2xl bg-white/95 border border-[#F7D1D8] shadow-xs space-y-4 hover:shadow-md hover:border-[#D45A7A] transition-all duration-300">
@@ -221,33 +221,33 @@ export default async function Home() {
           </div>
         </SectionWrapper>
 
-        {/* 5. KANNAUJ HERITAGE TIMELINE (1620 → TODAY) */}
+        {/* 5. HERITAGE TIMELINE */}
         <SectionWrapper className="bg-[#F7EEED] border-b border-[#F7D1D8] content-auto relative overflow-hidden">
           
           <div className="text-center space-y-3 mb-12 max-w-2xl mx-auto relative z-10">
             <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#FAE6E7] border border-[#F7D1D8] text-[#4A0D25] text-xs font-bold uppercase tracking-widest">
-              <Clock className="w-3.5 h-3.5 text-[#D45A7A]" /> 400-Year Historic Legacy
+              <Clock className="w-3.5 h-3.5 text-[#D45A7A]" /> Botanical Distillation Journey
             </div>
             <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-light tracking-tight text-[#1A0510] leading-[1.05]">
-              Kannauj Distillation
+              Botanical Distillation
               <span className="block font-normal text-[#4A0D25]">Through the Centuries</span>
             </h2>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-left relative z-10">
             <div className="p-5 rounded-2xl bg-white/80 border border-[#F7D1D8] space-y-2 shadow-xs hover:border-[#D45A7A] hover:bg-white transition-all">
-              <span className="font-mono text-xs font-black uppercase tracking-wider text-[#D45A7A]">1620 AD</span>
-              <h3 className="font-serif font-bold text-[#1A0510] text-base">Imperial Commission</h3>
+              <span className="font-mono text-xs font-black uppercase tracking-wider text-[#D45A7A]">ORIGINS</span>
+              <h3 className="font-serif font-bold text-[#1A0510] text-base">Imperial Distillation</h3>
               <p className="text-xs text-[#4A0D25]/85 leading-relaxed font-normal">
-                Mughal royal court commissions Kannauj copper still artisans to craft alcohol-free Ruh Gulab.
+                Early artisans perfected slow steam hydro-distillation for pure alcohol-free Rose Oil.
               </p>
             </div>
 
             <div className="p-5 rounded-2xl bg-white/80 border border-[#F7D1D8] space-y-2 shadow-xs hover:border-[#D45A7A] hover:bg-white transition-all">
               <span className="font-mono text-xs font-black uppercase tracking-wider text-[#D45A7A]">1880 AD</span>
-              <h3 className="font-serif font-bold text-[#1A0510] text-base">Bhapka Condensation</h3>
+              <h3 className="font-serif font-bold text-[#1A0510] text-base">Cold Condensation</h3>
               <p className="text-xs text-[#4A0D25]/85 leading-relaxed font-normal">
-                Pioneered double-distillation in bamboo receivers immersed in cold water baths for rose oil purity.
+                Pioneered refined condensation in submerged receiver tanks for maximum aromatic purity.
               </p>
             </div>
 
@@ -255,15 +255,15 @@ export default async function Home() {
               <span className="font-mono text-xs font-black uppercase tracking-wider text-[#D45A7A]">1960 AD</span>
               <h3 className="font-serif font-bold text-[#1A0510] text-base">Mysore Sandalwood Base</h3>
               <p className="text-xs text-[#4A0D25]/85 leading-relaxed font-normal">
-                Standardized aging in pure Mysore sandalwood oil base for 12+ hour skin longevity without synthetic fixatives.
+                Standardized natural botanical aging for 12+ hour skin longevity without synthetic fixatives.
               </p>
             </div>
 
             <div className="p-5 rounded-2xl bg-[#4A0D25] text-white border border-[#4A0D25] space-y-2 shadow-md ring-2 ring-[#F6A6BB]/30">
               <span className="font-mono text-xs font-black uppercase tracking-wider text-[#F6A6BB]">TODAY</span>
-              <h3 className="font-serif font-bold text-[#FFF5F7] text-base">World's Largest Producer</h3>
+              <h3 className="font-serif font-bold text-[#FFF5F7] text-base">100% Pure Botanical Purity</h3>
               <p className="text-xs text-white/80 leading-relaxed font-light">
-                Rose Valley Kannauj operates the world's largest certified copper deg distillation network.
+                RoseOil.in operates a premier certified botanical distillation and testing network.
               </p>
             </div>
           </div>

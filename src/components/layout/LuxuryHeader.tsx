@@ -405,10 +405,10 @@ export function LuxuryHeader() {
             {settings.use_text_logo ? (
               <div className="flex flex-col items-center">
                 <span className={`font-serif font-black tracking-widest text-[#1A0510] uppercase transition-all duration-300 group-hover:text-[#4A0D25] ${scrolled ? 'text-lg sm:text-xl' : 'text-xl sm:text-3xl'}`} suppressHydrationWarning>
-                  {settings.site_name || 'Rose Valley Kannauj'}
+                  {settings.site_name || 'RoseOil.in'}
                 </span>
                 <span className={`luxury-brand-subtitle hidden sm:block ${scrolled ? 'luxury-brand-subtitle-hidden' : ''}`} suppressHydrationWarning>
-                  {settings.tagline || 'Est. 1620 • Pure Hydro-Distillates'}
+                  {settings.tagline || '100% Pure Botanical Distillates'}
                 </span>
               </div>
             ) : (
@@ -416,7 +416,7 @@ export function LuxuryHeader() {
                 <div className="flex items-center justify-center">
                   <img 
                     src={formatImageUrl(settings.logo_url, '/images/logo/logo.png')} 
-                    alt={settings.site_name || "Rose Valley Kannauj"} 
+                    alt={settings.site_name || "RoseOil.in"} 
                     className={`w-auto object-contain transition-all duration-300 group-hover:scale-105 ${scrolled ? 'h-9 sm:h-11' : 'h-12 sm:h-16'}`}
                     onError={(e) => {
                       (e.target as HTMLImageElement).src = '/images/logo/logo.png';
@@ -424,7 +424,7 @@ export function LuxuryHeader() {
                   />
                 </div>
                 <span className={`luxury-brand-subtitle hidden sm:block ${scrolled ? 'luxury-brand-subtitle-hidden' : ''}`} suppressHydrationWarning>
-                  Est. 1620 • Pure Hydro-Distillates
+                  100% Pure Botanical Distillates
                 </span>
               </>
             )}
@@ -895,7 +895,7 @@ export function LuxuryHeader() {
             {/* About */}
             <div className="luxury-nav-item">
               <Link href="/about" className={`luxury-nav-link ${isActive('/about') ? 'luxury-nav-link-active' : ''}`}>
-                About Rose Valley
+                About RoseOil.in
               </Link>
             </div>
 
@@ -926,16 +926,16 @@ export function LuxuryHeader() {
             {settings.use_text_logo ? (
               <div className="flex flex-col">
                 <span className="font-serif font-black text-lg text-[#1A0510] uppercase tracking-widest leading-none">
-                  {settings.site_name || 'Rose Valley'}
+                  {settings.site_name || 'RoseOil.in'}
                 </span>
                 <span className="text-[9px] font-bold text-[#4A0D25] tracking-widest uppercase">
-                  {settings.tagline || 'Kannauj'}
+                  {settings.tagline || 'Pure Essential Oils'}
                 </span>
               </div>
             ) : (
               <img
                 src={formatImageUrl(settings.logo_url, '/images/logo/logo.png')}
-                alt={settings.site_name || 'Rose Valley Kannauj'}
+                alt={settings.site_name || 'RoseOil.in'}
                 className="h-10 sm:h-12 w-auto object-contain"
                 onError={(e) => {
                   (e.target as HTMLImageElement).src = '/images/logo/logo.png';
@@ -1031,7 +1031,7 @@ export function LuxuryHeader() {
             className={`luxury-mobile-link ${isActive('/about') ? 'luxury-mobile-link-active' : ''}`}
             onClick={() => setMobileMenuOpen(false)}
           >
-            <span>About Rose Valley</span>
+            <span>About RoseOil.in</span>
           </Link>
 
           <Link

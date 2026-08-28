@@ -54,14 +54,14 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       paymentStatus: order.status === 'cancelled' ? 'CANCELLED' : (order.payment_status || (order.status === 'pending' ? 'PENDING' : 'PAID')),
       paymentId: order.razorpay_payment_id || order.payment_id || 'PAY-ONLINE-CONFIRMED',
       seller: {
-        companyName: "Rose Valley Kannauj (Maison De L'Essence)",
-        address: 'Estate House, Near Grand Perfumery, Saraimeera, Kannauj, Uttar Pradesh - 209725, India',
+        companyName: "RoseOil.in Botanical Laboratories",
+        address: 'RoseOil.in Estate & Distillation Center, Kannauj, Uttar Pradesh - 209725, India',
         gstin: '09AAACR1234F1Z5',
         pan: 'AAACR1234F',
         state: 'Uttar Pradesh (09)',
-        email: 'concierge@rosevalleykannauj.com',
-        phone: '+91 98390 12345',
-        hsnCode: '330300',
+        email: 'support@roseoil.in',
+        phone: '+91 96486 78599',
+        hsnCode: '330129',
       },
       buyer: {
         name: shippingAddr?.fullName || shippingAddr?.full_name || order.user_name || 'Valued Client',
@@ -72,26 +72,44 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         address: `${shippingAddr?.streetAddress || shippingAddr?.street_address || ''}, ${shippingAddr?.city || ''}, ${shippingAddr?.state || ''} - ${shippingAddr?.postalCode || shippingAddr?.postal_code || ''}, ${shippingAddr?.country || 'India'}`,
         state: shippingAddr?.state || 'Uttar Pradesh',
       },
-      items: (order.order_items || []).map((item: any, idx: number) => {
-        const itemQty = Number(item.quantity || 1);
-        const itemPrice = Number(item.price || 0);
-        const itemTotal = itemPrice * itemQty;
-        const itemTaxable = Math.round(itemTotal / (1 + taxRate / 100));
-        const itemTax = itemTotal - itemTaxable;
+      items: [
+        ...(order.order_items || []).map((item: any, idx: number) => {
+          const itemQty = Number(item.quantity || 1);
+          const itemPrice = Number(item.price || 0);
+          const itemTotal = itemPrice * itemQty;
+          const itemTaxable = itemTotal;
+          const itemTax = Math.round(itemTaxable * (taxRate / 100));
 
-        return {
-          slNo: idx + 1,
-          productName: item.product_name || item.name || 'Artisanal Pure Hydro-Distilled Perfume',
-          variant: item.variantName || '50ml Pure Attar Extrait',
-          hsnCode: '330300',
-          quantity: itemQty,
-          unitPrice: itemPrice,
-          taxableAmount: itemTaxable,
-          taxRate,
-          taxAmount: itemTax,
-          totalAmount: itemTotal,
-        };
-      }),
+          return {
+            slNo: idx + 1,
+            productName: item.product_name || item.name || 'Artisanal Pure Hydro-Distilled Perfume',
+            variant: item.variantName || 'Pure Attar Batch Extract',
+            hsnCode: '330300',
+            quantity: itemQty,
+            unitPrice: itemPrice,
+            taxableAmount: itemTaxable,
+            taxRate,
+            taxAmount: itemTax,
+            totalAmount: itemTotal,
+          };
+        }),
+        ...(Number(shippingAddr?.shipping_fee ?? order.shipping_fee ?? 0) > 0
+          ? [
+              {
+                slNo: (order.order_items?.length || 0) + 1,
+                productName: 'Freight & Courier Logistics Dispatch',
+                variant: order.courier_name || 'Standard / Express Logistics Dispatch',
+                hsnCode: '996812',
+                quantity: 1,
+                unitPrice: Number(shippingAddr?.shipping_fee ?? order.shipping_fee),
+                taxableAmount: Number(shippingAddr?.shipping_fee ?? order.shipping_fee),
+                taxRate,
+                taxAmount: Math.round(Number(shippingAddr?.shipping_fee ?? order.shipping_fee) * (taxRate / 100)),
+                totalAmount: Number(shippingAddr?.shipping_fee ?? order.shipping_fee),
+              },
+            ]
+          : []),
+      ],
       financials: {
         taxableAmount,
         taxRate,
@@ -102,7 +120,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         sgstAmount,
         igstRate: !isIntraState ? taxRate : 0,
         igstAmount,
-        shippingFee: 0, // Complimentary free delivery
+        shippingFee: Number(shippingAddr?.shipping_fee ?? order.shipping_fee ?? 0),
+        totalWeightGrams: Number(shippingAddr?.total_weight_grams ?? order.total_weight_grams ?? 0),
         grandTotal: totalAmount,
         currency: 'INR',
       },

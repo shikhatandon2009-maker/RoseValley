@@ -206,7 +206,7 @@ export default function OrdersAdminPage() {
 
   const handleCopyGuestCreds = () => {
     if (!generatedAccountSuccess) return;
-    const textToCopy = `Maison Account Credentials:\nUsername: ${generatedAccountSuccess.email}\nPassword: ${generatedAccountSuccess.password}`;
+    const textToCopy = `RoseOil.in Account Credentials:\nUsername: ${generatedAccountSuccess.email}\nPassword: ${generatedAccountSuccess.password}`;
     navigator.clipboard.writeText(textToCopy);
     setCopiedGuestCreds(true);
     setTimeout(() => setCopiedGuestCreds(false), 2500);
@@ -758,6 +758,9 @@ export default function OrdersAdminPage() {
                 const buyerGstin = sAddr.gstin || null;
                 const businessName = sAddr.company_name || sAddr.business_name || sAddr.companyName || selectedOrder.company_name || selectedOrder.business_name || null;
                 const payMethod = sAddr.payment_method || (selectedOrder.razorpay_payment_id?.startsWith('PAYPAL') ? 'paypal' : 'razorpay');
+                const shipFee = Number(sAddr.shipping_fee ?? (selectedOrder as any).shipping_fee ?? 0);
+                const grossWeightGrams = Number(sAddr.total_weight_grams ?? (selectedOrder as any).total_weight_grams ?? 0);
+                const shipMethod = sAddr.shipping_method ?? (selectedOrder as any).shipping_method ?? 'standard';
 
                 return (
                   <div className="space-y-3">
@@ -776,12 +779,19 @@ export default function OrdersAdminPage() {
                     )}
 
                     <div className="p-4 rounded-2xl bg-[#F7EEED] border border-[#F7D1D8] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                      <div className="space-y-1">
+                      <div className="space-y-1.5">
                         <div className="text-xs text-[#4A0D25] font-bold">
                           Payment Method: <span className="font-black text-stone-900 uppercase px-2 py-0.5 rounded-full bg-white border border-[#F7D1D8] ml-1">{payMethod === 'paypal' ? 'PayPal Express' : 'Razorpay Gateway'}</span>
                         </div>
                         <div className="text-xs text-[#4A0D25] font-bold">
                           Payment Status: <span className="font-black text-emerald-800 uppercase px-2 py-0.5 rounded-full bg-emerald-100 border border-emerald-300 ml-1">{selectedOrder.payment_status}</span>
+                        </div>
+                        <div className="text-xs text-[#4A0D25] font-bold flex items-center gap-1">
+                          <Truck className="w-3.5 h-3.5 text-amber-700" /> Logistics:
+                          <span className="font-black text-amber-900 bg-amber-100/80 px-2 py-0.5 rounded-full border border-amber-300 text-[10px] uppercase ml-1">
+                            {shipMethod === 'express' ? 'Express Air Dispatch' : 'Standard Delivery'}
+                            {grossWeightGrams > 0 ? ` • ${(grossWeightGrams / 1000).toFixed(3)} Kg Gross` : ''}
+                          </span>
                         </div>
                         {selectedOrder.razorpay_payment_id && (
                           <div className="font-mono text-xs text-stone-600 font-bold">Txn Ref: {selectedOrder.razorpay_payment_id}</div>
@@ -789,7 +799,10 @@ export default function OrdersAdminPage() {
                       </div>
 
                       <div className="text-right space-y-1 text-xs">
-                        <div className="text-stone-600">Taxable Value: <strong className="text-stone-900">₹{Number(taxableVal).toLocaleString()}</strong></div>
+                        <div className="text-stone-600">Taxable Base: <strong className="text-stone-900">₹{Number(taxableVal).toLocaleString()}</strong></div>
+                        <div className="text-stone-600">
+                          Shipping & Handling: <strong className="text-stone-900">{shipFee > 0 ? `₹${shipFee.toLocaleString()}` : 'FREE'}</strong>
+                        </div>
                         <div className="text-[#4A0D25] font-bold">GST Tax ({taxRate}%): <strong>₹{Number(taxAmt).toLocaleString()}</strong></div>
                         <div className="text-xs text-[#4A0D25] font-extrabold uppercase tracking-wider pt-1 border-t border-[#F7D1D8]">Grand Total</div>
                         <div className="text-2xl font-black font-serif text-[#4A0D25]">₹{totalAmt.toLocaleString()}</div>
@@ -855,9 +868,9 @@ export default function OrdersAdminPage() {
                           <body>
                             <div class="header">
                               <div>
-                                <div class="title">ROSE VALLEY KANNAUJ</div>
-                                <p style="margin: 4px 0; font-size: 12px; color: #666;">Maison Fragrances & Hydro-Distillates • Kannauj, Uttar Pradesh</p>
-                                <p style="margin: 2px 0; font-size: 12px; font-weight: bold;">Store GSTIN: 09AAACR1234F1Z5 | HSN Code: 330300</p>
+                                <div class="title">ROSEOIL.IN</div>
+                                <p style="margin: 4px 0; font-size: 12px; color: #666;">Pure Essential Oils & Botanical Hydro-Distillates • India</p>
+                                <p style="margin: 2px 0; font-size: 12px; font-weight: bold;">Store GSTIN: 09AAACR1234F1Z5 | HSN Code: 330129</p>
                               </div>
                               <div style="text-align: right;">
                                 <h3 style="margin: 0; color: #8b0000;">TAX INVOICE</h3>

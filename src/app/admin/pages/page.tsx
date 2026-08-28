@@ -416,7 +416,7 @@ export default function PagesAdminPage() {
             <BookOpen className="w-10 h-10 text-[#F6A6BB] mx-auto" />
             <h3 className="font-serif font-extrabold text-lg text-[#1A0510]">No Articles Found</h3>
             <p className="text-xs text-[#4A0D25] font-bold max-w-md mx-auto">
-              No matching content found for filter "{typeFilter}". Click the seed button to generate authentic Rose Valley articles.
+              No matching content found for filter "{typeFilter}". Click the seed button to generate authentic RoseOil.in articles.
             </p>
             <button
               onClick={handleSeedContent}

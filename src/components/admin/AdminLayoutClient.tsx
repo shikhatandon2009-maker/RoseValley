@@ -5,6 +5,8 @@ import AdminSidebar from '@/components/admin/AdminSidebar';
 import AdminSeoDrawer from '@/components/admin/AdminSeoDrawer';
 import { Bell, Search, ShieldCheck, Menu, Sparkles } from 'lucide-react';
 
+import AdminScrollToTop from '@/components/admin/AdminScrollToTop';
+
 export default function AdminLayoutClient({
   children,
 }: {
@@ -120,6 +122,9 @@ export default function AdminLayoutClient({
 
         {/* Page Content */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">{children}</main>
+
+        {/* Global Interactive Scroll To Top Button */}
+        <AdminScrollToTop />
       </div>
     </div>
   );

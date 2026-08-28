@@ -31,7 +31,7 @@ export const useCurrencyStoreBase = create<CurrencyState>()(
       },
     }),
     {
-      name: 'maison_currency_setting',
+      name: 'roseoil_currency_setting',
     }
   )
 );

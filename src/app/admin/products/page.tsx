@@ -29,6 +29,8 @@ import {
   Droplets,
   FolderPlus,
   ChevronDown,
+  Zap,
+  Link2,
 } from 'lucide-react';
 
 interface ProductVariant {
@@ -37,6 +39,10 @@ interface ProductVariant {
   sku?: string;
   price: number | string;
   compare_at_price?: number | string;
+  net_weight?: number | string;
+  weight_unit?: string;
+  gross_weight?: number | string;
+  item_shipping_cost?: number | string;
 }
 
 interface CategoryOption {
@@ -66,6 +72,11 @@ interface Product {
   meta_title?: string;
   meta_description?: string;
   meta_keywords?: string;
+  net_weight?: number;
+  weight_unit?: string;
+  gross_weight?: number;
+  item_shipping_cost?: number;
+  is_free_shipping?: boolean;
   created_at: string;
   categories?: CategoryOption[];
   variants?: ProductVariant[];
@@ -82,14 +93,14 @@ interface Stats {
 function getStandardVariantsForKiloPrice(basePrice: number | string): ProductVariant[] {
   const b = Math.max(100, Number(basePrice) || 1000);
   return [
-    { name: 'Sample (2ml)', sku: '', price: 250, compare_at_price: 300 },
-    { name: '100 ml', sku: '', price: Math.round(b / 10 + 200), compare_at_price: Math.round((b / 10 + 200) * 1.2) },
-    { name: '250 ml', sku: '', price: Math.round(b / 4 + 200), compare_at_price: Math.round((b / 4 + 200) * 1.2) },
-    { name: '500 ml', sku: '', price: Math.round(b / 2 + 200), compare_at_price: Math.round((b / 2 + 200) * 1.2) },
-    { name: '1 Kg', sku: '', price: b, compare_at_price: Math.round(b * 1.2) },
-    { name: '5 Kg', sku: '', price: Math.round(b * 5 * 0.98), compare_at_price: Math.round(b * 5 * 1.15) },
-    { name: '10 Kg', sku: '', price: Math.round(b * 10 * 0.96), compare_at_price: Math.round(b * 10 * 1.15) },
-    { name: '20 Kg', sku: '', price: Math.round(b * 20 * 0.93), compare_at_price: Math.round(b * 20 * 1.15) },
+    { name: 'Sample (2ml)', sku: '', price: 250, compare_at_price: 300, net_weight: 2, weight_unit: 'ml', gross_weight: 2.4, item_shipping_cost: 0 },
+    { name: '100 ml', sku: '', price: Math.round(b / 10 + 200), compare_at_price: Math.round((b / 10 + 200) * 1.2), net_weight: 100, weight_unit: 'ml', gross_weight: 120, item_shipping_cost: 0 },
+    { name: '250 ml', sku: '', price: Math.round(b / 4 + 200), compare_at_price: Math.round((b / 4 + 200) * 1.2), net_weight: 250, weight_unit: 'ml', gross_weight: 300, item_shipping_cost: 0 },
+    { name: '500 ml', sku: '', price: Math.round(b / 2 + 200), compare_at_price: Math.round((b / 2 + 200) * 1.2), net_weight: 500, weight_unit: 'ml', gross_weight: 600, item_shipping_cost: 0 },
+    { name: '1 Kg', sku: '', price: b, compare_at_price: Math.round(b * 1.2), net_weight: 1, weight_unit: 'kg', gross_weight: 1.2, item_shipping_cost: 0 },
+    { name: '5 Kg', sku: '', price: Math.round(b * 5 * 0.98), compare_at_price: Math.round(b * 5 * 1.15), net_weight: 5, weight_unit: 'kg', gross_weight: 6.0, item_shipping_cost: 0 },
+    { name: '10 Kg', sku: '', price: Math.round(b * 10 * 0.96), compare_at_price: Math.round(b * 10 * 1.15), net_weight: 10, weight_unit: 'kg', gross_weight: 12.0, item_shipping_cost: 0 },
+    { name: '20 Kg', sku: '', price: Math.round(b * 20 * 0.93), compare_at_price: Math.round(b * 20 * 1.15), net_weight: 20, weight_unit: 'kg', gross_weight: 24.0, item_shipping_cost: 0 },
   ];
 }
 
@@ -157,6 +168,11 @@ export default function ProductsAdminPage() {
     meta_title: '',
     meta_keywords: '',
     meta_description: '',
+    net_weight: '' as string | number,
+    weight_unit: 'gm',
+    gross_weight: '' as string | number,
+    item_shipping_cost: '' as string | number,
+    is_free_shipping: false,
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -555,6 +571,11 @@ export default function ProductsAdminPage() {
       meta_title: '',
       meta_keywords: '',
       meta_description: '',
+      net_weight: '100',
+      weight_unit: 'ml',
+      gross_weight: '120',
+      item_shipping_cost: '0',
+      is_free_shipping: false,
     });
     setEditingProduct(null);
     setIsAddModalOpen(true);
@@ -568,6 +589,14 @@ export default function ProductsAdminPage() {
       product.variants && product.variants.length > 1
         ? product.variants
         : getStandardVariantsForKiloPrice(product.price);
+
+    const netWeight = product.net_weight !== undefined ? product.net_weight : 100;
+    const grossWeight =
+      product.gross_weight !== undefined && Number(product.gross_weight) > 0
+        ? product.gross_weight
+        : Number(netWeight) > 0
+        ? Number((Number(netWeight) * 1.2).toFixed(3))
+        : 120;
 
     setFormData({
       name: product.name,
@@ -589,6 +618,11 @@ export default function ProductsAdminPage() {
       meta_title: product.meta_title || '',
       meta_keywords: product.meta_keywords || '',
       meta_description: product.meta_description || '',
+      net_weight: netWeight,
+      weight_unit: product.weight_unit || 'ml',
+      gross_weight: grossWeight,
+      item_shipping_cost: product.item_shipping_cost || 0,
+      is_free_shipping: Boolean(product.is_free_shipping),
     });
 
     setEditingProduct(product);
@@ -605,8 +639,134 @@ export default function ProductsAdminPage() {
     setFormData((prev) => ({ ...prev, slug: generated }));
   };
 
-  // 1-Click Master AI Generator
+  // 1-Click Master AI Generator & Section-level Generators
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+  const [isGeneratingNotesAI, setIsGeneratingNotesAI] = useState(false);
+  const [isGeneratingDescAI, setIsGeneratingDescAI] = useState(false);
+  const [isGeneratingIngredientsAI, setIsGeneratingIngredientsAI] = useState(false);
+
+  // Section 4: AI Fragrance Notes Generator
+  const handleGenerateNotesAI = async () => {
+    if (!formData.name.trim()) {
+      showToast('error', 'Please enter a Product Name first in Section 1.');
+      return;
+    }
+
+    setIsGeneratingNotesAI(true);
+    showToast('success', '🧠 Analyzing fragrance notes pyramid...');
+
+    try {
+      const res = await fetch('/api/ai/generate-content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'scent_notes',
+          prompt: formData.name.trim(),
+        }),
+      });
+
+      if (!res.ok) throw new Error('Failed to generate fragrance notes.');
+      const data = await res.json();
+      let notes = data.draft;
+      if (typeof notes === 'string') {
+        try {
+          notes = JSON.parse(notes);
+        } catch (_) {
+          const first = notes.indexOf('{');
+          const last = notes.lastIndexOf('}');
+          if (first !== -1 && last > first) {
+            notes = JSON.parse(notes.substring(first, last + 1));
+          }
+        }
+      }
+
+      if (notes && typeof notes === 'object') {
+        setFormData((prev) => ({
+          ...prev,
+          topNotesText: Array.isArray(notes.top) ? notes.top.join(', ') : prev.topNotesText,
+          heartNotesText: Array.isArray(notes.heart) ? notes.heart.join(', ') : prev.heartNotesText,
+          baseNotesText: Array.isArray(notes.base) ? notes.base.join(', ') : prev.baseNotesText,
+        }));
+        showToast('success', '✨ AI generated authentic Top, Heart, and Base notes!');
+      }
+    } catch (err: any) {
+      showToast('error', err.message || 'Error generating notes.');
+    } finally {
+      setIsGeneratingNotesAI(false);
+    }
+  };
+
+  // Section 5: AI Description Generator
+  const handleGenerateDescriptionAI = async () => {
+    if (!formData.name.trim()) {
+      showToast('error', 'Please enter a Product Name first in Section 1.');
+      return;
+    }
+
+    setIsGeneratingDescAI(true);
+    showToast('success', '🧠 Generating bespoke luxury product story...');
+
+    try {
+      const res = await fetch('/api/ai/generate-content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'product_description',
+          prompt: formData.name.trim(),
+        }),
+      });
+
+      if (!res.ok) throw new Error('Failed to generate description.');
+      const data = await res.json();
+      if (data.draft) {
+        setFormData((prev) => ({
+          ...prev,
+          description: data.draft.trim(),
+        }));
+        showToast('success', '✨ AI generated luxury product description!');
+      }
+    } catch (err: any) {
+      showToast('error', err.message || 'Error generating description.');
+    } finally {
+      setIsGeneratingDescAI(false);
+    }
+  };
+
+  // Section 5: AI Ingredients Generator
+  const handleGenerateIngredientsAI = async () => {
+    if (!formData.name.trim()) {
+      showToast('error', 'Please enter a Product Name first in Section 1.');
+      return;
+    }
+
+    setIsGeneratingIngredientsAI(true);
+    showToast('success', '🧠 Analyzing botanical formulation & INCI ingredients...');
+
+    try {
+      const res = await fetch('/api/ai/generate-content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'ingredients',
+          prompt: formData.name.trim(),
+        }),
+      });
+
+      if (!res.ok) throw new Error('Failed to generate ingredients.');
+      const data = await res.json();
+      if (data.draft) {
+        setFormData((prev) => ({
+          ...prev,
+          ingredientsText: data.draft.trim(),
+        }));
+        showToast('success', '✨ AI generated botanical ingredients list!');
+      }
+    } catch (err: any) {
+      showToast('error', err.message || 'Error generating ingredients.');
+    } finally {
+      setIsGeneratingIngredientsAI(false);
+    }
+  };
 
   const handleGenerateProductAI = async () => {
     if (!formData.name.trim()) {
@@ -656,11 +816,12 @@ export default function ProductsAdminPage() {
           meta_description: draft.meta_description ? draft.meta_description.trim() : prev.meta_description,
           meta_keywords: draft.meta_keywords ? draft.meta_keywords.trim() : prev.meta_keywords,
           description: draft.description ? draft.description.trim() : prev.description,
+          ingredientsText: draft.ingredients ? draft.ingredients.trim() : prev.ingredientsText,
           topNotesText: draft.scent_notes?.top ? draft.scent_notes.top.join(', ') : prev.topNotesText,
           heartNotesText: draft.scent_notes?.heart ? draft.scent_notes.heart.join(', ') : prev.heartNotesText,
           baseNotesText: draft.scent_notes?.base ? draft.scent_notes.base.join(', ') : prev.baseNotesText,
         }));
-        showToast('success', '✨ AI generated bespoke SEO metadata & luxury perfume story!');
+        showToast('success', '✨ AI generated bespoke SEO metadata, notes, ingredients & luxury story!');
       } else {
         throw new Error('AI generation returned an unexpected response. Please try again.');
       }
@@ -677,7 +838,16 @@ export default function ProductsAdminPage() {
       ...prev,
       variants: [
         ...prev.variants,
-        { name: '', sku: '', price: prev.price || '', compare_at_price: '' },
+        {
+          name: '',
+          sku: '',
+          price: prev.price || '',
+          compare_at_price: '',
+          net_weight: prev.net_weight || 100,
+          weight_unit: prev.weight_unit || 'ml',
+          gross_weight: prev.gross_weight || 120,
+          item_shipping_cost: 0,
+        },
       ],
     }));
   };
@@ -685,7 +855,17 @@ export default function ProductsAdminPage() {
   const handleUpdateVariantRow = (index: number, field: keyof ProductVariant, value: any) => {
     setFormData((prev) => {
       const updated = [...prev.variants];
-      updated[index] = { ...updated[index], [field]: value };
+      const current = { ...updated[index], [field]: value };
+
+      // Auto-calculate +20% gross weight when net_weight is modified
+      if (field === 'net_weight') {
+        const netNum = Number(value);
+        if (!isNaN(netNum) && netNum > 0) {
+          current.gross_weight = Number((netNum * 1.2).toFixed(3));
+        }
+      }
+
+      updated[index] = current;
       return { ...prev, variants: updated };
     });
   };
@@ -779,13 +959,35 @@ export default function ProductsAdminPage() {
       const baseNotes = formData.baseNotesText.split(',').map((s) => s.trim()).filter(Boolean);
       const ingredients = formData.ingredientsText.split(',').map((s) => s.trim()).filter(Boolean);
 
-      const formattedVariants = formData.variants.map((v) => ({
-        id: v.id,
-        name: v.name.trim(),
-        sku: v.sku ? v.sku.trim() : null,
-        price: Number(v.price) || 0,
-        compare_at_price: v.compare_at_price ? Number(v.compare_at_price) : null,
-      }));
+      const formattedVariants = formData.variants.map((v) => {
+        const vNet = Number(v.net_weight) || 0;
+        const vGross =
+          v.gross_weight && Number(v.gross_weight) > 0
+            ? Number(v.gross_weight)
+            : vNet > 0
+            ? Number((vNet * 1.2).toFixed(3))
+            : 0;
+
+        return {
+          id: v.id,
+          name: v.name.trim(),
+          sku: v.sku ? v.sku.trim() : null,
+          price: Number(v.price) || 0,
+          compare_at_price: v.compare_at_price ? Number(v.compare_at_price) : null,
+          net_weight: vNet,
+          weight_unit: v.weight_unit || formData.weight_unit || 'gm',
+          gross_weight: vGross,
+          item_shipping_cost: Number(v.item_shipping_cost) || 0,
+        };
+      });
+
+      const prodNet = Number(formData.net_weight) || 0;
+      const prodGross =
+        formData.gross_weight && Number(formData.gross_weight) > 0
+          ? Number(formData.gross_weight)
+          : prodNet > 0
+          ? Number((prodNet * 1.2).toFixed(3))
+          : 0;
 
       const payload = {
         name: formData.name.trim(),
@@ -809,6 +1011,11 @@ export default function ProductsAdminPage() {
         meta_description: formData.meta_description.trim(),
         category_ids: formData.selectedCategoryIds,
         variants: formattedVariants,
+        net_weight: prodNet,
+        weight_unit: formData.weight_unit || 'gm',
+        gross_weight: prodGross,
+        item_shipping_cost: Number(formData.item_shipping_cost) || 0,
+        is_free_shipping: Boolean(formData.is_free_shipping),
       };
 
       const isEdit = Boolean(editingProduct);
@@ -945,6 +1152,26 @@ export default function ProductsAdminPage() {
               <span className="hidden xs:inline">{isExporting ? 'Exporting...' : 'Export CSV'}</span>
               <span className="xs:hidden">Export</span>
             </button>
+
+            <Link
+              href="/admin/products/bulk-pricing"
+              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 sm:py-2.5 rounded-xl border border-[#F7D1D8] bg-[#FAE6E7] hover:bg-[#F7D1D8] text-[#4A0D25] text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer"
+              title="Bulk Price Update Studio (Formula Engine)"
+            >
+              <Zap className="w-4 h-4 text-[#4A0D25]" />
+              <span className="hidden xs:inline">Bulk Pricing</span>
+              <span className="xs:hidden">Pricing</span>
+            </Link>
+
+            <Link
+              href="/admin/products/slugs"
+              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 sm:py-2.5 rounded-xl border border-[#F7D1D8] bg-[#FAE6E7] hover:bg-[#F7D1D8] text-[#4A0D25] text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer"
+              title="URL Slug Management & Conflict Resolver"
+            >
+              <Link2 className="w-4 h-4 text-[#4A0D25]" />
+              <span className="hidden xs:inline">Slug Manager</span>
+              <span className="xs:hidden">Slugs</span>
+            </Link>
 
             <button
               onClick={() => {
@@ -1942,10 +2169,15 @@ export default function ProductsAdminPage() {
             {/* Modal Body Form with 6 Sections */}
             <form onSubmit={handleSaveProduct} className="p-4 sm:p-6 overflow-y-auto space-y-5 sm:space-y-6 flex-1 text-xs">
 
-              {/* SECTION 1: CORE DETAILS & PRICING */}
+              {/* SECTION 1: CORE DETAILS, PRICING & LOGISTICS WEIGHTS */}
               <div className="p-4 sm:p-5 rounded-2xl bg-[#FDF8F8] border border-[#F7D1D8] space-y-4">
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#4A0D25]">
-                  <Info className="w-4 h-4 text-[#D45A7A]" /> Section 1: Core Details & Base Pricing
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#4A0D25]">
+                    <Info className="w-4 h-4 text-[#D45A7A]" /> Section 1: Core Details, Pricing & Shipping Logistics
+                  </div>
+                  <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300">
+                    Gross Weight +20% Auto
+                  </span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
@@ -2008,6 +2240,69 @@ export default function ProductsAdminPage() {
                     />
                   </div>
 
+                  {/* Weight-Based Shipping Parameters */}
+                  <div className="sm:col-span-2 p-3.5 rounded-xl bg-amber-50/70 border border-amber-200/80 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-amber-950 uppercase tracking-wider">
+                        📦 Weight Parameters (Pure Weight-Based Shipping)
+                      </span>
+                      <span className="text-[10px] text-amber-800 italic">
+                        100 gm/ml = 120 gm gross • 1 Kg/L = 1.2 kg gross (+20% packaging buffer)
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-bold text-amber-950 mb-1">Net Weight / Volume</label>
+                        <input
+                          type="number"
+                          step="0.001"
+                          value={formData.net_weight}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            const netNum = Number(val);
+                            const autoGross = !isNaN(netNum) && netNum > 0 ? Number((netNum * 1.2).toFixed(3)) : '';
+                            setFormData({
+                              ...formData,
+                              net_weight: val,
+                              gross_weight: autoGross,
+                            });
+                          }}
+                          placeholder="e.g. 100 or 1"
+                          className="w-full px-3 py-1.5 rounded-lg border border-amber-300 bg-white text-xs text-[#1A0510] font-bold focus:border-[#4A0D25] focus:outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-amber-950 mb-1">Unit</label>
+                        <select
+                          value={formData.weight_unit}
+                          onChange={(e) => setFormData({ ...formData, weight_unit: e.target.value })}
+                          className="w-full px-3 py-1.5 rounded-lg border border-amber-300 bg-white text-xs text-[#1A0510] font-bold focus:border-[#4A0D25] focus:outline-none"
+                        >
+                          <option value="gm">Grams (gm)</option>
+                          <option value="ml">Milliliters (ml)</option>
+                          <option value="kg">Kilograms (Kg)</option>
+                          <option value="L">Litres (L)</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-amber-950 mb-1">
+                          Gross Weight (+20%)
+                        </label>
+                        <input
+                          type="number"
+                          step="0.001"
+                          value={formData.gross_weight}
+                          onChange={(e) => setFormData({ ...formData, gross_weight: e.target.value })}
+                          placeholder="e.g. 120 or 1.2"
+                          className="w-full px-3 py-1.5 rounded-lg border border-amber-300 bg-white text-xs text-[#1A0510] font-mono font-bold focus:border-[#4A0D25] focus:outline-none"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="sm:col-span-2">
                     <label className="block text-xs font-bold text-[#4A0D25] mb-2">Assigned Categories</label>
                     <div className="flex flex-wrap gap-1.5 sm:gap-2">
@@ -2056,7 +2351,7 @@ export default function ProductsAdminPage() {
                       }}
                       className="px-2.5 py-1.5 rounded-lg bg-[#FAE6E7] hover:bg-[#F7D1D8] border border-[#F7D1D8] text-[#4A0D25] text-[11px] font-bold transition-all flex items-center gap-1 shadow-2xs cursor-pointer"
                     >
-                      <Sparkles className="w-3.5 h-3.5 text-[#D45A7A]" /> Sync Standard Sizes
+                      <Sparkles className="w-3.5 h-3.5 text-[#D45A7A]" /> Sync Standard Sizes (+20% Gross)
                     </button>
                     <button
                       type="button"
@@ -2131,6 +2426,28 @@ export default function ProductsAdminPage() {
                                 className="w-full px-2.5 py-1.5 rounded-lg border border-[#F7D1D8] text-xs text-stone-500"
                               />
                             </div>
+                            <div>
+                              <label className="block text-[10px] font-bold text-amber-900 mb-0.5">Net Wt / Vol</label>
+                              <input
+                                type="number"
+                                step="0.001"
+                                value={v.net_weight || ''}
+                                onChange={(e) => handleUpdateVariantRow(idx, 'net_weight', e.target.value)}
+                                placeholder="100"
+                                className="w-full px-2.5 py-1.5 rounded-lg border border-amber-200 text-xs font-bold text-amber-950"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-[10px] font-bold text-amber-900 mb-0.5">Gross (+20%)</label>
+                              <input
+                                type="number"
+                                step="0.001"
+                                value={v.gross_weight || ''}
+                                onChange={(e) => handleUpdateVariantRow(idx, 'gross_weight', e.target.value)}
+                                placeholder="120"
+                                className="w-full px-2.5 py-1.5 rounded-lg border border-amber-200 text-xs font-mono font-bold text-amber-950"
+                              />
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -2141,11 +2458,13 @@ export default function ProductsAdminPage() {
                       <table className="w-full text-left text-xs">
                         <thead className="bg-[#FAE6E7]/60 text-[#4A0D25] uppercase font-bold text-[10px] border-b border-[#F7D1D8]">
                           <tr>
-                            <th className="p-2.5">Size Format / Name</th>
+                            <th className="p-2.5">Size / Name</th>
                             <th className="p-2.5">SKU</th>
                             <th className="p-2.5">Price (₹)</th>
                             <th className="p-2.5">Compare (₹)</th>
-                            <th className="p-2.5 text-right w-12">Action</th>
+                            <th className="p-2.5 bg-amber-50/80 text-amber-950">Net Wt</th>
+                            <th className="p-2.5 bg-amber-50/80 text-amber-950">Gross (+20%)</th>
+                            <th className="p-2.5 text-right w-10">Action</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-[#F7EEED] font-medium">
@@ -2174,7 +2493,7 @@ export default function ProductsAdminPage() {
                                   type="number"
                                   value={v.price}
                                   onChange={(e) => handleUpdateVariantRow(idx, 'price', e.target.value)}
-                                  className="w-full px-2 py-1 rounded-lg border border-[#F7D1D8] text-xs font-bold text-[#1A0510]"
+                                  className="w-20 px-2 py-1 rounded-lg border border-[#F7D1D8] text-xs font-bold text-[#1A0510]"
                                 />
                               </td>
                               <td className="p-2">
@@ -2183,7 +2502,27 @@ export default function ProductsAdminPage() {
                                   value={v.compare_at_price || ''}
                                   onChange={(e) => handleUpdateVariantRow(idx, 'compare_at_price', e.target.value)}
                                   placeholder="MRP"
-                                  className="w-full px-2 py-1 rounded-lg border border-[#F7D1D8] text-xs text-stone-500"
+                                  className="w-20 px-2 py-1 rounded-lg border border-[#F7D1D8] text-xs text-stone-500"
+                                />
+                              </td>
+                              <td className="p-2 bg-amber-50/40">
+                                <input
+                                  type="number"
+                                  step="0.001"
+                                  value={v.net_weight || ''}
+                                  onChange={(e) => handleUpdateVariantRow(idx, 'net_weight', e.target.value)}
+                                  placeholder="100"
+                                  className="w-16 px-2 py-1 rounded-lg border border-amber-200 text-xs font-bold text-amber-950"
+                                />
+                              </td>
+                              <td className="p-2 bg-amber-50/40">
+                                <input
+                                  type="number"
+                                  step="0.001"
+                                  value={v.gross_weight || ''}
+                                  onChange={(e) => handleUpdateVariantRow(idx, 'gross_weight', e.target.value)}
+                                  placeholder="120"
+                                  className="w-16 px-2 py-1 rounded-lg border border-amber-200 text-xs font-mono font-bold text-amber-950"
                                 />
                               </td>
                               <td className="p-2 text-right">
@@ -2270,8 +2609,29 @@ export default function ProductsAdminPage() {
 
               {/* SECTION 4: FRAGRANCE NOTES PYRAMID */}
               <div className="p-4 sm:p-5 rounded-2xl bg-[#FAE6E7]/30 border border-[#F7D1D8] space-y-4">
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#4A0D25]">
-                  <Droplets className="w-4 h-4 text-[#D45A7A]" /> Section 4: Fragrance Notes Pyramid (Top, Heart, Base)
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-[#F7D1D8]/60 pb-3">
+                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#4A0D25]">
+                    <Droplets className="w-4 h-4 text-[#D45A7A]" /> Section 4: Fragrance Notes Pyramid (Top, Heart, Base)
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleGenerateNotesAI}
+                    disabled={isGeneratingNotesAI}
+                    className="px-3 py-1.5 rounded-xl bg-white hover:bg-[#FAE6E7] border border-[#F7D1D8] text-[#4A0D25] text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs hover:shadow-md disabled:opacity-50 cursor-pointer self-start sm:self-auto active:scale-95"
+                    title="Auto-generate Top, Heart, and Base notes using AI"
+                  >
+                    {isGeneratingNotesAI ? (
+                      <>
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#4A0D25]" />
+                        <span>Generating Notes...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-3.5 h-3.5 text-[#D45A7A] animate-pulse" />
+                        <span>✨ AI Generate Notes Pyramid</span>
+                      </>
+                    )}
+                  </button>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -2310,12 +2670,33 @@ export default function ProductsAdminPage() {
 
               {/* SECTION 5: PRODUCT STORY & FORMULATION */}
               <div className="p-4 sm:p-5 rounded-2xl bg-[#FDF8F8] border border-[#F7D1D8] space-y-4">
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#4A0D25]">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#4A0D25] border-b border-[#F7D1D8]/60 pb-2.5">
                   <FileText className="w-4 h-4 text-[#D45A7A]" /> Section 5: Product Story & Formulation
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#4A0D25] mb-1">Detailed Description</label>
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <label className="block text-xs font-bold text-[#4A0D25]">Detailed Description</label>
+                    <button
+                      type="button"
+                      onClick={handleGenerateDescriptionAI}
+                      disabled={isGeneratingDescAI}
+                      className="px-2.5 py-1 rounded-lg bg-white hover:bg-[#FAE6E7] border border-[#F7D1D8] text-[#4A0D25] text-[11px] font-bold transition-all flex items-center gap-1 shadow-xs hover:shadow-md disabled:opacity-50 cursor-pointer active:scale-95"
+                      title="Generate luxury bespoke product description using AI"
+                    >
+                      {isGeneratingDescAI ? (
+                        <>
+                          <RefreshCw className="w-3 h-3 animate-spin text-[#4A0D25]" />
+                          <span>Writing Story...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-3 h-3 text-[#D45A7A] animate-pulse" />
+                          <span>✨ AI Generate Story</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                   <textarea
                     rows={4}
                     value={formData.description}
@@ -2326,7 +2707,28 @@ export default function ProductsAdminPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#4A0D25] mb-1">Ingredients (comma-separated)</label>
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <label className="block text-xs font-bold text-[#4A0D25]">Ingredients (comma-separated)</label>
+                    <button
+                      type="button"
+                      onClick={handleGenerateIngredientsAI}
+                      disabled={isGeneratingIngredientsAI}
+                      className="px-2.5 py-1 rounded-lg bg-white hover:bg-[#FAE6E7] border border-[#F7D1D8] text-[#4A0D25] text-[11px] font-bold transition-all flex items-center gap-1 shadow-xs hover:shadow-md disabled:opacity-50 cursor-pointer active:scale-95"
+                      title="Auto-generate pure botanical ingredients list using AI"
+                    >
+                      {isGeneratingIngredientsAI ? (
+                        <>
+                          <RefreshCw className="w-3 h-3 animate-spin text-[#4A0D25]" />
+                          <span>Analyzing Ingredients...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-3 h-3 text-[#D45A7A] animate-pulse" />
+                          <span>✨ AI Generate Ingredients</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                   <input
                     type="text"
                     value={formData.ingredientsText}

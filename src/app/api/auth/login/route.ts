@@ -34,11 +34,11 @@ export async function POST(request: Request) {
 
     if (!authenticatedUser) {
       // Fallback for default demo accounts if database is not yet seeded
-      if (email === 'admin@maisonessence.com' && password === 'admin123') {
+      if ((email === 'admin@roseoil.in' || email === 'admin@maisonessence.com') && password === 'admin123') {
         authenticatedUser = {
           id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
-          email: 'admin@maisonessence.com',
-          full_name: 'Maison Admin',
+          email: email,
+          full_name: 'RoseOil.in Admin',
           role: 'admin',
           must_change_password: false,
         };
@@ -65,11 +65,11 @@ export async function POST(request: Request) {
 
       if (!isValid) {
         // Double check demo fallbacks
-        if (email === 'admin@maisonessence.com' && password === 'admin123') {
+        if ((email === 'admin@roseoil.in' || email === 'admin@maisonessence.com') && password === 'admin123') {
           authenticatedUser = {
             id: authenticatedUser.id,
             email: authenticatedUser.email,
-            full_name: authenticatedUser.full_name || 'Maison Admin',
+            full_name: authenticatedUser.full_name || 'RoseOil.in Admin',
             role: 'admin',
             must_change_password: false,
           };

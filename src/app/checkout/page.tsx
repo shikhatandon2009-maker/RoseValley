@@ -35,7 +35,7 @@ import {
 import { LuxuryHeader } from '@/components/layout/LuxuryHeader';
 import { LuxuryFooter } from '@/components/layout/LuxuryFooter';
 import { CheckoutChoiceModal } from '@/components/checkout/CheckoutChoiceModal';
-import { calculateWeightBasedShipping } from '@/lib/shipping-calculator';
+import { calculateWeightBasedShipping, extractItemWeights } from '@/lib/shipping-calculator';
 
 interface CountryConfig {
   code: string;
@@ -525,15 +525,16 @@ export default function CheckoutPage() {
   const discountAmount = Math.round((subtotalINR * discountPercent) / 100);
   const taxableGoodsAmount = Math.max(0, subtotalINR - discountAmount);
 
-  // Under GST Law: Domestic freight/shipping is a taxable supply (18% GST).
-  const taxableAmount = taxableGoodsAmount + shippingFee;
+  // Under GST Law: GST is applicable ONLY for Indian domestic orders (Export orders are 0% / Zero-rated)
+  const isIndianOrder = selectedCountryCode === 'IN';
+  const taxableAmount = isIndianOrder ? (taxableGoodsAmount + (isDomestic ? shippingFee : 0)) : taxableGoodsAmount;
 
-  // Dynamic GST Tax Rate from Store Settings (Defaults to 18.00%)
-  const taxRate = typeof settings?.tax_rate === 'number' ? settings.tax_rate : 18.00;
-  const goodsTaxAmount = Math.round((taxableGoodsAmount * taxRate) / 100);
-  const shippingTaxAmount = isDomestic ? Math.round((shippingFee * taxRate) / 100) : 0;
+  // Dynamic GST Tax Rate from Store Settings (Defaults to 18.00% for India, 0% for International)
+  const taxRate = isIndianOrder ? (typeof settings?.tax_rate === 'number' ? settings.tax_rate : 18.00) : 0;
+  const goodsTaxAmount = isIndianOrder ? Math.round((taxableGoodsAmount * taxRate) / 100) : 0;
+  const shippingTaxAmount = (isIndianOrder && isDomestic) ? Math.round((shippingFee * taxRate) / 100) : 0;
   const taxAmount = goodsTaxAmount + shippingTaxAmount;
-  const finalTotalINR = Math.round(taxableAmount + taxAmount);
+  const finalTotalINR = Math.round(taxableGoodsAmount + shippingFee + taxAmount);
 
   const handleCountryChange = (countryCode: string) => {
     setSelectedCountryCode(countryCode);
@@ -1051,26 +1052,35 @@ export default function CheckoutPage() {
                     />
                   </div>
 
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-bold text-[#4A0D25] flex items-center gap-1.5">
-                        <Receipt className="w-3.5 h-3.5 text-[#F6A6BB]" /> Buyer GST Number (Optional)
-                      </label>
-                      {gstinNumber && (
-                        <span className="text-[10px] text-emerald-800 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200 font-extrabold uppercase">
-                          ✓ {gstAutoPopulated ? 'Auto-filled' : 'Tax Credit'}
-                        </span>
-                      )}
+                  {selectedCountryCode === 'IN' ? (
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-[#4A0D25] flex items-center gap-1.5">
+                          <Receipt className="w-3.5 h-3.5 text-[#F6A6BB]" /> Buyer GST Number (Optional)
+                        </label>
+                        {gstinNumber && (
+                          <span className="text-[10px] text-emerald-800 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200 font-extrabold uppercase">
+                            ✓ {gstAutoPopulated ? 'Auto-filled' : 'Tax Credit'}
+                          </span>
+                        )}
+                      </div>
+                      <input
+                        type="text"
+                        value={gstinNumber}
+                        onChange={(e) => handleGstinNumberChange(e.target.value)}
+                        placeholder="09AAACS1234A1Z5"
+                        maxLength={15}
+                        className="w-full bg-white border border-[#F7D1D8] rounded-xl py-2.5 px-3.5 text-xs text-[#1A0510] font-mono font-bold uppercase focus:outline-none focus:ring-2 focus:ring-[#F6A6BB] shadow-xs"
+                      />
                     </div>
-                    <input
-                      type="text"
-                      value={gstinNumber}
-                      onChange={(e) => handleGstinNumberChange(e.target.value)}
-                      placeholder="09AAACS1234A1Z5"
-                      maxLength={15}
-                      className="w-full bg-white border border-[#F7D1D8] rounded-xl py-2.5 px-3.5 text-xs text-[#1A0510] font-mono font-bold uppercase focus:outline-none focus:ring-2 focus:ring-[#F6A6BB] shadow-xs"
-                    />
-                  </div>
+                  ) : (
+                    <div className="space-y-1 flex flex-col justify-end">
+                      <div className="bg-white/70 border border-[#F7D1D8] rounded-xl py-2.5 px-3.5 text-[11px] text-[#4A0D25] font-semibold flex items-center gap-2">
+                        <span>✈️</span>
+                        <span>International Order • Indian GST Not Applicable</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Street Address Line 1 */}
@@ -1190,66 +1200,81 @@ export default function CheckoutPage() {
               </div>
             )}
 
-            {/* REQUIREMENT 1: Optional GSTIN / Business Invoice Input */}
-            <div className="p-6 rounded-3xl bg-[#FAE6E7]/80 border border-[#F7D1D8] space-y-4 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Building2 className="w-4 h-4 text-[#F6A6BB]" />
-                  <span className="text-xs font-bold text-[#1A0510]">
-                    Add GST Number for Business Tax Invoice?
-                  </span>
+            {/* REQUIREMENT 1: Optional GSTIN / Business Invoice Input (India only) */}
+            {selectedCountryCode === 'IN' ? (
+              <div className="p-6 rounded-3xl bg-[#FAE6E7]/80 border border-[#F7D1D8] space-y-4 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-[#F6A6BB]" />
+                    <span className="text-xs font-bold text-[#1A0510]">
+                      Add GST Number for Business Tax Invoice?
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowGstinInput(!showGstinInput)}
+                    className={`px-3 py-1 rounded-xl text-[11px] font-extrabold uppercase tracking-wider transition-all border cursor-pointer ${
+                      showGstinInput
+                        ? 'bg-emerald-600 text-white border-emerald-700 shadow-xs'
+                        : 'bg-white text-[#4A0D25] border-[#F7D1D8] hover:bg-[#FAE6E7]'
+                    }`}
+                  >
+                    {showGstinInput ? 'GST Added ✓' : '+ Add GSTIN (Optional)'}
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setShowGstinInput(!showGstinInput)}
-                  className={`px-3 py-1 rounded-xl text-[11px] font-extrabold uppercase tracking-wider transition-all border cursor-pointer ${
-                    showGstinInput
-                      ? 'bg-emerald-600 text-white border-emerald-700 shadow-xs'
-                      : 'bg-white text-[#4A0D25] border-[#F7D1D8] hover:bg-[#FAE6E7]'
-                  }`}
-                >
-                  {showGstinInput ? 'GST Added ✓' : '+ Add GSTIN (Optional)'}
-                </button>
-              </div>
 
-              {showGstinInput && (
-                <div className="pt-2 border-t border-[#F7D1D8] space-y-3 animate-fade-in">
-                  <p className="text-[11px] text-[#4A0D25] font-medium">
-                    Enter your 15-digit GSTIN to receive an official B2B Tax Invoice with Input Tax Credit (ITC) eligibility.
-                  </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between">
-                        <label className="text-[11px] font-bold text-[#4A0D25]">Buyer GST Number (GSTIN) *</label>
-                        {gstAutoPopulated && gstinNumber && (
-                          <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 animate-fade-in flex items-center gap-1">
-                            <span>✓</span> Company Record Auto-filled
-                          </span>
-                        )}
+                {showGstinInput && (
+                  <div className="pt-2 border-t border-[#F7D1D8] space-y-3 animate-fade-in">
+                    <p className="text-[11px] text-[#4A0D25] font-medium">
+                      Enter your 15-digit Indian GSTIN to receive an official B2B Tax Invoice with Input Tax Credit (ITC) eligibility.
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <label className="text-[11px] font-bold text-[#4A0D25]">Buyer GST Number (GSTIN) *</label>
+                          {gstAutoPopulated && gstinNumber && (
+                            <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 animate-fade-in flex items-center gap-1">
+                              <span>✓</span> Company Record Auto-filled
+                            </span>
+                          )}
+                        </div>
+                        <input
+                          type="text"
+                          value={gstinNumber}
+                          onChange={(e) => handleGstinNumberChange(e.target.value)}
+                          placeholder="09AAAAA0000A1Z5"
+                          maxLength={15}
+                          className="w-full bg-white border border-[#F7D1D8] rounded-xl py-2 px-3 text-xs text-[#1A0510] font-mono font-bold uppercase focus:outline-none focus:ring-2 focus:ring-[#F6A6BB]"
+                        />
                       </div>
-                      <input
-                        type="text"
-                        value={gstinNumber}
-                        onChange={(e) => handleGstinNumberChange(e.target.value)}
-                        placeholder="09AAAAA0000A1Z5"
-                        maxLength={15}
-                        className="w-full bg-white border border-[#F7D1D8] rounded-xl py-2 px-3 text-xs text-[#1A0510] font-mono font-bold uppercase focus:outline-none focus:ring-2 focus:ring-[#F6A6BB]"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-[11px] font-bold text-[#4A0D25]">Registered Business / Entity Name (Optional)</label>
-                      <input
-                        type="text"
-                        value={companyName}
-                        onChange={(e) => handleCompanyNameChange(e.target.value)}
-                        placeholder="e.g. Wellness Botanicals Pvt Ltd"
-                        className="w-full bg-white border border-[#F7D1D8] rounded-xl py-2 px-3 text-xs text-[#1A0510] font-semibold focus:outline-none focus:ring-2 focus:ring-[#F6A6BB]"
-                      />
+                      <div className="space-y-1">
+                        <label className="text-[11px] font-bold text-[#4A0D25]">Registered Business / Entity Name (Optional)</label>
+                        <input
+                          type="text"
+                          value={companyName}
+                          onChange={(e) => handleCompanyNameChange(e.target.value)}
+                          placeholder="e.g. Wellness Botanicals Pvt Ltd"
+                          className="w-full bg-white border border-[#F7D1D8] rounded-xl py-2 px-3 text-xs text-[#1A0510] font-semibold focus:outline-none focus:ring-2 focus:ring-[#F6A6BB]"
+                        />
+                      </div>
                     </div>
                   </div>
+                )}
+              </div>
+            ) : (
+              <div className="p-4 sm:p-5 rounded-2xl bg-emerald-50/70 border border-emerald-200 flex items-center justify-between text-xs text-emerald-950">
+                <div className="flex items-center gap-2.5">
+                  <Sparkles className="w-4 h-4 text-emerald-700 shrink-0" />
+                  <div>
+                    <span className="font-bold text-emerald-950 block">Worldwide Export Dispatch ({currentCountry.name})</span>
+                    <span className="text-[11px] text-emerald-800 font-medium">Indian GST is not charged on international export orders.</span>
+                  </div>
                 </div>
-              )}
-            </div>
+                <span className="px-2.5 py-1 rounded-full bg-emerald-100 border border-emerald-300 text-[10px] font-black uppercase text-emerald-900 shrink-0">
+                  0% GST Export
+                </span>
+              </div>
+            )}
 
             {/* REQUIREMENT 3.5: Weight-Based & Regional Shipping Logistics */}
             <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-[#FAE6E7]/80 border border-[#F7D1D8] space-y-4 shadow-sm">
@@ -1258,7 +1283,7 @@ export default function CheckoutPage() {
                   <Truck className="w-4 h-4 text-[#F6A6BB]" /> Shipping & Freight Logistics
                 </h3>
                 <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#4A0D25] bg-white px-2.5 py-1 rounded-full border border-[#F7D1D8]">
-                  {totalNetKg} Kg Net • {totalGrossKg} Kg Gross (+20%)
+                  {totalNetKg >= 1 ? `${totalNetKg} Kg Net` : `${shippingCalculation.totalNetWeightGrams}g Net`} • {totalGrossKg >= 1 ? `${totalGrossKg} Kg Gross` : `${totalGrossWeightGrams}g Gross`} (+20%)
                 </span>
               </div>
 
@@ -1406,22 +1431,7 @@ export default function CheckoutPage() {
 
               <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
                 {items.map((item) => {
-                  const q = item.quantity || 1;
-                  const unit = (item.weight_unit || '').toLowerCase();
-                  let gw = item.gross_weight;
-                  if (!gw && item.net_weight) {
-                    gw = Number((item.net_weight * 1.2).toFixed(2));
-                  }
-                  const totalGw = gw ? gw * q : 0;
-                  const isKg =
-                    unit === 'kg' ||
-                    unit === 'l' ||
-                    (item.variantName && item.variantName.toLowerCase().includes('kg')) ||
-                    (item.name && item.name.toLowerCase().includes('kg'));
-                  const formattedGross = isKg
-                    ? `${totalGw % 1 === 0 ? totalGw : totalGw.toFixed(1)} Kg`
-                    : `${totalGw >= 1000 ? (totalGw / 1000).toFixed(1) + ' Kg' : Math.round(totalGw) + 'g'}`;
-
+                  const weightInfo = extractItemWeights(item);
                   return (
                     <div key={item.id} className="flex justify-between items-center text-xs">
                       <div>
@@ -1430,9 +1440,7 @@ export default function CheckoutPage() {
                         </p>
                         <div className="flex items-center gap-2 text-[10px] text-[#4A0D25] font-semibold">
                           <span>Qty: {item.quantity}</span>
-                          {gw ? (
-                            <span className="text-stone-500 font-medium">• {formattedGross} gross</span>
-                          ) : null}
+                          <span className="text-stone-500 font-medium">• {weightInfo.formattedGross} gross</span>
                         </div>
                       </div>
                       <span className="font-bold text-[#1A0510]" suppressHydrationWarning>{formatPrice(item.price * item.quantity)}</span>
@@ -1616,7 +1624,9 @@ export default function CheckoutPage() {
                   <span className="flex items-center gap-1 font-bold">
                     <Truck className="w-3.5 h-3.5 text-amber-700" /> Package Gross Weight:
                   </span>
-                  <span className="font-mono font-black">{totalGrossKg} Kg ({totalGrossWeightGrams} g)</span>
+                  <span className="font-mono font-black">
+                    {totalGrossKg >= 1 ? `${totalGrossKg} Kg` : `${totalGrossWeightGrams}g`} ({totalGrossWeightGrams} g)
+                  </span>
                 </div>
 
                 {/* Shipping & Handling (Weight/Region based) */}
@@ -1638,22 +1648,35 @@ export default function CheckoutPage() {
                   )}
                 </div>
 
-                <div className="flex justify-between text-stone-600 font-medium pt-1 border-t border-dashed border-[#F7D1D8]">
-                  <span>Total Taxable Base (Goods + Shipping)</span>
-                  <span suppressHydrationWarning>{formatPrice(taxableAmount)}</span>
-                </div>
+                {isIndianOrder ? (
+                  <>
+                    <div className="flex justify-between text-stone-600 font-medium pt-1 border-t border-dashed border-[#F7D1D8]">
+                      <span>Total Taxable Base (Goods + Shipping)</span>
+                      <span suppressHydrationWarning>{formatPrice(taxableAmount)}</span>
+                    </div>
 
-                <div className="flex justify-between text-[#4A0D25] font-bold">
-                  <span className="flex items-center gap-1">
-                    <Receipt className="w-3.5 h-3.5 text-[#F6A6BB]" /> Total GST Tax ({taxRate}%)
-                  </span>
-                  <span suppressHydrationWarning>{formatPrice(taxAmount)}</span>
-                </div>
+                    <div className="flex justify-between text-[#4A0D25] font-bold">
+                      <span className="flex items-center gap-1">
+                        <Receipt className="w-3.5 h-3.5 text-[#F6A6BB]" /> Total GST Tax ({taxRate}%)
+                      </span>
+                      <span suppressHydrationWarning>{formatPrice(taxAmount)}</span>
+                    </div>
 
-                {gstinNumber && (
-                  <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-900 font-bold flex items-center justify-between">
-                    <span>🏢 GST Credit Applied:</span>
-                    <span className="font-mono">{gstinNumber}</span>
+                    {gstinNumber && (
+                      <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-900 font-bold flex items-center justify-between">
+                        <span>🏢 GST Credit Applied:</span>
+                        <span className="font-mono">{gstinNumber}</span>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="flex justify-between items-center text-emerald-800 font-bold pt-1 border-t border-dashed border-[#F7D1D8]">
+                    <span className="flex items-center gap-1">
+                      <Receipt className="w-3.5 h-3.5 text-emerald-600" /> Indian GST (Exports)
+                    </span>
+                    <span className="text-[10px] font-extrabold uppercase bg-emerald-50 text-emerald-900 px-2 py-0.5 rounded border border-emerald-200">
+                      0% (Zero-Rated / No GST)
+                    </span>
                   </div>
                 )}
 

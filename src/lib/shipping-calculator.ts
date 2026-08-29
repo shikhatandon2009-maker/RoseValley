@@ -144,8 +144,104 @@ export function getExportRegionForCountry(countryCode: string): ExportRegionConf
   return EXPORT_REGIONS.rest_of_world;
 }
 
+export interface ItemWeightBreakdown {
+  unitNetGrams: number;
+  unitGrossGrams: number;
+  totalNetGrams: number;
+  totalGrossGrams: number;
+  totalNetKg: number;
+  totalGrossKg: number;
+  formattedNet: string;
+  formattedGross: string;
+}
+
+/**
+ * Robust Item Weight Extractor that accurately handles ml, g, kg, and text heuristics
+ */
+export function extractItemWeights(item: {
+  net_weight?: number | string;
+  weight_unit?: string;
+  gross_weight?: number | string;
+  quantity?: number;
+  name?: string;
+  variantName?: string;
+  [key: string]: any;
+}): ItemWeightBreakdown {
+  const q = Math.max(1, Number(item.quantity) || 1);
+  const text = `${item.variantName || ''} ${item.name || ''}`.toLowerCase();
+  const rawUnit = (item.weight_unit || '').toLowerCase().trim();
+  const rawNet = Number(item.net_weight);
+  const rawGross = Number(item.gross_weight);
+
+  // 1. Is unit explicitly in Kg or Litres?
+  const isKgUnit = 
+    rawUnit === 'kg' || rawUnit === 'kgs' || rawUnit === 'kilo' || rawUnit === 'kilogram' || rawUnit === 'kilograms' ||
+    rawUnit === 'l' || rawUnit === 'lt' || rawUnit === 'ltr' || rawUnit === 'liter' || rawUnit === 'litre' || rawUnit === 'litres';
+
+  // 2. Extract numeric weight mentions from variant / product name
+  const kgMatch = /\b(\d+(?:\.\d+)?)\s*(?:kg|kgs|kilo|kilogram|kilograms|litre|liter|l|ltr)\b/i.exec(text);
+  const gMatch = /\b(\d+(?:\.\d+)?)\s*(?:ml|milliliter|gm|g|gram|grams)\b/i.exec(text);
+
+  let unitNetGrams = 100; // default 100g
+
+  if (kgMatch) {
+    unitNetGrams = parseFloat(kgMatch[1]) * 1000;
+  } else if (gMatch) {
+    unitNetGrams = parseFloat(gMatch[1]);
+  } else if (!isNaN(rawNet) && rawNet > 0) {
+    if (isKgUnit) {
+      unitNetGrams = rawNet * 1000;
+    } else if (rawNet <= 25 && !text.includes('sample') && !text.includes('2ml') && !text.includes('10ml')) {
+      // Numbers <= 25 without 'ml' (like 1, 5, 10) are kilograms
+      unitNetGrams = rawNet * 1000;
+    } else {
+      unitNetGrams = rawNet;
+    }
+  } else if (!isNaN(rawGross) && rawGross > 0) {
+    if (isKgUnit || (rawGross <= 30 && !text.includes('sample'))) {
+      unitNetGrams = (rawGross * 1000) / 1.20;
+    } else {
+      unitNetGrams = rawGross / 1.20;
+    }
+  }
+
+  // Unit Gross Weight = Net Weight + 20% packaging overhead
+  let unitGrossGrams = Math.round(unitNetGrams * 1.20);
+  if (!isNaN(rawGross) && rawGross > 0) {
+    const rawGrossGrams = isKgUnit ? Math.round(rawGross * 1000) : Math.round(rawGross);
+    if (rawGrossGrams >= unitNetGrams) {
+      unitGrossGrams = rawGrossGrams;
+    }
+  }
+
+  const totalNetGrams = Math.round(unitNetGrams * q);
+  const totalGrossGrams = Math.round(unitGrossGrams * q);
+  const totalNetKg = Number((totalNetGrams / 1000).toFixed(3));
+  const totalGrossKg = Number((totalGrossGrams / 1000).toFixed(3));
+
+  const formattedNet = totalNetGrams >= 1000
+    ? `${totalNetGrams % 1000 === 0 ? totalNetGrams / 1000 : (totalNetGrams / 1000).toFixed(2)} Kg`
+    : `${totalNetGrams}g`;
+
+  const formattedGross = totalGrossGrams >= 1000
+    ? `${totalGrossGrams % 1000 === 0 ? totalGrossGrams / 1000 : (totalGrossGrams / 1000).toFixed(2)} Kg`
+    : `${totalGrossGrams}g`;
+
+  return {
+    unitNetGrams,
+    unitGrossGrams,
+    totalNetGrams,
+    totalGrossGrams,
+    totalNetKg,
+    totalGrossKg,
+    formattedNet,
+    formattedGross,
+  };
+}
+
 export interface ShippingCalculationResult {
   isDomestic: boolean;
+  totalNetWeightGrams: number;
   totalNetWeightKg: number;
   totalGrossWeightKg: number;
   totalGrossWeightGrams: number;
@@ -174,9 +270,9 @@ export function calculateWeightBasedShipping({
   orderSubtotalINR,
 }: {
   items: Array<{
-    net_weight?: number;
+    net_weight?: number | string;
     weight_unit?: string;
-    gross_weight?: number;
+    gross_weight?: number | string;
     quantity: number;
     name?: string;
     variantName?: string;
@@ -193,8 +289,9 @@ export function calculateWeightBasedShipping({
 }): ShippingCalculationResult {
   const isDomestic = (destinationCountryCode || 'IN').toUpperCase() === 'IN';
 
-  // 1. Calculate Total Net Weight & Subtotal (in grams & INR)
+  // 1. Calculate Total Net Weight, Gross Weight & Subtotal (in grams & INR)
   let totalNetGrams = 0;
+  let totalGrossWeightGrams = 0;
   let computedSubtotalINR = 0;
 
   for (const item of items) {
@@ -203,38 +300,14 @@ export function calculateWeightBasedShipping({
     const p = Number(item.price) || 0;
     computedSubtotalINR += p * qty;
 
-    let unitNetGrams = 100; // default 100ml / 100gm net
-    if (item.net_weight && Number(item.net_weight) > 0) {
-      const nw = Number(item.net_weight);
-      unitNetGrams = (item.weight_unit === 'kg' || item.weight_unit === 'L') ? nw * 1000 : nw;
-    } else if (item.gross_weight && Number(item.gross_weight) > 0) {
-      const gw = Number(item.gross_weight);
-      const grossGrams = (item.weight_unit === 'kg' || item.weight_unit === 'L') ? gw * 1000 : gw;
-      unitNetGrams = grossGrams / 1.20;
-    } else {
-      // Heuristic extraction from item name or variant
-      const text = `${item.name || ''} ${item.variantName || ''}`.toLowerCase();
-      if (text.includes('20 kg')) unitNetGrams = 20000;
-      else if (text.includes('10 kg')) unitNetGrams = 10000;
-      else if (text.includes('5 kg')) unitNetGrams = 5000;
-      else if (text.includes('1 kg') || text.includes('1 litre') || text.includes('1 l')) unitNetGrams = 1000;
-      else if (text.includes('500 ml') || text.includes('500 gm') || text.includes('500g')) unitNetGrams = 500;
-      else if (text.includes('250 ml') || text.includes('250 gm') || text.includes('250g')) unitNetGrams = 250;
-      else if (text.includes('100 ml') || text.includes('100 gm') || text.includes('100g')) unitNetGrams = 100;
-      else if (text.includes('50 ml') || text.includes('50 gm')) unitNetGrams = 50;
-      else if (text.includes('10 ml') || text.includes('10 gm')) unitNetGrams = 10;
-      else if (text.includes('2ml') || text.includes('sample')) unitNetGrams = 2;
-      else unitNetGrams = 100;
-    }
-
-    totalNetGrams += unitNetGrams * qty;
+    const breakdown = extractItemWeights(item);
+    totalNetGrams += breakdown.unitNetGrams * qty;
+    totalGrossWeightGrams += breakdown.unitGrossGrams * qty;
   }
 
   const effectiveSubtotalINR = typeof orderSubtotalINR === 'number' ? orderSubtotalINR : computedSubtotalINR;
+  const totalNetWeightGrams = totalNetGrams;
   const totalNetWeightKg = Number((totalNetGrams / 1000).toFixed(3));
-
-  // 2. Gross Weight = Total Net Weight + 20%
-  const totalGrossWeightGrams = Math.round(totalNetGrams * 1.20);
   const totalGrossWeightKg = Number((totalGrossWeightGrams / 1000).toFixed(3));
   const isOver200Kg = totalGrossWeightKg > 200;
 
@@ -272,6 +345,7 @@ export function calculateWeightBasedShipping({
 
     return {
       isDomestic: true,
+      totalNetWeightGrams,
       totalNetWeightKg,
       totalGrossWeightKg,
       totalGrossWeightGrams,
@@ -321,6 +395,7 @@ export function calculateWeightBasedShipping({
 
     return {
       isDomestic: false,
+      totalNetWeightGrams,
       totalNetWeightKg,
       totalGrossWeightKg,
       totalGrossWeightGrams,

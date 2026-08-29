@@ -43,18 +43,27 @@ export async function POST(request: Request) {
 
     const supabase = getSupabaseServerClient();
 
+    const countryCode = (shippingAddress?.countryCode || '').toUpperCase().trim();
+    const countryName = (shippingAddress?.country || '').toLowerCase().trim();
+    const isIndia = countryCode === 'IN' || countryName === 'india' || (!countryCode && !countryName);
+
     const businessName = shippingAddress?.companyName || shippingAddress?.company_name || shippingAddress?.business_name || null;
+
+    // GST is strictly applicable ONLY for Indian domestic orders (0 for international orders)
+    const effectiveTaxRate = isIndia ? (typeof taxRate === 'number' ? taxRate : 18.00) : 0;
+    const effectiveTaxAmount = isIndia ? (taxAmount || 0) : 0;
+    const effectiveShippingTax = isIndia ? (shippingTax || 0) : 0;
 
     const enhancedShippingAddress = {
       ...(typeof shippingAddress === 'object' && shippingAddress ? shippingAddress : {}),
-      gstin: gstin || shippingAddress?.gstin || null,
+      gstin: isIndia ? (gstin || shippingAddress?.gstin || null) : null,
       company_name: businessName,
       business_name: businessName,
-      tax_amount: taxAmount || 0,
-      tax_rate: taxRate || 18.00,
+      tax_amount: effectiveTaxAmount,
+      tax_rate: effectiveTaxRate,
       taxable_amount: taxableAmount || totalAmount,
       shipping_fee: shippingFee,
-      shipping_tax: shippingTax,
+      shipping_tax: effectiveShippingTax,
       total_weight_grams: totalWeightGrams,
       shipping_method: shippingMethod,
       payment_method: paymentMethod,

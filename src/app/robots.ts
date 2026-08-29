@@ -20,6 +20,7 @@ export default function robots(): MetadataRoute.Robots {
           '/account/',
           '/checkout',
           '/order-success',
+          '/*?_g=*',
         ],
       },
       {
@@ -31,6 +32,7 @@ export default function robots(): MetadataRoute.Robots {
           '/account/',
           '/checkout',
           '/order-success',
+          '/*?_g=*',
         ],
       },
     ],

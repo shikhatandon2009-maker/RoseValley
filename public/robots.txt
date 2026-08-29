@@ -6,6 +6,8 @@ Disallow: /api/
 Disallow: /account/
 Disallow: /checkout
 Disallow: /order-success
+Disallow: /*?_g=*
+
 
 User-agent: Googlebot
 Allow: /
@@ -14,6 +16,7 @@ Disallow: /api/
 Disallow: /account/
 Disallow: /checkout
 Disallow: /order-success
+Disallow: /*?_g=*
 
 Sitemap: https://roseoil.in/sitemap.xml
 Host: https://roseoil.in

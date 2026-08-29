@@ -67,7 +67,7 @@ export function ProductDetailClient({ product, variants, initialReviews, initial
   const [selectedImage, setSelectedImage] = useState(product.images?.[0] || '');
   const [selectedVariant, setSelectedVariant] = useState(uniqueVariants[0] || null);
   const [quantity, setQuantity] = useState(1);
-  const [activeTab, setActiveTab] = useState<'story' | 'notes' | 'ingredients' | 'shipping' | 'reviews' | 'qa'>('story');
+  const [activeTab, setActiveTab] = useState<'story' | 'shipping' | 'reviews' | 'qa'>('story');
 
   // Add to Cart Flying Animation state
   const [isFlying, setIsFlying] = useState(false);
@@ -686,10 +686,10 @@ export function ProductDetailClient({ product, variants, initialReviews, initial
 
       </div>
 
-      {/* Tabs: Story, Scent Notes, Ingredients, Reviews, Q&A */}
+      {/* Tabs: Story, Weight & Shipping, Reviews, Q&A */}
       <div className="space-y-6 sm:space-y-8 w-full overflow-hidden">
         <div className="flex border-b border-[#F7D1D8] overflow-x-auto gap-3 sm:gap-8 pb-1 scrollbar-none touch-pan-x w-full max-w-full -mx-1 px-1">
-          {(['story', 'notes', 'ingredients', 'shipping', 'reviews', 'qa'] as const).map((tab) => (
+          {(['story', 'shipping', 'reviews', 'qa'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -700,8 +700,6 @@ export function ProductDetailClient({ product, variants, initialReviews, initial
               }`}
             >
               {tab === 'story' && 'Story & Details'}
-              {tab === 'notes' && 'Olfactory Notes'}
-              {tab === 'ingredients' && 'Ingredients & Origin'}
               {tab === 'shipping' && 'Weight & Shipping Slabs'}
               {tab === 'reviews' && `Reviews (${reviews.length})`}
               {tab === 'qa' && `Q&A (${questions.length})`}
@@ -709,80 +707,172 @@ export function ProductDetailClient({ product, variants, initialReviews, initial
           ))}
         </div>
 
-        {/* Tab 0: Story */}
+        {/* Tab 0: Story & Details — Heritage English Manuscript Style */}
         {activeTab === 'story' && (
-          <div className="p-4 sm:p-8 bg-white/80 rounded-2xl border border-[#F7D1D8] space-y-4 animate-in fade-in shadow-xs">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="bg-[#FAE6E7] text-[#4A0D25] text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full">
-                400-Year Deg-Bhapka Hydro-Distillate
-              </span>
-              <span className="bg-emerald-50 text-emerald-900 border border-emerald-200 text-[10px] font-extrabold uppercase tracking-widest px-3 py-1 rounded-full">
-                100% Alcohol-Free Pure Elixir
-              </span>
-            </div>
-            <h3 className="font-serif text-xl sm:text-2xl font-bold text-[#1A0510]">{product.name}</h3>
-            <div className="text-xs sm:text-sm text-[#4A0D25] leading-relaxed whitespace-pre-line font-serif space-y-3">
-              {product.description || `${product.name} is a rare, hydro-distilled artisanal fragrance created using 400-year-old copper Deg-Bhapka stills in Kannauj.`}
-            </div>
-          </div>
-        )}
+          <div className="relative animate-in fade-in">
+            {/* Parchment-style outer container with ornamental border */}
+            <div className="relative p-6 sm:p-10 md:p-14 rounded-2xl overflow-hidden"
+              style={{
+                background: 'linear-gradient(145deg, #FDF8F0 0%, #F9F0E3 25%, #FBF4EA 50%, #F7EDE0 75%, #FDF8F0 100%)',
+                boxShadow: 'inset 0 0 80px rgba(139, 90, 43, 0.06), 0 4px 24px rgba(74, 13, 37, 0.08)',
+              }}
+            >
+              {/* Decorative inner border frame */}
+              <div className="absolute inset-3 sm:inset-5 border border-[#C9A96E]/30 rounded-xl pointer-events-none" />
+              <div className="absolute inset-4 sm:inset-6 border border-[#C9A96E]/15 rounded-lg pointer-events-none" />
 
-        {/* Tab 1: Olfactory Scent Notes */}
-        {activeTab === 'notes' && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 animate-in fade-in">
-            <div className="p-4 sm:p-6 bg-white/80 rounded-2xl border border-[#F7D1D8] space-y-2 shadow-xs">
-              <span className="text-[10px] uppercase tracking-widest text-[#4A0D25] font-black">Top Notes</span>
-              <h4 className="font-serif text-base sm:text-lg font-bold text-[#1A0510]">Opening Impression</h4>
-              <p className="text-xs text-[#4A0D25]/80 font-medium">Bright, volatile aromatics dancing for the first 15–30 minutes.</p>
-              <div className="flex flex-wrap gap-1.5 pt-2">
-                {(product.scent_notes?.top || [product.name + ' Essence']).map((n: string) => (
-                  <span key={n} className="bg-[#FAE6E7] text-[#4A0D25] text-xs px-2.5 py-1 rounded-full font-bold">
-                    {n}
+              {/* Corner Flourish Ornaments */}
+              <div className="absolute top-4 left-4 sm:top-6 sm:left-6 text-[#C9A96E]/40 text-2xl sm:text-3xl font-serif select-none pointer-events-none" style={{ lineHeight: 1 }}>❧</div>
+              <div className="absolute top-4 right-4 sm:top-6 sm:right-6 text-[#C9A96E]/40 text-2xl sm:text-3xl font-serif select-none pointer-events-none rotate-180" style={{ lineHeight: 1, transform: 'scaleX(-1)' }}>❧</div>
+              <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 text-[#C9A96E]/40 text-2xl sm:text-3xl font-serif select-none pointer-events-none rotate-180" style={{ lineHeight: 1 }}>❧</div>
+              <div className="absolute bottom-4 right-4 sm:bottom-6 sm:right-6 text-[#C9A96E]/40 text-2xl sm:text-3xl font-serif select-none pointer-events-none" style={{ lineHeight: 1, transform: 'scaleX(-1)' }}>❧</div>
+
+              {/* Subtle aged paper texture overlay */}
+              <div className="absolute inset-0 opacity-[0.03] pointer-events-none rounded-2xl"
+                style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\'/%3E%3C/svg%3E")' }}
+              />
+
+              <div className="relative z-10 space-y-6 sm:space-y-8">
+
+                {/* Heritage badges row */}
+                <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+                  <span className="bg-[#4A0D25]/90 text-[#F0DFC8] text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] px-3 sm:px-4 py-1.5 rounded-full border border-[#C9A96E]/40 shadow-sm">
+                    400-Year Deg-Bhapka Hydro-Distillate
                   </span>
-                ))}
+                  <span className="bg-[#1B3A2D]/90 text-[#D4E8D0] border border-[#6B8F71]/40 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] px-3 sm:px-4 py-1.5 rounded-full shadow-sm">
+                    100% Alcohol-Free Pure Elixir
+                  </span>
+                </div>
+
+                {/* Ornamental divider */}
+                <div className="flex items-center justify-center gap-3 sm:gap-4">
+                  <div className="h-px flex-1 max-w-[80px] sm:max-w-[120px] bg-gradient-to-r from-transparent to-[#C9A96E]/50" />
+                  <span className="text-[#C9A96E]/70 text-xs sm:text-sm select-none">✦ ✦ ✦</span>
+                  <div className="h-px flex-1 max-w-[80px] sm:max-w-[120px] bg-gradient-to-l from-transparent to-[#C9A96E]/50" />
+                </div>
+
+                {/* Grand Heritage Title */}
+                <div className="text-center space-y-2">
+                  <h3 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-[#2C1810] tracking-wide leading-tight"
+                    style={{ fontVariant: 'small-caps', letterSpacing: '0.06em' }}
+                  >
+                    {product.name}
+                  </h3>
+                  {/* Handwritten Script Subtitle */}
+                  <p className="font-script text-lg sm:text-xl md:text-2xl text-[#8B5A2B]/70 italic"
+                    style={{ fontFamily: 'var(--font-script, "Pinyon Script"), cursive' }}
+                  >
+                    A Sacred Botanical Heritage
+                  </p>
+                </div>
+
+                {/* Ornamental divider */}
+                <div className="flex items-center justify-center gap-3">
+                  <div className="h-px flex-1 max-w-[60px] sm:max-w-[100px] bg-gradient-to-r from-transparent to-[#C9A96E]/40" />
+                  <span className="text-[#C9A96E]/50 text-lg select-none">❦</span>
+                  <div className="h-px flex-1 max-w-[60px] sm:max-w-[100px] bg-gradient-to-l from-transparent to-[#C9A96E]/40" />
+                </div>
+
+                {/* Main Description — Heritage Manuscript Typography with Drop Cap */}
+                <div className="max-w-3xl mx-auto">
+                  {(() => {
+                    const desc = product.description || `${product.name} is a rare, hydro-distilled artisanal fragrance created using 400-year-old copper Deg-Bhapka stills in Kannauj. Each drop carries centuries of botanical mastery, distilled with reverence for nature's most precious aromatic treasures.`;
+                    const paragraphs = desc.split(/\n\n|\n/).filter((p: string) => p.trim());
+
+                    return (
+                      <div className="space-y-5 sm:space-y-6">
+                        {paragraphs.map((para: string, idx: number) => {
+                          const trimmed = para.trim();
+                          if (!trimmed) return null;
+
+                          // First paragraph gets a drop cap
+                          if (idx === 0 && trimmed.length > 1) {
+                            const firstLetter = trimmed[0];
+                            const rest = trimmed.slice(1);
+                            return (
+                              <p key={idx} className="font-serif text-sm sm:text-base text-[#2C1810]/90 leading-[1.9] sm:leading-[2] tracking-wide text-justify"
+                                style={{ textIndent: '0', fontFeatureSettings: '"liga" 1, "kern" 1' }}
+                              >
+                                <span className="float-left text-5xl sm:text-6xl md:text-7xl font-serif font-bold text-[#4A0D25] leading-[0.75] mr-2 sm:mr-3 mt-1 sm:mt-1.5"
+                                  style={{
+                                    fontVariant: 'normal',
+                                    textShadow: '1px 1px 0px rgba(201, 169, 110, 0.3)',
+                                    fontFamily: 'var(--font-serif, "Playfair Display"), Georgia, serif',
+                                  }}
+                                >
+                                  {firstLetter}
+                                </span>
+                                {rest}
+                              </p>
+                            );
+                          }
+
+                          return (
+                            <p key={idx} className="font-serif text-sm sm:text-base text-[#2C1810]/85 leading-[1.9] sm:leading-[2] tracking-wide text-justify"
+                              style={{ textIndent: '1.5em', fontFeatureSettings: '"liga" 1, "kern" 1' }}
+                            >
+                              {trimmed}
+                            </p>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                {/* Elegant Ornamental Section Break */}
+                <div className="flex items-center justify-center gap-3 py-2">
+                  <div className="h-px flex-1 max-w-[50px] sm:max-w-[80px] bg-gradient-to-r from-transparent to-[#C9A96E]/30" />
+                  <span className="text-[#C9A96E]/40 text-xs tracking-[0.3em] font-serif select-none">— ✿ —</span>
+                  <div className="h-px flex-1 max-w-[50px] sm:max-w-[80px] bg-gradient-to-l from-transparent to-[#C9A96E]/30" />
+                </div>
+
+                {/* Heritage Quality Seal — Handwritten Script Signature */}
+                <div className="text-center space-y-3 pt-2">
+                  <div className="inline-flex flex-col items-center gap-2 px-6 sm:px-8 py-4 sm:py-5 rounded-xl border border-[#C9A96E]/20"
+                    style={{ background: 'linear-gradient(135deg, rgba(201, 169, 110, 0.06), rgba(253, 248, 240, 0.5))' }}
+                  >
+                    {/* Handwritten Quality Mark */}
+                    <span className="text-2xl sm:text-3xl md:text-4xl text-[#4A0D25]/80"
+                      style={{ fontFamily: 'var(--font-script, "Pinyon Script"), cursive' }}
+                    >
+                      Distilled with Reverence
+                    </span>
+                    <div className="flex items-center gap-2 text-[10px] sm:text-[11px] text-[#8B5A2B]/60 font-serif uppercase tracking-[0.25em]">
+                      <span className="w-6 sm:w-8 h-px bg-[#C9A96E]/30" />
+                      <span>Est. Kannauj, India</span>
+                      <span className="w-6 sm:w-8 h-px bg-[#C9A96E]/30" />
+                    </div>
+                    {/* Handwritten Provenance Signature */}
+                    <p className="text-base sm:text-lg text-[#8B5A2B]/50 italic mt-1"
+                      style={{ fontFamily: 'var(--font-script, "Pinyon Script"), cursive' }}
+                    >
+                      Maison De L&apos;Essence — Pure Botanical Artistry
+                    </p>
+                  </div>
+                </div>
+
+                {/* Bottom Purity Guarantees Row */}
+                <div className="grid grid-cols-3 gap-3 sm:gap-4 pt-2">
+                  <div className="text-center space-y-1">
+                    <div className="text-lg sm:text-xl text-[#C9A96E]/70 select-none">⚗</div>
+                    <span className="block text-[9px] sm:text-[10px] font-serif uppercase tracking-[0.15em] text-[#2C1810]/60 font-semibold">Copper Deg-Bhapka</span>
+                    <span className="block text-[9px] text-[#8B5A2B]/40 font-serif italic">Traditional Distillation</span>
+                  </div>
+                  <div className="text-center space-y-1">
+                    <div className="text-lg sm:text-xl text-[#C9A96E]/70 select-none">❋</div>
+                    <span className="block text-[9px] sm:text-[10px] font-serif uppercase tracking-[0.15em] text-[#2C1810]/60 font-semibold">Zero Synthetics</span>
+                    <span className="block text-[9px] text-[#8B5A2B]/40 font-serif italic">No Alcohol or Chemicals</span>
+                  </div>
+                  <div className="text-center space-y-1">
+                    <div className="text-lg sm:text-xl text-[#C9A96E]/70 select-none">✤</div>
+                    <span className="block text-[9px] sm:text-[10px] font-serif uppercase tracking-[0.15em] text-[#2C1810]/60 font-semibold">Botanical Purity</span>
+                    <span className="block text-[9px] text-[#8B5A2B]/40 font-serif italic">100% Pure Essential Oil</span>
+                  </div>
+                </div>
+
               </div>
             </div>
-
-            <div className="p-4 sm:p-6 bg-white/80 rounded-2xl border border-[#F7D1D8] space-y-2 shadow-xs">
-              <span className="text-[10px] uppercase tracking-widest text-[#4A0D25] font-black">Heart Notes</span>
-              <h4 className="font-serif text-base sm:text-lg font-bold text-[#1A0510]">The Master Floral Core</h4>
-              <p className="text-xs text-[#4A0D25]/80 font-medium">The true identity and signature bouquet unfurling over 2–4 hours.</p>
-              <div className="flex flex-wrap gap-1.5 pt-2">
-                {(product.scent_notes?.heart || [product.name + ' Pure Heart']).map((n: string) => (
-                  <span key={n} className="bg-[#FAE6E7] text-[#4A0D25] text-xs px-2.5 py-1 rounded-full font-bold">
-                    {n}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            <div className="p-4 sm:p-6 bg-white/80 rounded-2xl border border-[#F7D1D8] space-y-2 shadow-xs">
-              <span className="text-[10px] uppercase tracking-widest text-[#4A0D25] font-black">Soul Notes</span>
-              <h4 className="font-serif text-base sm:text-lg font-bold text-[#1A0510]">Base Drydown Notes</h4>
-              <p className="text-xs text-[#4A0D25]/80 font-medium">Rich, enduring trail lingering on skin for 10+ hours.</p>
-              <div className="flex flex-wrap gap-1.5 pt-2">
-                {(product.scent_notes?.base || [product.name + ' Royal Base']).map((n: string) => (
-                  <span key={n} className="bg-[#FAE6E7] text-[#4A0D25] text-xs px-2.5 py-1 rounded-full font-bold">
-                    {n}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Tab 2: Ingredients */}
-        {activeTab === 'ingredients' && (
-          <div className="p-4 sm:p-8 bg-white/80 rounded-2xl border border-[#F7D1D8] space-y-4 animate-in fade-in shadow-xs">
-            <h3 className="font-serif text-lg sm:text-xl font-bold text-[#1A0510]">100% Transparent Formula</h3>
-            <p className="text-xs text-[#4A0D25] leading-relaxed font-medium">
-              We list every single ingredient. Formulated without phthalates, synthetic dyes, parabens, or animal products.
-            </p>
-            <ul className="list-disc list-inside text-xs text-[#4A0D25] space-y-1 font-mono">
-              {(product.ingredients || ['Pure Essential Oil Extract', 'Botanical Carrier Elixir', 'Distilled Floral Nectar']).map((ing: string, i: number) => (
-                <li key={i}>{ing}</li>
-              ))}
-            </ul>
           </div>
         )}
 

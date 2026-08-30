@@ -69,9 +69,11 @@ export function ProductDetailClient({ product, variants, initialReviews, initial
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState<'story' | 'shipping' | 'reviews' | 'qa'>('story');
 
-  // Add to Cart Flying Animation state
+  // Add to Cart Zoom Animation state
   const [isFlying, setIsFlying] = useState(false);
   const [addedSuccess, setAddedSuccess] = useState(false);
+  const [showZoomNotification, setShowZoomNotification] = useState(false);
+  const [zoomPhase, setZoomPhase] = useState<'idle' | 'zoom-in' | 'zoom-out' | 'notification'>('idle');
   const [showStickyBar, setShowStickyBar] = useState(false);
 
   // Interactive Image Hover Magnifier & 3D Tilt State
@@ -171,18 +173,29 @@ export function ProductDetailClient({ product, variants, initialReviews, initial
       item_shipping_cost: Number(itemShip) || 0,
     }, quantity, false);
 
-    setIsFlying(true);
     setAddedSuccess(true);
 
-    // Open sidebar cart after smooth animation completes
-    setTimeout(() => {
-      setIsFlying(false);
-      toggleCart(true);
-    }, 1050);
+    // Phase 1: Zoom IN — product name scales up to fill screen
+    setShowZoomNotification(true);
+    setZoomPhase('zoom-in');
 
+    // Phase 2: Zoom OUT — product name shrinks away toward cart
     setTimeout(() => {
+      setZoomPhase('zoom-out');
+    }, 800);
+
+    // Phase 3: Notification bar — "[Name] Added to the cart"
+    setTimeout(() => {
+      setZoomPhase('notification');
+      toggleCart(true);
+    }, 1400);
+
+    // Phase 4: Disappear after 3 seconds total from notification appearing
+    setTimeout(() => {
+      setShowZoomNotification(false);
+      setZoomPhase('idle');
       setAddedSuccess(false);
-    }, 2400);
+    }, 4400);
   };
 
   const handleReviewSubmit = (e: React.FormEvent) => {
@@ -649,9 +662,8 @@ export function ProductDetailClient({ product, variants, initialReviews, initial
             >
               {addedSuccess ? (
                 <>
-                  <CheckCircle2 className="w-4 h-4 text-[#4A0D25] animate-bounce" />
+                  <CheckCircle2 className="w-4 h-4 text-[#4A0D25]" />
                   <span className="font-black tracking-wide text-[#4A0D25]">Added to Cart!</span>
-                  <Sparkles className="w-3.5 h-3.5 text-[#4A0D25] animate-spin" />
                 </>
               ) : (
                 <>
@@ -1089,6 +1101,68 @@ export function ProductDetailClient({ product, variants, initialReviews, initial
         )}
 
       </div>
+
+      {/* FULL-SCREEN ZOOM PRODUCT NAME OVERLAY + NOTIFICATION */}
+      <AnimatePresence>
+        {showZoomNotification && zoomPhase !== 'notification' && (
+          <motion.div
+            key="zoom-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 z-[60] flex items-center justify-center pointer-events-none"
+            style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(6px)' }}
+          >
+            <motion.h1
+              initial={{ scale: 0.1, opacity: 0 }}
+              animate={
+                zoomPhase === 'zoom-in'
+                  ? { scale: 1, opacity: 1 }
+                  : { scale: 0.05, opacity: 0, y: -200, x: 200 }
+              }
+              transition={
+                zoomPhase === 'zoom-in'
+                  ? { duration: 0.7, ease: [0.22, 1, 0.36, 1] }
+                  : { duration: 0.5, ease: [0.55, 0, 1, 0.45] }
+              }
+              className="text-white font-black uppercase text-center px-6 select-none"
+              style={{
+                fontSize: 'clamp(2rem, 10vw, 7rem)',
+                lineHeight: 1.1,
+                letterSpacing: '0.08em',
+                filter: 'grayscale(1)',
+                textShadow: '0 4px 60px rgba(0,0,0,0.6), 0 0 120px rgba(255,255,255,0.15)',
+                maxWidth: '95vw',
+                wordBreak: 'break-word',
+              }}
+            >
+              {product.name}
+            </motion.h1>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* FLOATING NOTIFICATION — "[Product Name] Added to the cart" */}
+      <AnimatePresence>
+        {showZoomNotification && zoomPhase === 'notification' && (
+          <motion.div
+            key="cart-notification"
+            initial={{ y: -80, opacity: 0, scale: 0.9 }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            exit={{ y: -80, opacity: 0, scale: 0.9 }}
+            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+            className="fixed top-6 left-1/2 -translate-x-1/2 z-[70] flex items-center gap-3 bg-[#1A0510]/90 backdrop-blur-xl text-white px-6 py-3.5 rounded-2xl shadow-[0_12px_48px_rgba(74,13,37,0.35)] border border-[#F6A6BB]/30"
+          >
+            <CheckCircle2 className="w-5 h-5 text-[#F6A6BB] flex-shrink-0" />
+            <span className="font-bold text-sm tracking-wide">
+              <span className="font-black">{product.name}</span>{' '}
+              <span className="text-[#F6A6BB]">Added to the cart</span>
+            </span>
+            <ShoppingBag className="w-4 h-4 text-[#F6A6BB]/70 flex-shrink-0" />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* STICKY BOTTOM BAR FOR ADD TO CART ON SCROLL */}
       <AnimatePresence>

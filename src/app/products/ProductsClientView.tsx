@@ -453,7 +453,7 @@ export function ProductsClientView({
           </div>
 
           <h1 className="font-serif text-3xl sm:text-5xl md:text-6xl font-bold text-[#1A0510] tracking-tight">
-            {activeCategoryObj?.name || 'Our Fragrance Collection'}
+            {activeCategoryObj?.name || ''}
           </h1>
 
           <p className="text-xs sm:text-base text-[#4A0D25] leading-relaxed font-medium max-w-2xl mx-auto">
@@ -503,11 +503,10 @@ export function ProductsClientView({
                   key={term}
                   type="button"
                   onClick={() => handleSearchChange(term)}
-                  className={`text-[10px] sm:text-[11px] font-bold px-2.5 sm:px-3 py-1 rounded-full transition-all cursor-pointer ${
-                    searchQuery.toLowerCase() === term.toLowerCase()
-                      ? 'bg-[#4A0D25] text-white shadow-xs'
-                      : 'bg-white/90 text-[#4A0D25] border border-[#F7D1D8] hover:bg-[#FAE6E7]'
-                  }`}
+                  className={`text-[10px] sm:text-[11px] font-bold px-2.5 sm:px-3 py-1 rounded-full transition-all cursor-pointer ${searchQuery.toLowerCase() === term.toLowerCase()
+                    ? 'bg-[#4A0D25] text-white shadow-xs'
+                    : 'bg-white/90 text-[#4A0D25] border border-[#F7D1D8] hover:bg-[#FAE6E7]'
+                    }`}
                 >
                   {term}
                 </button>
@@ -531,19 +530,17 @@ export function ProductsClientView({
             <button
               type="button"
               onClick={() => handleCategoryChange('')}
-              className={`px-3.5 sm:px-4 py-2 rounded-full text-[11px] sm:text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap cursor-pointer shrink-0 flex items-center gap-1.5 ${
-                !selectedCategory
-                  ? 'bg-[#4A0D25] text-white shadow-md'
-                  : 'bg-[#F7EEED] text-[#1A0510] hover:bg-[#F7D1D8] border border-[#F7D1D8]'
-              }`}
+              className={`px-3.5 sm:px-4 py-2 rounded-full text-[11px] sm:text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap cursor-pointer shrink-0 flex items-center gap-1.5 ${!selectedCategory
+                ? 'bg-[#4A0D25] text-white shadow-md'
+                : 'bg-[#F7EEED] text-[#1A0510] hover:bg-[#F7D1D8] border border-[#F7D1D8]'
+                }`}
             >
               <span>All Scents</span>
               <span
-                className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                  !selectedCategory
-                    ? 'bg-white/20 text-white'
-                    : 'bg-[#FAE6E7] text-[#4A0D25]'
-                }`}
+                className={`text-[10px] px-1.5 py-0.2 rounded-full ${!selectedCategory
+                  ? 'bg-white/20 text-white'
+                  : 'bg-[#FAE6E7] text-[#4A0D25]'
+                  }`}
               >
                 {categoryCounts.all || initialProducts.length}
               </span>
@@ -557,20 +554,18 @@ export function ProductsClientView({
                   key={cat.id}
                   type="button"
                   onClick={() => handleCategoryChange(cat.slug)}
-                  className={`px-3.5 sm:px-4 py-2 rounded-full text-[11px] sm:text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap cursor-pointer shrink-0 flex items-center gap-1.5 ${
-                    isSelected
-                      ? 'bg-[#4A0D25] text-white shadow-md'
-                      : 'bg-[#F7EEED] text-[#1A0510] hover:bg-[#F7D1D8] border border-[#F7D1D8]'
-                  }`}
+                  className={`px-3.5 sm:px-4 py-2 rounded-full text-[11px] sm:text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap cursor-pointer shrink-0 flex items-center gap-1.5 ${isSelected
+                    ? 'bg-[#4A0D25] text-white shadow-md'
+                    : 'bg-[#F7EEED] text-[#1A0510] hover:bg-[#F7D1D8] border border-[#F7D1D8]'
+                    }`}
                 >
                   <span>{cat.name}</span>
                   {count > 0 && (
                     <span
-                      className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                        isSelected
-                          ? 'bg-white/20 text-white'
-                          : 'bg-[#FAE6E7] text-[#4A0D25]'
-                      }`}
+                      className={`text-[10px] px-1.5 py-0.2 rounded-full ${isSelected
+                        ? 'bg-white/20 text-white'
+                        : 'bg-[#FAE6E7] text-[#4A0D25]'
+                        }`}
                     >
                       {count}
                     </span>
@@ -608,11 +603,10 @@ export function ProductsClientView({
                         key={opt}
                         type="button"
                         onClick={() => handlePageSizeChange(opt)}
-                        className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold flex items-center justify-between transition-colors cursor-pointer ${
-                          isSelected
-                            ? 'bg-[#FAE6E7] text-[#4A0D25] font-bold'
-                            : 'text-[#1A0510] hover:bg-[#F7EEED]'
-                        }`}
+                        className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold flex items-center justify-between transition-colors cursor-pointer ${isSelected
+                          ? 'bg-[#FAE6E7] text-[#4A0D25] font-bold'
+                          : 'text-[#1A0510] hover:bg-[#F7EEED]'
+                          }`}
                       >
                         <span>{opt} products</span>
                         {isSelected && <Check className="w-3.5 h-3.5 text-[#F6A6BB]" />}
@@ -649,11 +643,10 @@ export function ProductsClientView({
                         key={option.id}
                         type="button"
                         onClick={() => handleSortChange(option.id)}
-                        className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold flex items-center justify-between transition-colors cursor-pointer ${
-                          isSelected
-                            ? 'bg-[#FAE6E7] text-[#4A0D25] font-bold'
-                            : 'text-[#1A0510] hover:bg-[#F7EEED]'
-                        }`}
+                        className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold flex items-center justify-between transition-colors cursor-pointer ${isSelected
+                          ? 'bg-[#FAE6E7] text-[#4A0D25] font-bold'
+                          : 'text-[#1A0510] hover:bg-[#F7EEED]'
+                          }`}
                       >
                         <span>{option.label}</span>
                         {isSelected && <Check className="w-3.5 h-3.5 text-[#F6A6BB]" />}
@@ -763,11 +756,10 @@ export function ProductsClientView({
                     type="button"
                     onClick={() => handlePageChange(safeCurrentPage - 1)}
                     disabled={safeCurrentPage <= 1}
-                    className={`inline-flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                      safeCurrentPage <= 1
-                        ? 'opacity-40 cursor-not-allowed bg-stone-100 text-stone-400'
-                        : 'bg-white hover:bg-[#FAE6E7] text-[#4A0D25] border border-[#F7D1D8] shadow-xs'
-                    }`}
+                    className={`inline-flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${safeCurrentPage <= 1
+                      ? 'opacity-40 cursor-not-allowed bg-stone-100 text-stone-400'
+                      : 'bg-white hover:bg-[#FAE6E7] text-[#4A0D25] border border-[#F7D1D8] shadow-xs'
+                      }`}
                     aria-label="Previous Page"
                   >
                     <ChevronLeft className="w-4 h-4" />
@@ -795,11 +787,10 @@ export function ProductsClientView({
                         key={pageNum}
                         type="button"
                         onClick={() => handlePageChange(pageNum)}
-                        className={`min-w-[36px] h-9 px-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
-                          isActive
-                            ? 'bg-[#4A0D25] text-white shadow-md scale-105'
-                            : 'bg-white hover:bg-[#FAE6E7] text-[#1A0510] border border-[#F7D1D8] shadow-xs'
-                        }`}
+                        className={`min-w-[36px] h-9 px-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${isActive
+                          ? 'bg-[#4A0D25] text-white shadow-md scale-105'
+                          : 'bg-white hover:bg-[#FAE6E7] text-[#1A0510] border border-[#F7D1D8] shadow-xs'
+                          }`}
                         aria-current={isActive ? 'page' : undefined}
                       >
                         {pageNum}
@@ -812,11 +803,10 @@ export function ProductsClientView({
                     type="button"
                     onClick={() => handlePageChange(safeCurrentPage + 1)}
                     disabled={safeCurrentPage >= totalPages}
-                    className={`inline-flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                      safeCurrentPage >= totalPages
-                        ? 'opacity-40 cursor-not-allowed bg-stone-100 text-stone-400'
-                        : 'bg-white hover:bg-[#FAE6E7] text-[#4A0D25] border border-[#F7D1D8] shadow-xs'
-                    }`}
+                    className={`inline-flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${safeCurrentPage >= totalPages
+                      ? 'opacity-40 cursor-not-allowed bg-stone-100 text-stone-400'
+                      : 'bg-white hover:bg-[#FAE6E7] text-[#4A0D25] border border-[#F7D1D8] shadow-xs'
+                      }`}
                     aria-label="Next Page"
                   >
                     <span className="hidden sm:inline">Next</span>

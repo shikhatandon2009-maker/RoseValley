@@ -573,54 +573,6 @@ export function ProductDetailClient({ product, variants, initialReviews, initial
             </div>
           )}
 
-          {/* DYNAMIC WEIGHT & PACKAGING SPECS & ESTIMATED SHIPPING PREVIEW */}
-          <div className="p-3.5 sm:p-4 rounded-2xl bg-[#FAE6E7]/80 border border-[#F7D1D8] space-y-2.5 shadow-2xs">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-[#4A0D25]">
-                <Scale className="w-4 h-4 text-[#F6A6BB]" />
-                <span>Weight & Packaging Specifications:</span>
-              </div>
-              <span className="text-[10px] font-extrabold uppercase tracking-wider bg-white px-2 py-0.5 rounded-full border border-[#F7D1D8] text-[#4A0D25]">
-                {activeNetWeight} {activeWeightUnit} Net • {activeGrossGrams < 1000 ? `${activeGrossGrams} gm` : `${(activeGrossGrams/1000).toFixed(2)} Kg`} Gross
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-              <div className="p-2.5 rounded-xl bg-white/90 border border-[#F7D1D8] space-y-0.5">
-                <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-stone-500 font-semibold flex items-center gap-1">
-                    <span>🇮🇳 Domestic Delivery:</span>
-                  </span>
-                  <span className="font-mono font-bold text-[#4A0D25]">
-                    {domesticShippingPreview.shippingFeeINR === 0 ? 'FREE' : `₹${domesticShippingPreview.shippingFeeINR}`}
-                  </span>
-                </div>
-                <span className="text-[10px] text-stone-500 block truncate">
-                  {domesticShippingPreview.slabLabel} (+ 18% GST)
-                </span>
-              </div>
-
-              <div className="p-2.5 rounded-xl bg-white/90 border border-[#F7D1D8] space-y-0.5">
-                <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-stone-500 font-semibold flex items-center gap-1">
-                    <span>✈️ Global Air Export:</span>
-                  </span>
-                  <span className="font-mono font-bold text-amber-900">$9 USD / Kg</span>
-                </div>
-                <span className="text-[10px] text-stone-500 block truncate">
-                  Min $30 USD • Tiered Rates over 200 Kg
-                </span>
-              </div>
-            </div>
-
-            <div className="text-[10px] text-[#4A0D25]/75 font-medium flex items-center gap-1 pt-0.5">
-              <Info className="w-3 h-3 text-[#F6A6BB] shrink-0" />
-              <span>
-                Calculated on Gross Weight (+20% packaging buffer). Total billed for {quantity} item(s): <strong>{totalBatchGrossKg} Kg</strong>.
-              </span>
-            </div>
-          </div>
-
           {/* Quantity & CTA Actions */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 pt-4 border-t border-[#F2D4D4]">
             <div className="flex items-center gap-2.5">

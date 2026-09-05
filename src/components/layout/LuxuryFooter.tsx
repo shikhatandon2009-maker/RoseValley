@@ -6,8 +6,33 @@ import { Sparkles, Award, Droplet } from 'lucide-react';
 import { useSiteSettingsStore } from '@/store/site-settings-store';
 import { formatImageUrl } from '@/lib/format-image';
 
+interface CategoryItem {
+  id: string | number;
+  name: string;
+  slug: string;
+}
+
+let cachedFooterCategories: CategoryItem[] | null = null;
+
 export function LuxuryFooter() {
   const settings = useSiteSettingsStore((s) => s.settings);
+  const [categories, setCategories] = React.useState<CategoryItem[]>(cachedFooterCategories || []);
+
+  useEffect(() => {
+    if (cachedFooterCategories && cachedFooterCategories.length > 0) {
+      setCategories(cachedFooterCategories);
+      return;
+    }
+    fetch('/api/admin/categories')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.categories && Array.isArray(data.categories)) {
+          cachedFooterCategories = data.categories;
+          setCategories(data.categories);
+        }
+      })
+      .catch((err) => console.error('Footer categories fetch error:', err));
+  }, []);
 
   return (
     <footer className="bg-[#F7EEED] text-[#1A0510] border-t border-[#F7D1D8] pt-16 pb-12 font-sans relative overflow-hidden select-none">
@@ -68,15 +93,30 @@ export function LuxuryFooter() {
 
         {/* Navigation & Policies Column */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 text-xs">
-          {/* Col 1: Real Collection Categories */}
+          {/* Col 1: Collections */}
           <div className="space-y-3">
             <h3 className="font-serif font-extrabold text-sm text-[#1A0510] uppercase tracking-widest">
-              Fragrance Collections
+              Collections
             </h3>
             <ul className="space-y-2 text-[#4A0D25] font-bold">
-              <li><Link href="/products?category=pure-essential-oils" className="hover:text-[#F6A6BB] transition-colors">Pure Essential Oils</Link></li>
-              <li><Link href="/products?category=artisanal-blends" className="hover:text-[#F6A6BB] transition-colors">Artisanal Blends & Distillates</Link></li>
-              <li><Link href="/products?category=royal-attars" className="hover:text-[#F6A6BB] transition-colors">Pure Botanical Extracts</Link></li>
+              {categories.length > 0 ? (
+                categories.map((c) => (
+                  <li key={c.id}>
+                    <Link
+                      href={`/products?category=${c.slug}`}
+                      className="hover:text-[#F6A6BB] transition-colors"
+                    >
+                      {c.name}
+                    </Link>
+                  </li>
+                ))
+              ) : (
+                <>
+                  <li><Link href="/products?category=pure-essential-oils" className="hover:text-[#F6A6BB] transition-colors">Pure Essential Oils</Link></li>
+                  <li><Link href="/products?category=artisanal-perfumes" className="hover:text-[#F6A6BB] transition-colors">Artisanal Perfumes</Link></li>
+                  <li><Link href="/products?category=luxury-elixirs-blends" className="hover:text-[#F6A6BB] transition-colors">Luxury Elixirs & Blends</Link></li>
+                </>
+              )}
               <li><Link href="/products" className="hover:text-[#F6A6BB] transition-colors">Explore All Products</Link></li>
             </ul>
           </div>
